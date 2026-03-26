@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include "lib/ne/node.h"
-#include "lib/ne/connection.h"
 #include "lib/util.h"
 
 int main(){
@@ -9,8 +8,17 @@ int main(){
 
 	AddNode("Viorel");
 	AddNode("Claudiu");
-	printf("Found : %s\n", Nodes.items[0].label);
-	printf("Found : %s\n", Nodes.items[1].label);
+
+	Node* a = FindNode("Viorel", 6);
+	Node* b = FindNode("Claudiu", 7);
+
+	if (a)
+		printf("Found : %s\n", a->label);
+
+	UniLink(a, b);
+
+	if (b)
+		printf("Found : %s\n", b->label);
 
 	FreeNodes();
 

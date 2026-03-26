@@ -10,6 +10,7 @@ _Bool FreeNodes(){
 		free(Nodes.items);
 		Nodes.items = NULL;
 	}
+	dic_delete(NodeHash);
 	Nodes.capacity = 0;
 	Nodes.count = 0;
 	Nodes.init = 0;
@@ -19,6 +20,7 @@ _Bool FreeNodes(){
 _Bool InitNodes(){
 	if (Nodes.init) FreeNodes();
 
+	NodeHash = dic_new(INIT_NODE_CAP);
 	Nodes.capacity = INIT_NODE_CAP;
 	Nodes.count = 0;
 	Nodes.items = (Node*)malloc(sizeof(Node) * INIT_NODE_CAP);
@@ -47,14 +49,58 @@ Node* AddNode(const char* label){
 		Nodes.capacity = new_capacity;
 	}
 
-	Node* node = Nodes.items + Nodes.count;
-	node->label_size = mystrnlen(label, NODE_LABEL_CAP);
+	Node* node = NodeAt(Nodes.count);
+	node->length = mystrnlen(label, NODE_LABEL_CAP);
+
+	node->nsize = NODE_NBRS_CAP;
+	node->ncount = 0;
+	node->id = Nodes.count;
+	node->neighbours = malloc(node->nsize * sizeof(long));
 	
-	memcpy(node->label, label, node->label_size);
-	node->label[node->label_size] = '\0';
+	memcpy(node->label, label, node->length);
+	node->label[node->length] = '\0';
+
+	dic_add(NodeHash, node->label, node->length);
+	*NodeHash->value = Nodes.count;
 
 	Nodes.count ++;
 
 	return node;
 }
 
+// Unidirectional Linkage
+_Bool UniLink(Node* A, Node* B){
+	if (!A || !B) return 0;
+	long a = A->ncount, b = B->ncount;
+
+	if (a >= A->nsize){
+		long* tmp = realloc(A->neighbours, A->nsize * 2);
+		if (!tmp){
+			fprintf(stderr, "Failed to allocate memory for node neighbour\n");
+			return 0;
+		}
+		A->neighbours = tmp;
+		A->nsize *= 2;
+	}
+
+	A->neighbours[A->ncount++] = B->id;
+
+	return 1;
+}
+
+// Bidirectional Linkage
+_Bool BiLink(Node* A, Node* B){
+	return UniLink(A, B) && UniLink(B, A);
+}
+
+Node* FindNode(const char* label, uint8_t size){
+	if (!Nodes.init || !Nodes.items) return NULL;
+	if (dic_find(NodeHash, (void*)label, size)){
+		long index = *NodeHash->value;
+		if (index < 0 || index >= Nodes.count) return NULL;
+		return NodeAt(index);
+	}
+	return NULL;
+}
+
+inline Node* NodeAt(long index){return Nodes.items + index;}

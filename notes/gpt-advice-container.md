@@ -10,3 +10,4 @@ To find all connections (neighbors) of a node, simply iterate linearly over the 
 
 This approach avoids pointer overhead, minimizes memory fragmentation, and provides excellent cache locality, making traversals such as BFS or DFS very fast even for graphs with up to millions of nodes.
 
+-- Note: Idea is dissmised because I don't want to move memory around too much
