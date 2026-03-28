@@ -3,6 +3,6 @@
 
 #include "node.h"
 
-Node* FindNeighbours(Node* node);
+struct Connection* FindNeighbours(Node* node);
 
 #endif

@@ -1,6 +1,6 @@
 #include "search.h"
+#include "node.h"
 
-Node* FindNeighbours(Node* node){
-
-
+struct Connection* FindNeighbours(Node* node){
+	return node->neighbours;
 }

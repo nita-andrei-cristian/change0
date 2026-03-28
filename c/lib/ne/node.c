@@ -55,7 +55,7 @@ Node* AddNode(const char* label){
 	node->nsize = NODE_NBRS_CAP;
 	node->ncount = 0;
 	node->id = Nodes.count;
-	node->neighbours = malloc(node->nsize * sizeof(long));
+	node->neighbours = malloc(node->nsize * sizeof(struct Connection));
 	
 	memcpy(node->label, label, node->length);
 	node->label[node->length] = '\0';
@@ -74,16 +74,21 @@ _Bool UniLink(Node* A, Node* B){
 	long a = A->ncount, b = B->ncount;
 
 	if (a >= A->nsize){
-		long* tmp = realloc(A->neighbours, A->nsize * 2);
+		size_t new_capacity = MAX(NODE_NBRS_CAP, A->nsize * 2);
+		struct Connection* tmp = (struct Connection*)realloc(A->neighbours, new_capacity * sizeof(struct Connection));
+		//struct Connection* tmp = (struct Connection*)realloc(A->neighbours, 50);
 		if (!tmp){
 			fprintf(stderr, "Failed to allocate memory for node neighbour\n");
 			return 0;
 		}
 		A->neighbours = tmp;
-		A->nsize *= 2;
+		A->nsize = new_capacity;
 	}
 
-	A->neighbours[A->ncount++] = B->id;
+	A->neighbours[A->ncount].activation = 1.0;
+	A->neighbours[A->ncount].target = B;
+
+	A->ncount ++;
 
 	return 1;
 }

@@ -1,0 +1,7 @@
+{
+	"nodes" : ["Introspectie", "Filozofie", "Arta Culinara"],
+	"connections" : [
+		["Introspectie", "Filozofie"],
+		["Filozofie", "Arta Culinara"]
+	]
+}

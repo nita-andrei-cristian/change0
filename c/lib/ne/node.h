@@ -8,16 +8,32 @@
 #define INIT_NODE_CAP 256
 #define NODE_LABEL_CAP 32
 #define NODE_NBRS_CAP 4 // NEIGHBOURS
+			
+typedef enum {
+    REL_LOGICAL,
+    REL_EMOTIONAL,
+    REL_SOCIAL,
+    REL_TEMPORAL,
+    REL_CAUSAL
+} RelationType;
 
 typedef struct {
 	char label[NODE_LABEL_CAP + 1];
 	uint_fast8_t length;
-	long *neighbours;
+	struct Connection *neighbours;
+	double activation;
 	long nsize;
 	long ncount;
 	long id;
 } Node;
 struct dictionary* NodeHash;
+
+struct Connection {
+	RelationType dimension;
+	double activation;
+	double weight;
+	Node* target;
+};
 
 struct NodeContainer {
 	_Bool init;
