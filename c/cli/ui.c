@@ -83,7 +83,10 @@ static void Run(int i){
 
 	if (INPUT_TYPE[i] == DEEPRESEARCH){
 		char* out = DeepResearchStart();
-		printf("Deep research result : \n\n%s\n", out);
+		if (out){
+			printf("Deep research result : \n\n%s\n", out);
+			free(out);
+		}
 	}
 
 	WaitForInput();
