@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    "copilarie",
+    "familie",
+    "casa",
+    "masa",
+    "duminica",
+    "bucatarie",
+    "miros",
+    "siguranta",
+    {"name":"nostalgie", "activation":2.10},
+    {"name":"parinti", "activation":1.90},
+    {"name":"amintire", "activation":1.80},
+    {"name":"caldura", "activation":1.60}
+  ],
+  "connections": [
+    {"nodes":["copilarie","familie"],"weight":1.30,"activation":1.90},
+    {"nodes":["familie","parinti"],"weight":1.20,"activation":1.70},
+    {"nodes":["familie","casa"],"weight":1.20,"activation":1.80},
+    {"nodes":["casa","bucatarie"],"weight":1.00,"activation":1.40},
+    {"nodes":["bucatarie","masa"],"weight":1.10,"activation":1.50},
+    {"nodes":["masa","duminica"],"weight":1.20,"activation":1.60},
+    {"nodes":["miros","amintire"],"weight":1.30,"activation":1.90},
+    {"nodes":["amintire","nostalgie"],"weight":1.20,"activation":2.00},
+    {"nodes":["nostalgie","copilarie"],"weight":1.20,"activation":1.80},
+    {"nodes":["casa","siguranta"],"weight":1.10,"activation":1.60},
+    {"nodes":["siguranta","caldura"],"weight":1.00,"activation":1.40},
+    {"nodes":["masa","familie"],"weight":1.10,"activation":1.50},
+    {"nodes":["miros","bucatarie"],"weight":1.00,"activation":1.30},
+    {"nodes":["duminica","amintire"],"weight":1.00,"activation":1.30}
+  ]
+}

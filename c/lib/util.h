@@ -5,13 +5,14 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define CLAMP(mi,mx,v) ((v) < (mi) ? (mi) : ((v) > (mx) ? (mx) : (v)))
+#define FSIZE(fixed) (sizeof((fixed)) - 1)
 
 // ai generated strnlen
 size_t mystrnlen(const char* s, size_t maxlen);
 #endif
 
 #ifndef READ_FILE_FUNC
-char* readFile(char* filename);
+char* readFile(char* filename, size_t *bytes);
 #endif
 
 #ifndef CONVERSION_FUNCTIONS

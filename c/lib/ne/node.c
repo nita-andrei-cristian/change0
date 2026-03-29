@@ -37,6 +37,9 @@ _Bool InitNodes(){
 
 Node* AddNode(const char* label){
 	if (!label || !Nodes.init || !Nodes.items) return NULL;
+	size_t label_len = mystrnlen(label, NODE_LABEL_CAP);
+
+	if (FindNode(label, label_len)) return FindNode(label, label_len);
 
 	if (Nodes.count >= Nodes.capacity) {
 		size_t new_capacity = MAX(INIT_NODE_CAP,Nodes.capacity) * 2;
@@ -50,12 +53,12 @@ Node* AddNode(const char* label){
 	}
 
 	Node* node = NodeAt(Nodes.count);
-	node->length = mystrnlen(label, NODE_LABEL_CAP);
-
+	node->length = label_len;
 	node->nsize = NODE_NBRS_CAP;
 	node->ncount = 0;
 	node->id = Nodes.count;
 	node->neighbours = malloc(node->nsize * sizeof(struct Connection));
+	node->activation = 1;
 	
 	memcpy(node->label, label, node->length);
 	node->label[node->length] = '\0';
@@ -68,9 +71,29 @@ Node* AddNode(const char* label){
 	return node;
 }
 
+Node* AddNode_ex(const char* label, double activation){
+	Node* out = AddNode(label);
+	out->activation = activation;
+
+	return out;
+}
+
 // Unidirectional Linkage
 _Bool UniLink(Node* A, Node* B){
 	if (!A || !B) return 0;
+	
+	// scan if A already contains B
+	// TODO make this faster than O(A neighbours)
+	
+	for (size_t i = 0; i < A->ncount; i++){
+		if (A->neighbours[i].target == B){
+			// HIT
+			A->neighbours[i].activation += 0.05;
+			A->neighbours[i].weight += 0.01;
+			return 0;
+		};
+	}
+
 	long a = A->ncount, b = B->ncount;
 
 	if (a >= A->nsize){
@@ -86,9 +109,12 @@ _Bool UniLink(Node* A, Node* B){
 	}
 
 	A->neighbours[A->ncount].activation = 1.0;
+	A->neighbours[A->ncount].weight = 1.0;
 	A->neighbours[A->ncount].target = B;
 
 	A->ncount ++;
+
+	ConnectionCount ++;
 
 	return 1;
 }

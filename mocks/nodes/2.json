@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    "telefon",
+    "scroll",
+    "imagine",
+    "oboseala",
+    "camera",
+    "noapte",
+    "oglinda",
+    "timp",
+    {"name":"dopamina", "activation":2.20},
+    {"name":"comparatie", "activation":2.00},
+    {"name":"notificari", "activation":1.90},
+    {"name":"singuratate", "activation":1.70}
+  ],
+  "connections": [
+    {"nodes":["telefon","scroll"],"weight":1.30,"activation":1.90},
+    {"nodes":["scroll","dopamina"],"weight":1.20,"activation":2.00},
+    {"nodes":["scroll","comparatie"],"weight":1.10,"activation":1.80},
+    {"nodes":["comparatie","imagine"],"weight":1.20,"activation":1.90},
+    {"nodes":["telefon","notificari"],"weight":1.10,"activation":1.70},
+    {"nodes":["camera","noapte"],"weight":1.20,"activation":1.60},
+    {"nodes":["noapte","telefon"],"weight":1.20,"activation":1.70},
+    {"nodes":["camera","oglinda"],"weight":1.00,"activation":1.30},
+    {"nodes":["oglinda","imagine"],"weight":1.10,"activation":1.60},
+    {"nodes":["scroll","oboseala"],"weight":1.30,"activation":1.80},
+    {"nodes":["oboseala","timp"],"weight":1.00,"activation":1.40},
+    {"nodes":["singuratate","camera"],"weight":1.10,"activation":1.50},
+    {"nodes":["singuratate","scroll"],"weight":1.00,"activation":1.40},
+    {"nodes":["timp","noapte"],"weight":1.00,"activation":1.20}
+  ]
+}

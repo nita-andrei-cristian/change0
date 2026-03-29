@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    "oras",
+    "strada",
+    "plimbare",
+    "parc",
+    "ganduri",
+    "casti",
+    "muzica",
+    "memorie",
+    {"name":"vara", "activation":1.80},
+    {"name":"observatie", "activation":1.50},
+    {"name":"liniste", "activation":1.70},
+    {"name":"trecut", "activation":1.40}
+  ],
+  "connections": [
+    {"nodes":["oras","strada"],"weight":1.10,"activation":1.30},
+    {"nodes":["strada","plimbare"],"weight":1.20,"activation":1.50},
+    {"nodes":["plimbare","parc"],"weight":1.00,"activation":1.30},
+    {"nodes":["plimbare","ganduri"],"weight":1.20,"activation":1.70},
+    {"nodes":["ganduri","observatie"],"weight":1.00,"activation":1.40},
+    {"nodes":["casti","muzica"],"weight":1.20,"activation":1.60},
+    {"nodes":["muzica","memorie"],"weight":1.30,"activation":1.80},
+    {"nodes":["memorie","trecut"],"weight":1.10,"activation":1.40},
+    {"nodes":["parc","vara"],"weight":1.10,"activation":1.60},
+    {"nodes":["parc","liniste"],"weight":1.20,"activation":1.70},
+    {"nodes":["muzica","plimbare"],"weight":1.10,"activation":1.50},
+    {"nodes":["casti","ganduri"],"weight":1.10,"activation":1.40},
+    {"nodes":["oras","observatie"],"weight":0.90,"activation":1.10},
+    {"nodes":["memorie","vara"],"weight":1.00,"activation":1.30}
+  ]
+}

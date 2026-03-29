@@ -42,11 +42,15 @@ struct NodeContainer {
 	Node* items;
 } Nodes;
 
+size_t ConnectionCount = 0;
+
 _Bool FreeNodes();
 
 _Bool InitNodes();
 
 Node* AddNode(const char* label);
+
+Node* AddNode_ex(const char* label, double activation);
 
 Node* FindNode(const char* label, uint8_t size);
 

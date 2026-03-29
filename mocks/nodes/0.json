@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    "noapte",
+    "camera",
+    "muzica",
+    "reflectie",
+    "telefon",
+    "playlist",
+    "vis",
+    "subconstient",
+    {"name":"liniste", "activation":1.90},
+    {"name":"gol", "activation":1.70},
+    {"name":"introspectie", "activation":2.20},
+    {"name":"oboseala", "activation":1.60}
+  ],
+  "connections": [
+    {"nodes":["noapte","camera"],"weight":1.20,"activation":1.60},
+    {"nodes":["camera","telefon"],"weight":1.00,"activation":1.20},
+    {"nodes":["telefon","playlist"],"weight":1.10,"activation":1.40},
+    {"nodes":["playlist","muzica"],"weight":1.20,"activation":1.60},
+    {"nodes":["muzica","reflectie"],"weight":1.20,"activation":1.80},
+    {"nodes":["reflectie","introspectie"],"weight":1.30,"activation":2.10},
+    {"nodes":["liniste","introspectie"],"weight":1.20,"activation":1.90},
+    {"nodes":["noapte","liniste"],"weight":1.10,"activation":1.50},
+    {"nodes":["vis","subconstient"],"weight":1.20,"activation":1.70},
+    {"nodes":["subconstient","reflectie"],"weight":1.10,"activation":1.60},
+    {"nodes":["gol","introspectie"],"weight":1.00,"activation":1.50},
+    {"nodes":["oboseala","noapte"],"weight":1.00,"activation":1.30},
+    {"nodes":["muzica","vis"],"weight":1.00,"activation":1.40},
+    {"nodes":["camera","liniste"],"weight":1.00,"activation":1.30}
+  ]
+}

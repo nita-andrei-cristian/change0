@@ -1,0 +1,392 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>graph</title>
+  <style>
+    html, body, canvas {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: black;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+<canvas id="graph"></canvas>
+<script>
+(async function () {
+  const canvas = document.getElementById("graph");
+  const ctx = canvas.getContext("2d");
+
+  let width = 0, height = 0;
+  function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  let mouseX = width * 0.5;
+  let mouseY = height * 0.5;
+  let viewOffsetX = 0;
+  let viewOffsetY = 0;
+
+  canvas.addEventListener("mousemove", (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+
+  let raw;
+  try {
+    const res = await fetch("./export.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    raw = await res.json();
+  } catch (err) {
+    ctx.fillStyle = "white";
+    ctx.font = "16px sans-serif";
+    ctx.fillText("export.json load error", 20, 30);
+    console.error(err);
+    return;
+  }
+
+  if (!raw || !Array.isArray(raw.nodes) || !Array.isArray(raw.connections)) {
+    ctx.fillStyle = "white";
+    ctx.font = "16px sans-serif";
+    ctx.fillText("invalid graph schema", 20, 30);
+    return;
+  }
+
+  const nodes = raw.nodes.map((item) => {
+    if (typeof item === "string") {
+      return {
+        id: item,
+        label: item,
+        activation: 1,
+        x: width * (0.15 + Math.random() * 0.7),
+        y: height * (0.15 + Math.random() * 0.7),
+        vx: 0,
+        vy: 0
+      };
+    }
+
+    return {
+      id: item.name,
+      label: item.name,
+      activation: Number(item.activation ?? 1),
+      x: width * (0.15 + Math.random() * 0.7),
+      y: height * (0.15 + Math.random() * 0.7),
+      vx: 0,
+      vy: 0
+    };
+  });
+
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+  const edges = raw.connections.map(c => {
+    const from = c.nodes?.[0];
+    const to = c.nodes?.[1];
+    return {
+      a: nodeMap.get(from),
+      b: nodeMap.get(to),
+      weight: Number(c.weight ?? 1),
+      activation: Number(c.activation ?? 1),
+      hover: 0
+    };
+  }).filter(e => e.a && e.b && e.a !== e.b);
+
+  const REPULSION = 1800;
+  const SPRING = 0.02;
+  const REST = 90;
+  const DAMPING = 0.84;
+  const MAX_SPEED = 6;
+
+  function clamp(v, lo, hi) {
+    return v < lo ? lo : (v > hi ? hi : v);
+  }
+
+  function edgeThickness(e) {
+    return 0.8 + 0.6 * e.activation + 0.8 * e.weight;
+  }
+
+  function edgeAlpha(e) {
+    return Math.min(0.95, 0.10 + 0.12 * e.activation + 0.10 * e.weight);
+  }
+
+  function nodeRadius(n) {
+    return 3 + Math.min(10, n.activation * 2.2);
+  }
+
+  function distancePointToSegment(px, py, ax, ay, bx, by) {
+    const dx = bx - ax;
+    const dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    if (len2 < 0.0001) {
+      const sx = px - ax;
+      const sy = py - ay;
+      return Math.sqrt(sx * sx + sy * sy);
+    }
+
+    let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+    t = clamp(t, 0, 1);
+
+    const qx = ax + t * dx;
+    const qy = ay + t * dy;
+    const ox = px - qx;
+    const oy = py - qy;
+    return Math.sqrt(ox * ox + oy * oy);
+  }
+
+  function physics() {
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = nodes[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let d2 = dx * dx + dy * dy + 0.1;
+        let d = Math.sqrt(d2);
+
+        let force = REPULSION * (0.5 + 0.25 * a.activation + 0.25 * b.activation) / d2;
+        let fx = force * dx / d;
+        let fy = force * dy / d;
+
+        a.vx -= fx;
+        a.vy -= fy;
+        b.vx += fx;
+        b.vy += fy;
+      }
+    }
+
+    for (const e of edges) {
+      let dx = e.b.x - e.a.x;
+      let dy = e.b.y - e.a.y;
+      let d = Math.sqrt(dx * dx + dy * dy) + 0.01;
+
+      let rest = REST / Math.sqrt(Math.max(0.2, e.activation));
+      let force = SPRING * Math.max(0.1, e.weight) * (d - rest);
+
+      let fx = force * dx / d;
+      let fy = force * dy / d;
+
+      e.a.vx += fx;
+      e.a.vy += fy;
+      e.b.vx -= fx;
+      e.b.vy -= fy;
+    }
+
+    for (const n of nodes) {
+      n.vx *= DAMPING;
+      n.vy *= DAMPING;
+
+      n.vx = clamp(n.vx, -MAX_SPEED, MAX_SPEED);
+      n.vy = clamp(n.vy, -MAX_SPEED, MAX_SPEED);
+
+      n.x += n.vx;
+      n.y += n.vy;
+
+      n.x = clamp(n.x, 20, width - 20);
+      n.y = clamp(n.y, 20, height - 20);
+    }
+
+    const targetOffsetX = (mouseX - width * 0.5) * -0.08;
+    const targetOffsetY = (mouseY - height * 0.5) * -0.08;
+    viewOffsetX += (targetOffsetX - viewOffsetX) * 0.08;
+    viewOffsetY += (targetOffsetY - viewOffsetY) * 0.08;
+  }
+
+  let hoveredNode = null;
+  let hoveredEdge = null;
+  let hoverAlpha = 0;
+
+  let pinnedNode = null;
+  let pinnedEdge = null;
+  let pinnedAlpha = 0;
+
+  function pickAtScreen(sx, sy) {
+    const mx = sx - viewOffsetX;
+    const my = sy - viewOffsetY;
+
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const n = nodes[i];
+      const r = nodeRadius(n) + 6;
+      const dx = mx - n.x;
+      const dy = my - n.y;
+      if (dx * dx + dy * dy <= r * r) {
+        return { node: n, edge: null };
+      }
+    }
+
+    let best = null;
+    let bestDist = Infinity;
+    for (const e of edges) {
+      const dist = distancePointToSegment(mx, my, e.a.x, e.a.y, e.b.x, e.b.y);
+      const threshold = 4 + edgeThickness(e);
+      if (dist < threshold && dist < bestDist) {
+        best = e;
+        bestDist = dist;
+      }
+    }
+
+    return { node: null, edge: best };
+  }
+
+  canvas.addEventListener("click", (e) => {
+    const hit = pickAtScreen(e.clientX, e.clientY);
+
+    if (hit.node) {
+      pinnedNode = hit.node;
+      pinnedEdge = null;
+    } else if (hit.edge) {
+      pinnedNode = null;
+      pinnedEdge = hit.edge;
+    } else {
+      pinnedNode = null;
+      pinnedEdge = null;
+    }
+  });
+
+  function updateHover() {
+    const hit = pickAtScreen(mouseX, mouseY);
+    hoveredNode = hit.node;
+    hoveredEdge = hit.edge;
+
+    const target = (hoveredNode || hoveredEdge) ? 1 : 0;
+    hoverAlpha += (target - hoverAlpha) * 0.18;
+
+    const pinnedTarget = (pinnedNode || pinnedEdge) ? 1 : 0;
+    pinnedAlpha += (pinnedTarget - pinnedAlpha) * 0.18;
+
+    for (const e of edges) {
+      const hot =
+        hoveredEdge === e ||
+        pinnedEdge === e ||
+        (hoveredNode && (hoveredNode === e.a || hoveredNode === e.b)) ||
+        (pinnedNode && (pinnedNode === e.a || pinnedNode === e.b));
+
+      e.hover += ((hot ? 1 : 0) - e.hover) * 0.18;
+    }
+  }
+
+  function getOverlayLines() {
+    if (pinnedNode) {
+      return [
+        pinnedNode.label,
+        `activation: ${pinnedNode.activation.toFixed(2)}`,
+        ""
+      ];
+    }
+
+    if (pinnedEdge) {
+      return [
+        `${pinnedEdge.a.label} -> ${pinnedEdge.b.label}`,
+        `activation: ${pinnedEdge.activation.toFixed(2)}`,
+        `weight: ${pinnedEdge.weight.toFixed(2)}`
+      ];
+    }
+
+    if (hoveredNode) {
+      return [
+        hoveredNode.label,
+        `activation: ${hoveredNode.activation.toFixed(2)}`,
+        ""
+      ];
+    }
+
+    if (hoveredEdge) {
+      return [
+        `${hoveredEdge.a.label} -> ${hoveredEdge.b.label}`,
+        `activation: ${hoveredEdge.activation.toFixed(2)}`,
+        `weight: ${hoveredEdge.weight.toFixed(2)}`
+      ];
+    }
+
+    return null;
+  }
+
+  function drawOverlay() {
+    const lines = getOverlayLines();
+    const alpha = (pinnedNode || pinnedEdge) ? pinnedAlpha : hoverAlpha;
+    if (!lines || alpha < 0.03) return;
+
+    let x, y;
+    if (pinnedNode || pinnedEdge) {
+      x = 18;
+      y = 18;
+    } else {
+      x = mouseX + 16;
+      y = mouseY + 18;
+    }
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.font = "13px sans-serif";
+
+    for (let i = 0; i < 3; i++) {
+      ctx.fillText(lines[i] ?? "", x, y + i * 16);
+    }
+
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.save();
+    ctx.translate(viewOffsetX, viewOffsetY);
+
+    for (const e of edges) {
+      const alpha = edgeAlpha(e) + 0.20 * e.hover;
+      const thick = edgeThickness(e) + 1.4 * e.hover;
+
+      ctx.strokeStyle = `rgba(255,0,0,${Math.min(1, alpha)})`;
+      ctx.lineWidth = thick;
+      ctx.shadowBlur = e.hover > 0.05 ? 8 * e.hover : 0;
+      ctx.shadowColor = "rgba(255,0,0,0.6)";
+      ctx.beginPath();
+      ctx.moveTo(e.a.x, e.a.y);
+      ctx.lineTo(e.b.x, e.b.y);
+      ctx.stroke();
+    }
+
+    ctx.shadowBlur = 0;
+
+    for (const n of nodes) {
+      const hot = hoveredNode === n || pinnedNode === n ? 1 : 0;
+      const r = nodeRadius(n) + hot * 1.5;
+
+      ctx.beginPath();
+      ctx.fillStyle = "black";
+      ctx.strokeStyle = hot ? "rgba(255,120,120,1)" : "red";
+      ctx.lineWidth = 1 + hot * 1.2;
+      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "white";
+      ctx.font = "12px sans-serif";
+      ctx.fillText(n.label, n.x + r + 4, n.y - r - 2);
+    }
+
+    ctx.restore();
+
+    drawOverlay();
+  }
+
+  function loop() {
+    physics();
+    updateHover();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  loop();
+})();
+</script>
+</body>
+</html>

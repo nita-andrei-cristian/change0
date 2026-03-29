@@ -45,7 +45,7 @@ char* searchFirstNonDigit(char *source){
 	return NULL;
 }
 
-char* readFile(char* filename)
+char* readFile(char* filename, size_t *size)
 {
 	FILE* f = fopen(filename, "rb");
 	if (!f) {
@@ -54,18 +54,18 @@ char* readFile(char* filename)
 	};
 
 	fseek(f, 0, SEEK_END);
-	long size = ftell(f);
+	*size = (size_t) ftell(f);
 	rewind(f);
 
-	char* buffer = malloc(size + 1);
+	char* buffer = malloc(*size + 1);
 	if (!buffer){
 		fclose(f);
 		fprintf(stderr, "Error allocating \"%s\" in a buffer\n", filename);
 		return NULL;
 	}
 
-	fread(buffer, 1, size, f);
-	buffer[size] = '\0';
+	fread(buffer, 1, *size, f);
+	buffer[*size] = '\0';
 
 	fclose(f);
 	return buffer;	

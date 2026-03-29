@@ -1,7 +1,9 @@
 #include "ui.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include "../lib/ne/node.h"
-#include "../lib/ne/search.h"
+#include "../lib/ne/engine.h"
+#include "../lib/util.h"
 
 static inline void clear(){
 	printf("\033[H\033[J");
@@ -9,32 +11,6 @@ static inline void clear(){
 
 void UIStart(){
 	InitNodes();
-
-	Node* a = AddNode("Viorel");
-	Node* b = AddNode("Claudiu");
-	Node* c = AddNode("Cicadrel");
-	Node* d = AddNode("Busuioc");
-	Node* e = AddNode("Aurelian");
-	Node* f = AddNode("Maximus");
-
-	if (a)
-		printf("Found : %s\n", a->label);
-
-	UniLink(a, b);
-	BiLink(a, c);
-	UniLink(a, d);
-	UniLink(a, e);
-	UniLink(a, f);
-	
-	struct Connection* neighbours = FindNeighbours(a);
-	for (int i = 0; i < a->ncount; i++){
-		printf("Found neighbour [%s] : [%f]\n", neighbours[i].target->label, neighbours[i].activation);
-	}
-
-	if (b)
-		printf("Found : %s\n", b->label);
-
-
 }
 
 static inline void WaitForInput(){
@@ -42,11 +18,46 @@ static inline void WaitForInput(){
 	scanf(" %c", &x);
 }
 
-
-
 static void Run(int i){
 	clear();
 	printf("------------- [ %c ] -------------\n", INPUT_CHAR[i]);
+
+	if (INPUT_TYPE[i] == MESSAGE){
+		// mock something
+		char path[64];
+		sprintf(path, "/home/nita/dev/c/change/mocks/nodes/%d.json", rand() % 10);
+
+		size_t size = 0;
+		char* content = readFile(path, &size);
+		if (content){
+			if (!AddToGraph(content,size)){
+				fprintf(stderr, "Couldn't add to graph the following json \n%s\n", content);
+			}
+			free(content);
+		}
+	}
+
+	if (INPUT_TYPE[i] == MESSAGEX10){
+		for (int i = 0; i < 10; i++){
+			// mock something
+			char path[64];
+			sprintf(path, "/home/nita/dev/c/change/mocks/nodes/%d.json", i);
+
+			size_t size = 0;
+			char* content = readFile(path, &size);
+			if (content){
+				if (!AddToGraph(content,size)){
+					fprintf(stderr, "Couldn't add to graph the following json \n%s\n", content);
+				}
+				free(content);
+			}
+		}
+	}
+
+	if (INPUT_TYPE[i] == EXPORT){
+		ExportGraphTo("/home/nita/dev/c/change/js/export.json");
+	}
+
 	WaitForInput();
 }
 
@@ -72,7 +83,6 @@ void UILoop(){
 			if (option == INPUT_CHAR[selection]) Run(INPUT_TYPE[selection]);
 		}
 		if (selection == OPTIONS_COUNT) continue;
-
 
 	}
 }

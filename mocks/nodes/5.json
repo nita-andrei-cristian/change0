@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    "relatie",
+    "emotie",
+    "atasament",
+    "incredere",
+    "mesaje",
+    "seara",
+    "oras",
+    "asteptare",
+    {"name":"vulnerabilitate", "activation":2.00},
+    {"name":"apropiere", "activation":1.90},
+    {"name":"nesiguranta", "activation":1.70},
+    {"name":"intalnire", "activation":1.60}
+  ],
+  "connections": [
+    {"nodes":["relatie","emotie"],"weight":1.30,"activation":1.80},
+    {"nodes":["relatie","atasament"],"weight":1.20,"activation":1.70},
+    {"nodes":["atasament","vulnerabilitate"],"weight":1.20,"activation":1.90},
+    {"nodes":["vulnerabilitate","incredere"],"weight":1.10,"activation":1.70},
+    {"nodes":["incredere","apropiere"],"weight":1.20,"activation":1.80},
+    {"nodes":["relatie","mesaje"],"weight":1.00,"activation":1.40},
+    {"nodes":["mesaje","asteptare"],"weight":1.20,"activation":1.60},
+    {"nodes":["asteptare","nesiguranta"],"weight":1.10,"activation":1.50},
+    {"nodes":["seara","intalnire"],"weight":1.10,"activation":1.40},
+    {"nodes":["intalnire","relatie"],"weight":1.20,"activation":1.70},
+    {"nodes":["oras","intalnire"],"weight":1.00,"activation":1.30},
+    {"nodes":["seara","mesaje"],"weight":0.90,"activation":1.20},
+    {"nodes":["emotie","nesiguranta"],"weight":1.00,"activation":1.40},
+    {"nodes":["apropiere","mesaje"],"weight":1.00,"activation":1.30}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "nodes": [
+    "carte",
+    "lectura",
+    "idei",
+    {"name": "platon", "activation": 2.3},
+    {"name": "cunoastere", "activation": 2.0}
+  ],
+  "connections": [
+    ["carte", "lectura"],
+    ["lectura", "idei"],
+    ["platon", "carte"],
+    ["idei", "cunoastere"]
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    "facultate",
+    "laptop",
+    "proiect",
+    "deadline",
+    "colegi",
+    "biblioteca",
+    "cafea",
+    "stres",
+    {"name":"concentrare", "activation":1.90},
+    {"name":"oboseala", "activation":1.80},
+    {"name":"ambitie", "activation":2.00},
+    {"name":"viitor", "activation":1.70}
+  ],
+  "connections": [
+    {"nodes":["facultate","proiect"],"weight":1.20,"activation":1.60},
+    {"nodes":["proiect","deadline"],"weight":1.30,"activation":1.90},
+    {"nodes":["deadline","stres"],"weight":1.20,"activation":1.80},
+    {"nodes":["stres","oboseala"],"weight":1.10,"activation":1.60},
+    {"nodes":["laptop","proiect"],"weight":1.10,"activation":1.40},
+    {"nodes":["biblioteca","concentrare"],"weight":1.20,"activation":1.70},
+    {"nodes":["concentrare","proiect"],"weight":1.20,"activation":1.60},
+    {"nodes":["cafea","oboseala"],"weight":1.00,"activation":1.30},
+    {"nodes":["colegi","proiect"],"weight":1.10,"activation":1.50},
+    {"nodes":["colegi","facultate"],"weight":1.00,"activation":1.30},
+    {"nodes":["ambitie","viitor"],"weight":1.20,"activation":1.80},
+    {"nodes":["viitor","facultate"],"weight":1.10,"activation":1.50},
+    {"nodes":["ambitie","proiect"],"weight":1.10,"activation":1.50},
+    {"nodes":["cafea","biblioteca"],"weight":0.90,"activation":1.10}
+  ]
+}
