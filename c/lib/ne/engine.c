@@ -11,7 +11,14 @@
 static void AddNodeFromEntry(json_value *val){
 	if (val->type == json_string){
 		printf("Adding [%s]\n", val->u.string.ptr);
-		AddNode(val->u.string.ptr); // TODO : optimize by not calculating strlen twice (it's already calcualted in the json_string)
+
+		Node* n = FindNode(val->u.string.ptr, val->u.string.length);
+		if (n){
+			n->activation += NODE_ACT_INCR;
+		}else{
+			AddNode(val->u.string.ptr); // TODO you may optimize by not calculating strlen twice (it's already calcualted in the json_string)
+		}
+
 		return;
 	}
 	if (val->type != json_object) return;
@@ -55,6 +62,9 @@ static void AddNodesFromEntry(json_object_entry* entry){
 	for (size_t i = 0; i < entry->value->u.array.length; i++){
 		AddNodeFromEntry(entry->value->u.array.values[i]);
 	}
+	
+	// Decay Nodes
+	DecayNodes();
 }
 
 static void ProcessArrayLinkage(json_value *entry, double weight, double activation){
@@ -76,9 +86,17 @@ static void ProcessArrayLinkage(json_value *entry, double weight, double activat
 		if (!B) continue;
 
 		printf("Linking %s, %s\n", A->label, B->label);
-		UniLink(A, B);
-		A->neighbours[A->ncount - 1].activation = activation;
-		A->neighbours[A->ncount - 1].weight = weight;
+
+		struct Connection *link = LinkExists(A, B);
+		if (link){
+			link->activation += CONN_ACT_INCR * activation;
+			link->weight += CONN_WGT_INCR * weight;
+		}else{
+			UniLink(A, B);
+			A->neighbours[A->ncount - 1].activation = activation;
+			A->neighbours[A->ncount - 1].weight = weight;
+		}
+
 	}
 }
 
@@ -118,11 +136,14 @@ static void AddConnectionFromEntry(json_value* val){
 static void AddConnectionsFromEntry(json_object_entry* entry){
 	if (entry->value == NULL) return;
 	if (entry->value->type != json_array) return;
+	if (entry->value->u.array.length == 0) return;
 
 	for (size_t i = 0; i < entry->value->u.array.length; i++)
 		// Adding a connection
 		AddConnectionFromEntry(entry->value->u.array.values[i]);
-	
+
+	// Decay Connecitons
+	DecayAllConnections();
 }
 
 _Bool AddToGraph(char *JSON, size_t len){

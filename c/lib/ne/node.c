@@ -1,3 +1,5 @@
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,11 +37,10 @@ _Bool InitNodes(){
 	return 1;
 }
 
+// Danger: Node must not exist! Always verify with FindNode
 Node* AddNode(const char* label){
 	if (!label || !Nodes.init || !Nodes.items) return NULL;
 	size_t label_len = mystrnlen(label, NODE_LABEL_CAP);
-
-	if (FindNode(label, label_len)) return FindNode(label, label_len);
 
 	if (Nodes.count >= Nodes.capacity) {
 		size_t new_capacity = MAX(INIT_NODE_CAP,Nodes.capacity) * 2;
@@ -72,27 +73,40 @@ Node* AddNode(const char* label){
 }
 
 Node* AddNode_ex(const char* label, double activation){
-	Node* out = AddNode(label);
+	size_t label_len = mystrnlen(label, NODE_LABEL_CAP); // recomputing length, yes
+	Node* out = FindNode(label, label_len);
+	if (out) {
+		out->activation += NODE_ACT_INCR * activation; // relative to 1
+		return out;
+	}
+	out = AddNode(label);
 	out->activation = activation;
 
 	return out;
 }
 
-// Unidirectional Linkage
-_Bool UniLink(Node* A, Node* B){
-	if (!A || !B) return 0;
-	
+struct Connection* LinkExists(Node* A, Node* B){
 	// scan if A already contains B
 	// TODO make this faster than O(A neighbours)
 	
 	for (size_t i = 0; i < A->ncount; i++){
 		if (A->neighbours[i].target == B){
 			// HIT
-			A->neighbours[i].activation += 0.05;
-			A->neighbours[i].weight += 0.01;
-			return 0;
+			// TODO when adding a new connection, increase activation based on its initial activation
+			A->neighbours[i].activation += CONN_ACT_INCR;
+			A->neighbours[i].weight += CONN_WGT_INCR;
+			return &(A->neighbours[i]);
 		};
 	}
+
+	return NULL;
+}
+
+// Unidirectional Linkage
+// Danger: Always check the Link doesn't exist to avoid overriding
+_Bool UniLink(Node* A, Node* B){
+	if (!A || !B) return 0;
+	
 
 	long a = A->ncount, b = B->ncount;
 
@@ -124,6 +138,35 @@ _Bool BiLink(Node* A, Node* B){
 	return UniLink(A, B) && UniLink(B, A);
 }
 
+_Bool DecayNodes(){
+	for (size_t i = 0; i < Nodes.count; i++){
+		NodeAt(i)->activation *= NODE_ACT_DECAY;
+	}
+	return 1;
+}
+
+_Bool ActivateAllConnections(){
+	for (size_t i = 0; i < Nodes.count; i++){
+		Node* n = NodeAt(i);
+		n->neighbours[i].weight += CONN_WGT_INCR;
+		n->neighbours[i].activation += CONN_ACT_INCR;
+	}
+	return 1;
+}
+
+_Bool DecayAllConnections(){
+	for (size_t i = 0; i < Nodes.count; i++){
+		Node* n = NodeAt(i);
+	
+		for (size_t j = 0; j < n->ncount; j++){
+			n->neighbours[j].weight *= CONN_WGT_DECAY;
+			n->neighbours[j].activation *= CONN_ACT_DECAY;
+		}
+	}
+	return 1;
+}
+
+
 Node* FindNode(const char* label, uint8_t size){
 	if (!Nodes.init || !Nodes.items) return NULL;
 	if (dic_find(NodeHash, (void*)label, size)){
@@ -133,5 +176,3 @@ Node* FindNode(const char* label, uint8_t size){
 	}
 	return NULL;
 }
-
-inline Node* NodeAt(long index){return Nodes.items + index;}
