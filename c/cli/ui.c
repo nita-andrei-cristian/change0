@@ -1,4 +1,5 @@
 #include "ui.h"
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "../lib/ne/node.h"
@@ -6,6 +7,7 @@
 #include "../lib/util.h"
 #include <unistd.h>
 #include <termios.h>
+#include "../lib/deep-research/deep-research.h"
 
 // AI generated function
 static int getch_nowait_enterless(void) {
@@ -77,6 +79,11 @@ static void Run(int i){
 
 	if (INPUT_TYPE[i] == EXPORT){
 		ExportGraphTo("/home/nita/dev/c/change/js/export.json");
+	}
+
+	if (INPUT_TYPE[i] == DEEPRESEARCH){
+		char* out = DeepResearchStart();
+		printf("Deep research result : \n\n%s\n", out);
 	}
 
 	WaitForInput();
