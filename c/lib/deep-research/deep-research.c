@@ -75,7 +75,31 @@ char* DeepResearchStart(){
 	return context.payload;
 }
 
+// Commands 1-4
+
+enum DEEP_RESEARCH_EXIT Run1(Context *context, json_value *document){
+	AddContext(context, "[[Command 1 inner contents]]\n");
+	return NEXT_STEP;
+}
+
+enum DEEP_RESEARCH_EXIT Run2(Context *context, json_value *document){
+	AddContext(context, "[[Command 2 inner contents]]\n");
+	return NEXT_STEP;
+}
+
+enum DEEP_RESEARCH_EXIT Run3(Context *context, json_value *document){
+	AddContext(context, "[[Command 3 inner contents]]\n");
+	return NEXT_STEP;
+}
+
+enum DEEP_RESEARCH_EXIT Run4(Context *context, json_value *document){
+	AddContext(context, "[[Command 4 inner contents]]\n");
+	return NEXT_STEP;
+}
+
 enum DEEP_RESEARCH_EXIT DeepResearchLoop(Context *context){
+	if (!context) return COMMON_FAIL;
+
 	char s[32];
 
 	context->round ++;
@@ -115,7 +139,13 @@ enum DEEP_RESEARCH_EXIT DeepResearchLoop(Context *context){
 		json_object_entry entry = document->u.object.values[i];
 
 		// AI Wants to finish
-		if (!strcmp(entry.name, "finished")){
+		if (	
+			!strcmp(entry.name, "finished") && 
+			(
+			 (entry.value->type == json_boolean && entry.value->u.boolean) ||
+			 (entry.value->type == json_integer && entry.value->u.integer)
+			)
+		    ){
 			char s[128];
 
 			if (context->round >= context->minDepth){
@@ -127,10 +157,41 @@ enum DEEP_RESEARCH_EXIT DeepResearchLoop(Context *context){
 
 			break;
 		}
-	}
 
-	AddContextEx(context, "Ran command : ", FSIZE("Ran command : "));
-	AddContextEx(context, response, responseSize);
+		if (!strcmp(entry.name, "command")){
+			json_value *found = entry.value;
+			
+			if (found->type != json_integer) continue;
+
+			uint_fast64_t value = found->u.integer;
+
+			enum DEEP_RESEARCH_EXIT (*fn)(Context* a, json_value* b);
+
+			fn = NULL;
+
+			if (value == 1)
+				fn = Run1;
+			else if (value == 2)
+				fn = Run2;
+			else if (value == 3)
+				fn = Run3;
+			else if (value == 4)
+				fn = Run4;
+
+			if (!fn) continue;
+
+			enum DEEP_RESEARCH_EXIT status = fn(context, document);
+
+			if (status == COMMON_FAIL) {
+				AddContextEx(context, "Error : Command failed", FSIZE("Error : Command failed"));
+				return status;
+			}
+			
+			AddContextEx(context, "Ran command : ", FSIZE("Ran command : "));
+			AddContextEx(context, response, responseSize);
+		}
+
+	}
 
 	json_value_free(document);
 	free(response);
