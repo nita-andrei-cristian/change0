@@ -58,7 +58,6 @@ static _Bool AddContext(Context *c, char* end){
 static char* MockResponse(size_t *size){
 	char path[64];
 	sprintf(path, "/home/nita/dev/c/change/mocks/action-data/%d.json", rand() % 4);
-	sprintf(path, "/home/nita/dev/c/change/mocks/action-data/%d.json", 2);
 	return readFile(path, size);
 }
 
@@ -403,7 +402,7 @@ enum DEEP_RESEARCH_EXIT DeepResearchLoop(Context *context){
 
 	}
 
-	json_value_free(document);
+	if (document) json_value_free(document);
 	free(response);
 	return NEXT_STEP;
 }
