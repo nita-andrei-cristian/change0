@@ -9,6 +9,8 @@
 #define RESPONSE_FAIL_PARSE "Error : Failed parsing response as json\n"
 #define JSON_INVALID_CHECKS "Error : Json was parsed, but invalid checks\n"
 
+#define NODE_NOT_FOUND_MESSSAGE "Node not found : "
+
 // general context about the round
 typedef struct{
 	char* payload;

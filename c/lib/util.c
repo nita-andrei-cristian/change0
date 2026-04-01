@@ -102,7 +102,7 @@ on page 60.
 // Retrieved 2026-03-09, License - CC BY-SA 3.0
 
  /* itoa:  convert n to characters in s */
- void itoa(int n, char s[])
+void itoa(int n, char s[])
  {
      int i, sign;
 

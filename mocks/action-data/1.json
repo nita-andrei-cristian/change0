@@ -1,5 +1,6 @@
 {
   "command": 2,
-  "node": "Arta",
-  "percentage": 60
+  "node": "viitor",
+  "percentage": 60,
+  "criteria" : "weight"
 }

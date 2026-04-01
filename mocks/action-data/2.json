@@ -1,6 +1,7 @@
 {
   "command": 3,
-  "node": "Arta",
-  "depth": 2,
-  "percentage": 55
+  "node": "muzica",
+  "depth": 3,
+  "pWeight": 90,
+  "pActivation": 90
 }

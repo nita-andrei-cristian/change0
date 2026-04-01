@@ -176,3 +176,15 @@ Node* FindNode(const char* label, uint8_t size){
 	}
 	return NULL;
 }
+
+double ReadNodeActivation(Node* n){
+	return n->activation;
+}
+
+double ReadConnectionActivation(struct Connection* c){
+	return c->activation;
+}
+
+double ReadConnectionWeight(struct Connection* c){
+	return c->activation;
+}

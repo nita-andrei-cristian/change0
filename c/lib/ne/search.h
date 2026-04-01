@@ -2,7 +2,28 @@
 #define SEARCH_ENGINE_HEADER
 
 #include "node.h"
+#include <stdint.h>
+
+#define MAX_FAMILY_DEPTH 5
 
 struct Connection* FindNeighbours(Node* node);
+
+typedef double (*GetValueFn)(const void *elem);
+
+void **FilterTopPercent(
+    void *container,
+    size_t containerSize,
+    size_t elemSize,
+    int_fast64_t percentage,
+    size_t *count,
+    GetValueFn getValue
+);
+
+Node** FilterNodeByActivationGlobal(int_fast64_t percentage, size_t *count);
+
+Node** FilterNodeNeighboursByWeight(Node* node, int_fast64_t percentage, size_t *count);
+Node** FilterNodeNeighboursByActivation(Node* node, int_fast64_t percentage, size_t *count);
+
+char* ComputeNodeFamily(Node* node, int_fast64_t percA, int_fast64_t percW, size_t depth, size_t *length);
 
 #endif

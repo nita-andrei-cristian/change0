@@ -37,6 +37,7 @@ static void AddNodeFromEntry(json_value *val){
 			// Constructing a name for the Node
 			short len = MIN(31, entry.value->u.string.length);
 			memcpy(name, entry.value->u.string.ptr, len);
+
 			name[len] = '\0';
 			constructable = 1;
 		} else if (!strcmp(entry.name, "activation")){

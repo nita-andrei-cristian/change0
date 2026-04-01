@@ -8,7 +8,7 @@
 #define INIT_NODE_CAP 256
 #define NODE_LABEL_CAP 32
 #define NODE_NBRS_CAP 4 // NEIGHBOURS
-			
+
 #define NODE_ACT_DECAY 0.95
 #define CONN_ACT_DECAY 0.95
 #define CONN_WGT_DECAY 0.99
@@ -20,11 +20,11 @@
 #define NodeAt(i) (Nodes.items + (i))
 
 typedef enum {
-    REL_LOGICAL,
-    REL_EMOTIONAL,
-    REL_SOCIAL,
-    REL_TEMPORAL,
-    REL_CAUSAL
+	REL_LOGICAL,
+	REL_EMOTIONAL,
+	REL_SOCIAL,
+	REL_TEMPORAL,
+	REL_CAUSAL
 } RelationType;
 
 typedef struct {
@@ -76,5 +76,11 @@ _Bool ActivateAllConnections();
 _Bool DecayAllConnections();
 
 struct Connection* LinkExists(Node* A, Node* B);
+
+double ReadNodeActivation(Node* n);
+
+double ReadConnectionActivation(struct Connection* c);
+
+double ReadConnectionWeight(struct Connection* c);
 
 #endif
