@@ -175,13 +175,16 @@ Node** FilterNodeNeighboursByWeight(Node* node, int_fast64_t percentage, size_t 
 }
 
 // We assume the node exists, if not, too bad.
-char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth, size_t *count){
+char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth, double lastA, double lastW, size_t *count){
 	if (depth == 0 || node == NULL) return NULL;
 	if (depth == 1){
 		// last one
-		char* out = malloc(128);
+		char* out = malloc(128 + NODE_LABEL_CAP);
 		if (!out) return NULL;
-		*count = sprintf(out, "{\"NodeName\" : \"%s\"},", node->label);
+		if (lastA || lastW)
+			*count = sprintf(out, "{\"NodeName\" : \"%s\", \"act\" : %.2f, \"wght\" : %.2f},", node->label, lastA, lastW);
+		else
+			*count = sprintf(out, "{\"NodeName\" : \"%s\"},", node->label);
 		
 		return out;
 	}
@@ -217,13 +220,18 @@ char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth,
 	free(valuesA);
 	free(valuesW);
 
-	size_t capacity = 128;
+	size_t capacity = 1024;
 	char *out = malloc(capacity);
 	if(!out) return NULL;
 	*count = 0;
 
-	char buff[128 + NODE_LABEL_CAP];
-	size_t header_len = sprintf(buff, "{\"NodeName\" : \"%s\", \"children\" : [", node->label);
+	char buff[256 + NODE_LABEL_CAP];
+	size_t header_len;
+	if (lastA || lastW)
+		header_len = sprintf(buff, "{\"NodeName\" : \"%s\", \"act\" : %.2f, \"wght\" : %.2f, \"children\" : [", node->label, lastA, lastW);
+	else
+		header_len = sprintf(buff, "{\"NodeName\" : \"%s\", \"children\" : [", node->label);
+
 	memcpy(out, buff, header_len); *count += header_len;
 
 	for (size_t i = 0; i < node->ncount; i++) {
@@ -231,7 +239,7 @@ char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth,
 			char *item;
 			size_t len = 0;
 
-			item = recursive_step(node->neighbours[i].target, pA, pW, depth - 1, &len);
+			item = recursive_step(node->neighbours[i].target, pA, pW, depth - 1, node->neighbours[i].activation, node->neighbours[i].weight, &len);
 			if (!item) continue;
 
 			size_t new_capacity = capacity;
@@ -270,7 +278,7 @@ char* ComputeNodeFamily(Node* node, int_fast64_t percA, int_fast64_t percW, size
 	*length = 0;
 
 	size_t count;
-	char* root = recursive_step(node, percA, percW, depth, &count);
+	char* root = recursive_step(node, percA, percW, depth, 0, 0, &count);
 	if(!root) {
 		return NULL;
 	}
