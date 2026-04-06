@@ -1,15 +1,16 @@
 {
+  "context": "Pasiuni",
   "nodes": [
-    "carte",
-    "lectura",
-    "idei",
-    {"name": "platon", "activation": 2.3},
-    {"name": "cunoastere", "activation": 2.0}
+    {"name":"muzica", "weight":1.5},
+    {"name":"trenduri", "weight":1.6},
+    {"name":"tiktok", "weight":1.7},
+    {"name":"dans", "weight":1.4},
+    {"name":"creativitate", "weight":1.5}
   ],
   "connections": [
-    ["carte", "lectura"],
-    ["lectura", "idei"],
-    ["platon", "carte"],
-    ["idei", "cunoastere"]
+    {"nodes":["tiktok","trenduri"],"weight":1.6,"activation":1.9},
+    {"nodes":["trenduri","muzica"],"weight":1.5,"activation":1.8},
+    {"nodes":["muzica","dans"],"weight":1.4,"activation":1.7},
+    {"nodes":["dans","creativitate"],"weight":1.5,"activation":1.8}
   ]
 }

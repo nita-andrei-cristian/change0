@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Graph Viewer</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="graph" aria-label="Interactive graph viewer"></canvas>
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("graph");
+      const ctx = canvas.getContext("2d");
+
+      const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
+      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+      const toNumber = (value, fallback = 0) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
+      };
+
+      const state = {
+        allNodes: [],
+        roots: [],
+        nodeById: new Map(),
+        childrenByParent: new Map(),
+        allEdges: [],
+        focusRoot: null,
+        visibleNodes: [],
+        visibleEdges: [],
+        hoveredNode: null,
+        selectedNode: null,
+        loading: true,
+        error: null,
+        width: 0,
+        height: 0,
+        dpr: 1,
+        lastFrame: performance.now()
+      };
+
+      function generatedColorFromId(id) {
+        const hue = ((id * 137.508) % 360 + 360) % 360;
+        return `hsl(${hue.toFixed(3)} 68% 58%)`;
+      }
+
+      function computeNodeRadius(node) {
+        const emphasis = clamp((Math.abs(node.activation) + Math.abs(node.weight)) * 0.5, 0.6, 2.2);
+        return clamp(14 + emphasis * 6, 18, 30);
+      }
+
+      function summarizeNode(node) {
+        return {
+          id: node.id,
+          name: node.name,
+          hasParent: node.hasParent,
+          parentId: node.parentId,
+          color: node.color
+        };
+      }
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        state.width = Math.max(1, Math.round(rect.width));
+        state.height = Math.max(1, Math.round(rect.height));
+        state.dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+        canvas.width = Math.round(state.width * state.dpr);
+        canvas.height = Math.round(state.height * state.dpr);
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+
+        if (state.visibleNodes.length > 0) {
+          seedVisibleLayout();
+        }
+      }
+
+      function parseNodes(rawNodes) {
+        const nodes = [];
+        const nodeById = new Map();
+
+        for (const item of rawNodes) {
+          const id = Number(item.id);
+          if (!Number.isFinite(id)) {
+            console.warn("Skipping node with invalid numeric id", item);
+            continue;
+          }
+
+          if (nodeById.has(id)) {
+            console.warn("Skipping duplicate node id", item);
+            continue;
+          }
+
+          const hasParent = hasOwn(item, "parent");
+          const parsedParentId = hasParent ? Number(item.parent) : null;
+          const node = {
+            raw: item,
+            id,
+            name: typeof item.name === "string" ? item.name : String(id),
+            activation: toNumber(item.activation, 0),
+            weight: toNumber(item.weight, 0),
+            hasParent,
+            parentId: hasParent && Number.isFinite(parsedParentId) ? parsedParentId : null,
+            isRoot: hasParent === false,
+            baseColor: null,
+            color: null,
+            radius: 0,
+            x: 0,
+            y: 0,
+            vx: 0,
+            vy: 0,
+            seed: ((id * 9301 + 49297) % 233280) / 233280
+          };
+
+          node.radius = computeNodeRadius(node);
+          nodes.push(node);
+          nodeById.set(id, node);
+        }
+
+        nodes.sort((a, b) => a.id - b.id);
+        return { nodes, nodeById };
+      }
+
+      function buildChildrenByParent(nodes) {
+        const childrenByParent = new Map();
+
+        for (const node of nodes) {
+          if (node.hasParent !== true || !Number.isFinite(node.parentId)) {
+            continue;
+          }
+
+          if (!childrenByParent.has(node.parentId)) {
+            childrenByParent.set(node.parentId, []);
+          }
+
+          childrenByParent.get(node.parentId).push(node);
+        }
+
+        for (const children of childrenByParent.values()) {
+          children.sort((a, b) => a.id - b.id);
+        }
+
+        return childrenByParent;
+      }
+
+      function assignColors(nodes, nodeById) {
+        const resolving = new Set();
+
+        function resolveColor(node) {
+          if (node.color) {
+            return node.color;
+          }
+
+          if (node.hasParent === false) {
+            node.baseColor = generatedColorFromId(node.id);
+            node.color = node.baseColor;
+            return node.color;
+          }
+
+          if (resolving.has(node.id)) {
+            node.baseColor = generatedColorFromId(node.id);
+            node.color = node.baseColor;
+            return node.color;
+          }
+
+          resolving.add(node.id);
+          const parent = Number.isFinite(node.parentId) ? nodeById.get(node.parentId) : null;
+
+          if (!parent) {
+            node.baseColor = generatedColorFromId(node.id);
+            node.color = node.baseColor;
+          } else {
+            const parentColor = resolveColor(parent);
+            node.baseColor = parent.baseColor || parentColor;
+            node.color = node.baseColor;
+          }
+
+          resolving.delete(node.id);
+          return node.color;
+        }
+
+        for (const node of nodes) {
+          resolveColor(node);
+        }
+      }
+
+      function buildEdges(rawConnections, nodeById) {
+        const edges = [];
+
+        for (const item of rawConnections) {
+          if (!item || !Array.isArray(item.nodes) || item.nodes.length !== 2) {
+            continue;
+          }
+
+          const sourceId = Number(item.nodes[0]);
+          const targetId = Number(item.nodes[1]);
+
+          if (!Number.isFinite(sourceId) || !Number.isFinite(targetId)) {
+            continue;
+          }
+
+          const source = nodeById.get(sourceId);
+          const target = nodeById.get(targetId);
+          if (!source || !target || source === target) {
+            continue;
+          }
+
+          edges.push({
+            source,
+            target,
+            weight: clamp(toNumber(item.weight, 1), 0.1, 5),
+            activation: clamp(toNumber(item.activation, 1), 0.1, 5)
+          });
+        }
+
+        return edges;
+      }
+
+      function seedVisibleLayout() {
+        const count = state.visibleNodes.length;
+        if (count === 0) {
+          return;
+        }
+
+        const centerX = state.width * 0.5;
+        const centerY = state.height * 0.5;
+        const averageRadius = state.visibleNodes.reduce((sum, node) => sum + node.radius, 0) / count;
+        const spacing = clamp(averageRadius * 1.45, 28, 42);
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+
+        for (let index = 0; index < count; index += 1) {
+          const node = state.visibleNodes[index];
+          const distance = count === 1 ? 0 : spacing * Math.sqrt(index + 0.5);
+          const angle = count === 1 ? -Math.PI * 0.5 : index * goldenAngle + node.seed * 0.6;
+          node.x = centerX + Math.cos(angle) * distance;
+          node.y = centerY + Math.sin(angle) * distance;
+          node.vx = 0;
+          node.vy = 0;
+        }
+      }
+
+      function recomputeVisibleGraph() {
+        const visibleNodes = state.focusRoot === null
+          ? state.roots.slice()
+          : (state.childrenByParent.get(state.focusRoot.id) || []).slice();
+
+        const visibleIds = new Set(visibleNodes.map((node) => node.id));
+        const visibleEdges = state.allEdges.filter((edge) => (
+          visibleIds.has(edge.source.id) && visibleIds.has(edge.target.id)
+        ));
+
+        state.visibleNodes = visibleNodes;
+        state.visibleEdges = visibleEdges;
+
+        if (state.hoveredNode && !visibleIds.has(state.hoveredNode.id)) {
+          state.hoveredNode = null;
+        }
+
+        if (state.selectedNode && !visibleIds.has(state.selectedNode.id)) {
+          state.selectedNode = null;
+        }
+
+        console.log("VISIBLE NODES", state.visibleNodes.map(summarizeNode));
+        seedVisibleLayout();
+      }
+
+      function stepLayout(delta) {
+        const nodes = state.visibleNodes;
+        if (nodes.length === 0) {
+          return;
+        }
+
+        const centerX = state.width * 0.5;
+        const centerY = state.height * 0.5;
+        const repulsion = nodes.length > 20 ? 3400 : 2600;
+        const softMargin = 36;
+        const collisionPadding = 10;
+
+        for (let i = 0; i < nodes.length; i += 1) {
+          const a = nodes[i];
+
+          for (let j = i + 1; j < nodes.length; j += 1) {
+            const b = nodes[j];
+            let dx = b.x - a.x;
+            let dy = b.y - a.y;
+
+            if (dx === 0 && dy === 0) {
+              const angle = (a.seed + b.seed) * Math.PI * 2;
+              dx = Math.cos(angle) * 0.01;
+              dy = Math.sin(angle) * 0.01;
+            }
+
+            const distanceSquared = Math.max(dx * dx + dy * dy, 0.01);
+            const distance = Math.sqrt(distanceSquared);
+            const nx = dx / distance;
+            const ny = dy / distance;
+            const repel = repulsion / distanceSquared;
+
+            a.vx -= nx * repel * delta;
+            a.vy -= ny * repel * delta;
+            b.vx += nx * repel * delta;
+            b.vy += ny * repel * delta;
+
+            const minDistance = a.radius + b.radius + collisionPadding;
+            if (distance < minDistance) {
+              const push = (minDistance - distance) * 0.16;
+              a.x -= nx * push;
+              a.y -= ny * push;
+              b.x += nx * push;
+              b.y += ny * push;
+            }
+          }
+        }
+
+        for (const edge of state.visibleEdges) {
+          const dx = edge.target.x - edge.source.x;
+          const dy = edge.target.y - edge.source.y;
+          const distance = Math.max(Math.sqrt(dx * dx + dy * dy), 0.01);
+          const nx = dx / distance;
+          const ny = dy / distance;
+          const desired = clamp(
+            edge.source.radius + edge.target.radius + 20 + edge.activation * 8,
+            54,
+            140
+          );
+          const spring = (distance - desired) * 0.004 * edge.weight * delta;
+
+          edge.source.vx += nx * spring;
+          edge.source.vy += ny * spring;
+          edge.target.vx -= nx * spring;
+          edge.target.vy -= ny * spring;
+        }
+
+        for (const node of nodes) {
+          node.vx += (centerX - node.x) * 0.0036 * delta;
+          node.vy += (centerY - node.y) * 0.0036 * delta;
+
+          const left = softMargin + node.radius;
+          const right = state.width - softMargin - node.radius;
+          const top = softMargin + node.radius;
+          const bottom = state.height - softMargin - node.radius;
+
+          if (node.x < left) {
+            node.vx += (left - node.x) * 0.02 * delta;
+          } else if (node.x > right) {
+            node.vx -= (node.x - right) * 0.02 * delta;
+          }
+
+          if (node.y < top) {
+            node.vy += (top - node.y) * 0.02 * delta;
+          } else if (node.y > bottom) {
+            node.vy -= (node.y - bottom) * 0.02 * delta;
+          }
+
+          node.vx *= 0.86;
+          node.vy *= 0.86;
+
+          node.x += node.vx * delta;
+          node.y += node.vy * delta;
+
+          node.x = clamp(node.x, node.radius + 4, state.width - node.radius - 4);
+          node.y = clamp(node.y, node.radius + 4, state.height - node.radius - 4);
+        }
+      }
+
+      function pickNode(x, y) {
+        for (let index = state.visibleNodes.length - 1; index >= 0; index -= 1) {
+          const node = state.visibleNodes[index];
+          const dx = x - node.x;
+          const dy = y - node.y;
+          const radius = node.radius + 6;
+          if (dx * dx + dy * dy <= radius * radius) {
+            return node;
+          }
+        }
+
+        return null;
+      }
+
+      function updateHover(x, y) {
+        state.hoveredNode = pickNode(x, y);
+        canvas.style.cursor = state.hoveredNode ? "pointer" : "default";
+      }
+
+      function measurePanel(lines, font, lineHeight) {
+        ctx.save();
+        ctx.font = font;
+        let width = 0;
+        for (const line of lines) {
+          width = Math.max(width, ctx.measureText(line).width);
+        }
+        ctx.restore();
+        return {
+          width: width + 20,
+          height: lines.length * lineHeight + 14
+        };
+      }
+
+      function drawPanel(x, y, lines, accent) {
+        const font = "12px system-ui, sans-serif";
+        const lineHeight = 18;
+        const size = measurePanel(lines, font, lineHeight);
+
+        ctx.save();
+        ctx.fillStyle = "rgba(0, 0, 0, 0.82)";
+        ctx.strokeStyle = accent || "rgba(255, 255, 255, 0.18)";
+        ctx.lineWidth = 1;
+        ctx.fillRect(x, y, size.width, size.height);
+        ctx.strokeRect(x + 0.5, y + 0.5, size.width - 1, size.height - 1);
+        ctx.font = font;
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+
+        for (let index = 0; index < lines.length; index += 1) {
+          ctx.fillText(lines[index], x + 10, y + 8 + index * lineHeight);
+        }
+
+        ctx.restore();
+        return size;
+      }
+
+      function drawTooltip(node) {
+        if (!node) {
+          return;
+        }
+
+        const lines = [
+          `${node.name} (#${node.id})`,
+          `activation ${node.activation.toFixed(2)}`,
+          `weight ${node.weight.toFixed(2)}`
+        ];
+
+        if (node.hasParent === true && Number.isFinite(node.parentId)) {
+          lines.push(`parent ${node.parentId}`);
+        }
+
+        const font = "12px system-ui, sans-serif";
+        const lineHeight = 18;
+        const size = measurePanel(lines, font, lineHeight);
+        const x = clamp(node.x + node.radius + 14, 12, state.width - size.width - 12);
+        const y = clamp(node.y - size.height * 0.5, 12, state.height - size.height - 12);
+        drawPanel(x, y, lines, node.color);
+      }
+
+      function drawStatus() {
+        const lines = [];
+
+        if (state.focusRoot === null) {
+          lines.push("View: roots");
+          lines.push("Click a root node to show its direct children");
+        } else {
+          lines.push(`View: children of ${state.focusRoot.name}`);
+          lines.push("Click a child node to pin it");
+          lines.push("Click empty background to return to roots");
+        }
+
+        lines.push(`Visible nodes: ${state.visibleNodes.length}`);
+        drawPanel(14, 14, lines, state.focusRoot ? state.focusRoot.color : "rgba(255, 255, 255, 0.18)");
+      }
+
+      function drawEdges() {
+        ctx.save();
+        ctx.lineCap = "round";
+
+        for (const edge of state.visibleEdges) {
+          const alpha = clamp(0.08 + edge.activation * 0.03, 0.08, 0.2);
+          ctx.strokeStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+          ctx.lineWidth = 0.8 + edge.weight * 0.7;
+          ctx.beginPath();
+          ctx.moveTo(edge.source.x, edge.source.y);
+          ctx.lineTo(edge.target.x, edge.target.y);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      function drawNodes() {
+        const labelFontSize = state.visibleNodes.length > 24 ? 11 : 12;
+        const orderedNodes = state.visibleNodes.slice().sort((a, b) => {
+          const aPinned = state.selectedNode && a.id === state.selectedNode.id ? 1 : 0;
+          const bPinned = state.selectedNode && b.id === state.selectedNode.id ? 1 : 0;
+          const aHover = state.hoveredNode && a.id === state.hoveredNode.id ? 1 : 0;
+          const bHover = state.hoveredNode && b.id === state.hoveredNode.id ? 1 : 0;
+          return aPinned + aHover - (bPinned + bHover);
+        });
+
+        ctx.save();
+        ctx.font = `500 ${labelFontSize}px system-ui, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+
+        for (const node of orderedNodes) {
+          const hovered = state.hoveredNode && node.id === state.hoveredNode.id;
+          const selected = state.selectedNode && node.id === state.selectedNode.id;
+
+          if (hovered || selected) {
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.radius + 6, 0, Math.PI * 2);
+            ctx.strokeStyle = hovered && !selected ? "rgba(255, 255, 255, 0.18)" : node.color;
+            ctx.lineWidth = hovered && !selected ? 2 : 1.5;
+            ctx.stroke();
+          }
+
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+          ctx.fillStyle = "#000";
+          ctx.fill();
+          ctx.strokeStyle = node.color;
+          ctx.lineWidth = selected ? 4.5 : hovered ? 3.5 : 2.5;
+          ctx.stroke();
+
+          ctx.fillStyle = "#fff";
+          ctx.fillText(node.name, node.x, node.y + node.radius + 7);
+        }
+
+        ctx.restore();
+      }
+
+      function renderMessage(title, detail) {
+        ctx.save();
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, state.width, state.height);
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#fff";
+        ctx.font = "600 18px system-ui, sans-serif";
+        ctx.fillText(title, state.width * 0.5, state.height * 0.5 - 10);
+        if (detail) {
+          ctx.font = "12px system-ui, sans-serif";
+          ctx.fillStyle = "rgba(255, 255, 255, 0.82)";
+          ctx.fillText(detail, state.width * 0.5, state.height * 0.5 + 18);
+        }
+        ctx.restore();
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, state.width, state.height);
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, state.width, state.height);
+
+        if (state.loading) {
+          renderMessage("Loading graph", "Fetching ./export.json");
+          return;
+        }
+
+        if (state.error) {
+          renderMessage("Failed to load graph", state.error);
+          return;
+        }
+
+        drawEdges();
+        drawNodes();
+        drawStatus();
+        drawTooltip(state.selectedNode || state.hoveredNode || null);
+
+        if (state.visibleNodes.length === 0) {
+          const message = state.focusRoot
+            ? "This root has no direct children"
+            : "No root nodes found";
+          renderMessage(message, "Click empty background to return to roots");
+        }
+      }
+
+      function onPointerMove(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        updateHover(x, y);
+      }
+
+      function onPointerLeave() {
+        state.hoveredNode = null;
+        canvas.style.cursor = "default";
+      }
+
+      function onClick(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const hitNode = pickNode(x, y);
+
+        if (!hitNode) {
+          if (state.focusRoot !== null) {
+            state.focusRoot = null;
+            state.selectedNode = null;
+            recomputeVisibleGraph();
+          } else {
+            state.selectedNode = null;
+          }
+          return;
+        }
+
+        if (state.focusRoot === null) {
+          if (hitNode.isRoot) {
+            state.focusRoot = hitNode;
+            state.selectedNode = null;
+            recomputeVisibleGraph();
+          }
+          return;
+        }
+
+        state.selectedNode = hitNode;
+      }
+
+      async function loadGraph() {
+        try {
+          const response = await fetch("./export.json", { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const raw = await response.json();
+          if (!raw || !Array.isArray(raw.nodes) || !Array.isArray(raw.connections)) {
+            throw new Error("Invalid JSON shape");
+          }
+
+          const parsed = parseNodes(raw.nodes);
+          state.allNodes = parsed.nodes;
+          state.nodeById = parsed.nodeById;
+          state.roots = state.allNodes.filter((node) => node.hasParent === false);
+          state.childrenByParent = buildChildrenByParent(state.allNodes);
+          assignColors(state.allNodes, state.nodeById);
+          state.allEdges = buildEdges(raw.connections, state.nodeById);
+
+          console.log("ALL NODES", state.allNodes.map(summarizeNode));
+          console.log("ROOT NODES", state.roots.map(summarizeNode));
+          console.log(
+            "CHILDREN BY PARENT",
+            Array.from(state.childrenByParent.entries()).map(([parentId, children]) => ({
+              parentId,
+              children: children.map(summarizeNode)
+            }))
+          );
+
+          state.loading = false;
+          state.error = null;
+          recomputeVisibleGraph();
+        } catch (error) {
+          console.error(error);
+          state.loading = false;
+          state.error = error instanceof Error ? error.message : String(error);
+        }
+      }
+
+      function frame(now) {
+        const delta = clamp((now - state.lastFrame) / 16.6667, 0.5, 1.8);
+        state.lastFrame = now;
+        stepLayout(delta);
+        render();
+        requestAnimationFrame(frame);
+      }
+
+      canvas.addEventListener("mousemove", onPointerMove);
+      canvas.addEventListener("mouseleave", onPointerLeave);
+      canvas.addEventListener("click", onClick);
+      window.addEventListener("resize", resizeCanvas);
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          state.focusRoot = null;
+          state.selectedNode = null;
+          recomputeVisibleGraph();
+        }
+      });
+
+      resizeCanvas();
+      loadGraph();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>

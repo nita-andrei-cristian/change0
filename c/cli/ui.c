@@ -2,12 +2,14 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../lib/ne/node.h"
-#include "../lib/ne/engine.h"
-#include "../lib/util.h"
+#include "../ne/node.h"
+//#include "../ne/engine.h"
+#include "../lib/util/util.h"
+#include "../ne/engine.h"
 #include <unistd.h>
 #include <termios.h>
-#include "../lib/deep-research/deep-research.h"
+#include <string.h>
+//#include "../lib/deep-research/deep-research.h"
 
 // AI generated function
 static int getch_nowait_enterless(void) {
@@ -29,8 +31,20 @@ static inline void clear(){
 	printf("\033[H\033[J");
 }
 
+static void SetUpContexts(){
+	for (int i = 0; i < CONTEXT_COUNT; i++){
+		Node *n = AddNodeEx(context_labels[i], strlen(context_labels[i]), NODE_INIT_ACT, NODE_INIT_WGHT, PARENTLESS, -1, FERTILE);
+		if(!n){
+			fprintf(stderr, "Critical Error: Couldn't initialize contexts for neuro engine\n");
+			exit(EXIT_FAILURE);
+		}
+		Contexts[i] = n->globalIndex;
+	}
+}
+
 void UIStart(){
 	InitNodes();
+	SetUpContexts();
 }
 
 // AI generated function
@@ -41,6 +55,7 @@ static inline void WaitForInput(void) {
     }
 }
 
+int index = 8;
 static void Run(int i){
 	clear();
 	printf("------------- [ %c ] -------------\n", INPUT_CHAR[i]);
@@ -48,14 +63,14 @@ static void Run(int i){
 	if (INPUT_TYPE[i] == MESSAGE){
 		// mock something
 		char path[64];
-		sprintf(path, "/home/nita/dev/c/change/mocks/nodes/%d.json", rand() % 10);
+		//sprintf(path, "/home/nita/dev/c/change2/mocks/nodes/%d.json", rand() % 10);
+		sprintf(path, "/home/nita/dev/c/change2/mocks/nodes/%d.json", index);
 
 		size_t size = 0;
 		char* content = readFile(path, &size);
 		if (content){
-			if (!AddToGraph(content,size)){
+			 if (!AddContextNodesFromJSON(content,size))
 				fprintf(stderr, "Couldn't add to graph the following json \n%s\n", content);
-			}
 			free(content);
 		}
 	}
@@ -64,12 +79,12 @@ static void Run(int i){
 		for (int i = 0; i < 10; i++){
 			// mock something
 			char path[64];
-			sprintf(path, "/home/nita/dev/c/change/mocks/nodes/%d.json", i);
+			sprintf(path, "/home/nita/dev/c/change2/mocks/nodes/%d.json", i);
 
 			size_t size = 0;
 			char* content = readFile(path, &size);
 			if (content){
-				if (!AddToGraph(content,size)){
+				if (!AddContextNodesFromJSON(content,size)){
 					fprintf(stderr, "Couldn't add to graph the following json \n%s\n", content);
 				}
 				free(content);
@@ -78,15 +93,17 @@ static void Run(int i){
 	}
 
 	if (INPUT_TYPE[i] == EXPORT){
-		ExportGraphTo("/home/nita/dev/c/change/js/export.json");
+		ExportGraphTo("/home/nita/dev/c/change2/js/export.json");
 	}
 
 	if (INPUT_TYPE[i] == DEEPRESEARCH){
+		/*
 		char* out = DeepResearchStart();
 		if (out){
 			printf("Deep research result : \n\n%s\n", out);
 			free(out);
 		}
+		*/
 	}
 
 	WaitForInput();

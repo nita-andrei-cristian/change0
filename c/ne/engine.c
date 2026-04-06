@@ -2,22 +2,15 @@
 #include <string.h>
 #include <stdio.h>
 #include <string.h>
-#include <node.h>
-#include <../jsonp/json.h>
-#include <../util.h>
+#include "node.h"
+#include <../lib/jsonp/json.h>
+#include <../lib/util/util.h>
 
-// TODO : make sure strcmp is safe and strings null terminate, altough it's probably fine if i use the parser
-
-static void AddNodeFromEntry(json_value *val){
+static void AddNodeFromEntry(json_value *val, size_t context){
 	if (val->type == json_string){
 		printf("Adding [%s]\n", val->u.string.ptr);
 
-		Node* n = FindNode(val->u.string.ptr, val->u.string.length);
-		if (n){
-			n->activation += NODE_ACT_INCR;
-		}else{
-			AddNode(val->u.string.ptr); // TODO you may optimize by not calculating strlen twice (it's already calcualted in the json_string)
-		}
+		AddInfertileNodeInParent(val->u.string.ptr, val->u.string.length, context); 
 
 		return;
 	}
@@ -26,7 +19,9 @@ static void AddNodeFromEntry(json_value *val){
 
 	char name[32] = "\0";
 	_Bool constructable = 0;
-	double activation = 1.0;
+	double activation = NODE_INIT_ACT;
+	double weight = NODE_INIT_WGHT;
+	size_t len;
 
 	for (size_t i = 0; i < val->u.object.length; i++){
 		json_object_entry entry = val->u.object.values[i];
@@ -35,9 +30,8 @@ static void AddNodeFromEntry(json_value *val){
 
 		if (!strcmp(entry.name, "name") && entry.value->type == json_string){
 			// Constructing a name for the Node
-			short len = MIN(31, entry.value->u.string.length);
+			len = MIN(31, entry.value->u.string.length);
 			memcpy(name, entry.value->u.string.ptr, len);
-
 			name[len] = '\0';
 			constructable = 1;
 		} else if (!strcmp(entry.name, "activation")){
@@ -46,32 +40,33 @@ static void AddNodeFromEntry(json_value *val){
 			}else if (entry.value->type == json_integer){
 				activation = (double)entry.value->u.integer;
 			}
+		}else if (!strcmp(entry.name, "weight")){
+			if (entry.value->type == json_double){
+				weight = entry.value->u.dbl;
+			}else if (entry.value->type == json_integer){
+				weight = (double)entry.value->u.integer;
+			}
 		}
+
 	}
 
-	printf("Adding [%s] with activation [%f]\n", name, activation);
 	if (constructable)
-		AddNode_ex(name, activation);
-	
+		AddNodeEx(name, len, activation, weight, 1, context, 0);
 }
 
-static void AddNodesFromEntry(json_object_entry* entry){
-	if (entry->value == NULL) return;
-	if (entry->value->type != json_array) return;
-	if (entry->value->u.array.length == 0) return;
+static void AddNodesFromEntry(json_object_entry* entry, size_t context){
+	if (!entry->value) return;
+	if (entry->value->type != json_array || entry->value->u.array.length == 0) return;
 
 	for (size_t i = 0; i < entry->value->u.array.length; i++){
-		AddNodeFromEntry(entry->value->u.array.values[i]);
+		AddNodeFromEntry(entry->value->u.array.values[i], context);
 	}
 	
-	// Decay Nodes
-	DecayNodes();
 }
 
-static void ProcessArrayLinkage(json_value *entry, double weight, double activation){
+static void ProcessArrayLinkage(json_value *entry, double weight, double activation, size_t context){
 	if (!entry) return;
-	if (entry->type != json_array) return;
-	if (entry->u.array.length < 2) return;
+	if (entry->type != json_array || entry->u.array.length < 2) return;
 	for (size_t i = 0; i < entry->u.array.length; i++){
 		size_t j = (i + 1) % entry->u.array.length;
 
@@ -81,34 +76,28 @@ static void ProcessArrayLinkage(json_value *entry, double weight, double activat
 		if (a->type != json_string) continue;
 		if (b->type != json_string) continue;
 
-		Node* A = FindNode(a->u.string.ptr, a->u.string.length);
+		Node* A = FindNode(a->u.string.ptr, a->u.string.length, NodeAt(context));
 		if (!A) continue;
-		Node* B = FindNode(b->u.string.ptr, b->u.string.length);
+		Node* B = FindNode(b->u.string.ptr, b->u.string.length, NodeAt(context));
 		if (!B) continue;
 
 		printf("Linking %s, %s\n", A->label, B->label);
 
-		struct Connection *link = LinkExists(A, B);
-		if (link){
-			link->activation += CONN_ACT_INCR * activation;
-			link->weight += CONN_WGT_INCR * weight;
-		}else{
-			UniLink(A, B);
-			A->neighbours[A->ncount - 1].activation = activation;
-			A->neighbours[A->ncount - 1].weight = weight;
-		}
+		UniLink(A, B);
+		A->neighbours[A->ncount - 1].activation = activation;
+		A->neighbours[A->ncount - 1].weight = weight;
 
 	}
 }
 
 // link a->b b->c c->d d->a
-static void AddConnectionFromEntry(json_value* val){
+static void AddConnectionFromEntry(json_value* val, size_t context){
 	if (!val) return;
-	ProcessArrayLinkage(val, 1.0, 1.0); // just in case we're working with a direct array
+	ProcessArrayLinkage(val, NODE_INIT_ACT, NODE_INIT_WGHT, context); // just in case we're working with a direct array
 	if (val->type != json_object) return;
 	
-	double activation = 1.0;
-	double weight = 1.0;
+	double activation = NODE_INIT_ACT;
+	double weight = NODE_INIT_WGHT;
 	json_value* arr = NULL;
 
 	for (size_t i = 0; i < val->u.object.length; i++){
@@ -130,24 +119,21 @@ static void AddConnectionFromEntry(json_value* val){
 		}
 	}
 
-	ProcessArrayLinkage(arr, weight, activation);
+	ProcessArrayLinkage(arr, weight, activation, context);
 	
 }
 
-static void AddConnectionsFromEntry(json_object_entry* entry){
+static void AddConnectionsFromEntry(json_object_entry* entry, size_t context){
 	if (entry->value == NULL) return;
 	if (entry->value->type != json_array) return;
-	if (entry->value->u.array.length == 0) return;
 
 	for (size_t i = 0; i < entry->value->u.array.length; i++)
 		// Adding a connection
-		AddConnectionFromEntry(entry->value->u.array.values[i]);
+		AddConnectionFromEntry(entry->value->u.array.values[i], context);
 
-	// Decay Connecitons
-	DecayAllConnections();
 }
 
-_Bool AddToGraph(char *JSON, size_t len){
+_Bool AddContextNodesFromJSON(char *JSON, size_t len){
 	if (!JSON) return 0;
 
 	json_value* document = json_parse(JSON, len);
@@ -159,10 +145,35 @@ _Bool AddToGraph(char *JSON, size_t len){
 		return 0;
 	};
 
-	for ( i = 0; i < document->u.object.length; i ++){
+
+	size_t context;
+	_Bool found = 0;
+
+	// Iterate once to find context
+	for (i = 0; i < document->u.object.length; i++){
 		json_object_entry entry = document->u.object.values[i];
-		if (strcmp(entry.name, "nodes") == 0) AddNodesFromEntry(&entry);
-		else if(strcmp(entry.name, "connections") == 0) AddConnectionsFromEntry(&entry);
+		if (strcmp(entry.name, "context") == 0 && entry.value->type == json_string){
+			// linear search (Small context sample)
+			for (uint_fast8_t i = 0; i < CONTEXT_COUNT; i++){
+				if (NodeExists(i) && strcmp(entry.value->u.string.ptr, NodeAt(Contexts[i])->label) == 0){
+					context = Contexts[i];
+					found = 1;
+					break;
+				}
+			}
+			break;
+		}
+	}
+
+	if (!found){
+		fprintf(stderr, "Error: Context not found or doesn't exist\n");
+		return 0;
+	} 
+
+	for (i = 0; i < document->u.object.length; i++){
+		json_object_entry entry = document->u.object.values[i];
+		if (strcmp(entry.name, "nodes") == 0) AddNodesFromEntry(&entry, context);
+		else if(strcmp(entry.name, "connections") == 0) AddConnectionsFromEntry(&entry, context);
 	}
 
 	printf("JSON parsed successfully\n\n");
@@ -214,23 +225,34 @@ _Bool ExportGraphTo(char* directory){
 	p += FSIZE("\"nodes\":[");
 
 	for (size_t i = 0; i < Nodes.count; i++) {
+		Node *n = NodeAt(i);
+		//printf("Node : %s | %s\n", n->label, n->parent ? n->parent->label : "NONE");
+	}
+
+	for (size_t i = 0; i < Nodes.count; i++) {
 		if (i) *p++ = ',';
 
 		Node *n = NodeAt(i);
 
-		if (n->activation == 1.0) {
-			*p++ = '"';
-			memcpy(p, n->label, n->length);
-			p += n->length;
-			*p++ = '"';
-		} else {
+		if (n->hasParent)
 			p += sprintf(
-				p,
-				"{\"name\":\"%s\",\"activation\":%.2f}",
-				n->label,
-				n->activation
-			);
-		}
+					p,
+					"{\"name\":\"%s\",\"activation\":%.2f,\"weight\":%.2f,\"parent\":%zu,\"id\":%zu}\n",
+					n->label,
+					n->activation,
+					n->weight,
+					n->parent,
+					n->globalIndex
+				    );
+		else
+			p += sprintf(
+					p,
+					"{\"name\":\"%s\",\"activation\":%.2f,\"weight\":%.2f,\"id\":%zu}\n",
+					n->label,
+					n->activation,
+					n->weight,
+					n->globalIndex
+				    );
 	}
 
 	*p++ = ']';
@@ -246,7 +268,7 @@ _Bool ExportGraphTo(char* directory){
 		Node *n = NodeAt(i);
 
 		for (size_t j = 0; j < n->ncount; j++) {
-			struct Connection c = n->neighbours[j];
+			Connection c = n->neighbours[j];
 
 			if (!firstConnection)
 				*p++ = ',';
@@ -254,9 +276,9 @@ _Bool ExportGraphTo(char* directory){
 
 			p += sprintf(
 				p,
-				"{\"nodes\":[\"%s\",\"%s\"],\"weight\":%.2f,\"activation\":%.2f}",
-				n->label,
-				c.target->label,
+				"{\"nodes\":[%zu,%zu],\"weight\":%.2f,\"activation\":%.2f}\n",
+				n->globalIndex,
+				c.target,
 				c.weight,
 				c.activation
 			);

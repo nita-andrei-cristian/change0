@@ -1,3 +1,4 @@
+/*
 #include "search.h"
 #include "node.h"
 #include "../util.h"
@@ -314,3 +315,4 @@ Node** FilterNodeByActivationGlobal(int_fast64_t percentage, size_t *count){
 	return (Node**) FilterTopPercent((void*)Nodes.items, Nodes.count, sizeof(Node), percentage, count, (GetValueFn) ReadNodeActivation);
 }
 
+*/

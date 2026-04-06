@@ -1,32 +1,17 @@
 {
+  "context": "Emotie",
   "nodes": [
-    "weekend",
-    "oras",
-    "bar",
-    "prieteni",
-    "poze",
-    "telefon",
-    "ras",
-    "energie",
-    {"name":"iesire", "activation":1.90},
-    {"name":"story", "activation":1.60},
-    {"name":"moment", "activation":1.80},
-    {"name":"prezenta", "activation":1.50}
+    {"name":"fericire", "weight":1.3},
+    {"name":"prieteni", "weight":1.4},
+    {"name":"acceptare", "weight":1.5},
+    {"name":"singuratate", "weight":1.6},
+    {"name":"chat", "weight":1.3},
+    {"name":"dependenta", "weight":1.5}
   ],
   "connections": [
-    {"nodes":["weekend","iesire"],"weight":1.20,"activation":1.60},
-    {"nodes":["iesire","oras"],"weight":1.10,"activation":1.40},
-    {"nodes":["oras","bar"],"weight":1.10,"activation":1.40},
-    {"nodes":["bar","prieteni"],"weight":1.20,"activation":1.70},
-    {"nodes":["prieteni","ras"],"weight":1.10,"activation":1.50},
-    {"nodes":["ras","energie"],"weight":1.10,"activation":1.60},
-    {"nodes":["telefon","poze"],"weight":1.00,"activation":1.30},
-    {"nodes":["poze","story"],"weight":1.10,"activation":1.40},
-    {"nodes":["story","moment"],"weight":1.10,"activation":1.50},
-    {"nodes":["moment","prezenta"],"weight":1.00,"activation":1.30},
-    {"nodes":["prezenta","prieteni"],"weight":1.10,"activation":1.40},
-    {"nodes":["telefon","bar"],"weight":0.90,"activation":1.10},
-    {"nodes":["weekend","prieteni"],"weight":1.00,"activation":1.20},
-    {"nodes":["moment","ras"],"weight":1.00,"activation":1.30}
+    {"nodes":["prieteni","acceptare"],"weight":1.4,"activation":1.8},
+    {"nodes":["acceptare","fericire"],"weight":1.3,"activation":1.7},
+    {"nodes":["singuratate","dependenta"],"weight":1.5,"activation":1.8},
+    {"nodes":["chat","dependenta"],"weight":1.4,"activation":1.7}
   ]
 }

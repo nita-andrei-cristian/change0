@@ -1,32 +1,17 @@
 {
+  "context": "Emotie",
   "nodes": [
-    "eu",
-    "prieteni",
-    "grup",
-    "apartenenta",
-    "identitate",
-    "social media",
-    "oras",
-    "cafenea",
-    {"name":"validare", "activation":2.10},
-    {"name":"mesaje", "activation":1.70},
-    {"name":"iesire", "activation":1.60},
-    {"name":"prezent", "activation":1.40}
+    {"name":"anxietate", "weight":1.6},
+    {"name":"comparatie", "weight":1.5},
+    {"name":"social_media", "weight":1.7},
+    {"name":"validare", "weight":1.6},
+    {"name":"likeuri", "weight":1.5},
+    {"name":"stima_de_sine", "weight":1.4}
   ],
   "connections": [
-    {"nodes":["eu","identitate"],"weight":1.20,"activation":1.60},
-    {"nodes":["eu","prieteni"],"weight":1.30,"activation":1.80},
-    {"nodes":["prieteni","grup"],"weight":1.10,"activation":1.40},
-    {"nodes":["grup","apartenenta"],"weight":1.20,"activation":1.70},
-    {"nodes":["identitate","validare"],"weight":1.30,"activation":2.00},
-    {"nodes":["validare","social media"],"weight":1.10,"activation":1.90},
-    {"nodes":["social media","mesaje"],"weight":1.00,"activation":1.50},
-    {"nodes":["mesaje","prieteni"],"weight":1.20,"activation":1.60},
-    {"nodes":["oras","cafenea"],"weight":1.00,"activation":1.30},
-    {"nodes":["cafenea","iesire"],"weight":1.10,"activation":1.40},
-    {"nodes":["iesire","prieteni"],"weight":1.20,"activation":1.60},
-    {"nodes":["oras","eu"],"weight":0.90,"activation":1.20},
-    {"nodes":["prezent","eu"],"weight":1.00,"activation":1.10},
-    {"nodes":["prezent","social media"],"weight":0.90,"activation":1.20}
+    {"nodes":["social_media","comparatie"],"weight":1.5,"activation":1.9},
+    {"nodes":["comparatie","anxietate"],"weight":1.4,"activation":1.8},
+    {"nodes":["likeuri","validare"],"weight":1.5,"activation":1.9},
+    {"nodes":["validare","stima_de_sine"],"weight":1.3,"activation":1.7}
   ]
 }

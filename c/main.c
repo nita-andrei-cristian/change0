@@ -1,10 +1,10 @@
+#include <stdio.h>
 #include "cli/ui.h"
 
 int main(){
-
 	UIStart();
 	UILoop();
 	UIKill();
 
-	return 0;
+	printf("Hello world!\n");
 }

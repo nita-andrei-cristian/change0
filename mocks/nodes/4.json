@@ -1,32 +1,16 @@
 {
+  "context": "Subiectiv",
   "nodes": [
-    "copilarie",
-    "familie",
-    "casa",
-    "masa",
-    "duminica",
-    "bucatarie",
-    "miros",
-    "siguranta",
-    {"name":"nostalgie", "activation":2.10},
-    {"name":"parinti", "activation":1.90},
-    {"name":"amintire", "activation":1.80},
-    {"name":"caldura", "activation":1.60}
+    {"name":"identitate", "weight":1.6},
+    {"name":"masca", "weight":1.5},
+    {"name":"online", "weight":1.7},
+    {"name":"realitate", "weight":1.4},
+    {"name":"confuzie", "weight":1.6}
   ],
   "connections": [
-    {"nodes":["copilarie","familie"],"weight":1.30,"activation":1.90},
-    {"nodes":["familie","parinti"],"weight":1.20,"activation":1.70},
-    {"nodes":["familie","casa"],"weight":1.20,"activation":1.80},
-    {"nodes":["casa","bucatarie"],"weight":1.00,"activation":1.40},
-    {"nodes":["bucatarie","masa"],"weight":1.10,"activation":1.50},
-    {"nodes":["masa","duminica"],"weight":1.20,"activation":1.60},
-    {"nodes":["miros","amintire"],"weight":1.30,"activation":1.90},
-    {"nodes":["amintire","nostalgie"],"weight":1.20,"activation":2.00},
-    {"nodes":["nostalgie","copilarie"],"weight":1.20,"activation":1.80},
-    {"nodes":["casa","siguranta"],"weight":1.10,"activation":1.60},
-    {"nodes":["siguranta","caldura"],"weight":1.00,"activation":1.40},
-    {"nodes":["masa","familie"],"weight":1.10,"activation":1.50},
-    {"nodes":["miros","bucatarie"],"weight":1.00,"activation":1.30},
-    {"nodes":["duminica","amintire"],"weight":1.00,"activation":1.30}
+    {"nodes":["online","masca"],"weight":1.6,"activation":1.9},
+    {"nodes":["masca","identitate"],"weight":1.5,"activation":1.8},
+    {"nodes":["identitate","confuzie"],"weight":1.6,"activation":1.9},
+    {"nodes":["realitate","confuzie"],"weight":1.4,"activation":1.7}
   ]
 }

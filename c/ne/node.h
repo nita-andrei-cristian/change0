@@ -1,0 +1,105 @@
+#ifndef NE_NODES
+#define NE_NODES
+
+#include <stddef.h>
+#include <stdint.h>
+#include "../lib/hd/hashdict.h"
+
+#define CONTEXT_COUNT 5
+
+#define INIT_NODE_CAP 16
+#define NODE_LABEL_CAP 32
+#define NODE_NBRS_CAP 4 // NEIGHBOURS
+
+#define NODE_ACT_DECAY 0.95
+#define CONN_ACT_DECAY 0.95
+#define CONN_WGT_DECAY 0.99
+
+#define NODE_ACT_INCR 0.05
+#define CONN_ACT_INCR 0.05
+#define CONN_WGT_INCR 0.01
+
+#define NODE_INIT_ACT 1
+#define NODE_INIT_WGHT 1
+
+#define CONN_INIT_ACT 1
+#define CONN_INIT_WGHT 1
+
+#define INIT_CHILDREN_COUNT 256
+
+#define NodeAt(i) (Nodes.items + (i))
+#define NodeExists(i) ((i) < Nodes.count)
+
+#define INFERTILE 0
+#define FERTILE 1
+#define HASPARENT 1
+#define PARENTLESS 0
+
+typedef struct NodeType {
+	char label[NODE_LABEL_CAP];
+	uint_fast8_t labelLength;
+
+	double weight;
+	double activation;
+
+	struct ConnectionType *neighbours;
+	size_t nsize, ncount, globalIndex;
+
+	_Bool hasParent;
+	size_t parent;
+	struct dictionary *childrenIndex;
+} Node;
+
+typedef struct ConnectionType {
+	double activation;
+	double weight;
+	size_t target;
+} Connection;
+
+struct {
+	Node* items;
+	size_t capacity;
+	size_t count;
+
+	_Bool init;
+} Nodes;
+
+_Bool InitNodes();
+_Bool FreeNodes();
+
+Node* FindNode(char* target, uint_fast8_t length, Node* parent);
+
+Node* AddNodeEx(
+		char* label,
+		size_t label_len,
+		double activation,
+		double weight,
+		_Bool hasParent,
+		size_t parent,
+		_Bool fertile
+	       );
+Node* AddInfertileNodeInParent(
+		char* label,
+		size_t label_len,
+		size_t parent
+		);
+
+_Bool UniLinkEx(Node* A, Node* B, double activation, double weight);
+_Bool UniLink(Node* A, Node* B);
+_Bool BiLink(Node* A, Node* B);
+_Bool BiLinkEx(Node* A, Node* B, double activation, double weight);
+
+size_t ConnectionCount = 0;
+
+char context_labels[CONTEXT_COUNT][NODE_LABEL_CAP] = {
+	"Profesie",
+	"Emotie",
+	"Pasiuni",
+	"Generalitati",
+	"Subiectiv",
+};
+size_t Contexts[CONTEXT_COUNT];
+
+
+
+#endif
