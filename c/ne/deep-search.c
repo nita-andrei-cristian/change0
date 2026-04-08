@@ -28,11 +28,23 @@ static char* mock_ai_run(char* prompt, size_t *size){
 	return readFile(path, size);
 }
 
+static void run1(json_value* doc, String *dynamic_mem){
+	CatStringF(dynamic_mem, "Executed command 1...\n");
+}
+
+static void run2(json_value* doc, String *dynamic_mem){
+	CatStringF(dynamic_mem, "Executed command 2...\n");
+}
+
+static void run3(json_value* doc, String *dynamic_mem){
+	CatStringF(dynamic_mem, "Executed command 3...\n");
+}
 
 static void exec_response(json_value* doc, String *dynamic_mem, size_t depth, char** conclusion, size_t *conclusionSize){
 
 	_Bool finished = 0;
 	json_value* original_conclusion = NULL;
+	int_fast64_t command = -1;
 
 	for (size_t i = 0; i < doc->u.object.length; i++){
 		json_object_entry *e = &doc->u.object.values[i];
@@ -40,6 +52,9 @@ static void exec_response(json_value* doc, String *dynamic_mem, size_t depth, ch
 			finished = e->value->u.boolean;
 		if (strcmp(e->name, "conclusion") == 0 && e->value->type == json_string){
 			original_conclusion = e->value;
+		}
+		if (strcmp(e->name, "command") == 0 && e->value->type == json_integer){
+			command = e->value->u.integer;
 		}
 	}
 
@@ -54,7 +69,12 @@ static void exec_response(json_value* doc, String *dynamic_mem, size_t depth, ch
 		return;
 	}
 
-	printf("%s", dynamic_mem->p);
+	if (command == 1)
+		run1(doc, dynamic_mem);
+	if (command == 2)
+		run2(doc, dynamic_mem);
+	if (command == 3)
+		run3(doc, dynamic_mem);
 }
 
 // TODO : handle cassert
@@ -123,6 +143,7 @@ char* start_ds_session(){
 
 	think(&mem, &out, 0);
 
+	printf("Memory : %s", mem.dynamic.p);
 	free_ds_memory(&mem);
 
 	return c_str(&out);
