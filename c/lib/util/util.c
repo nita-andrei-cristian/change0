@@ -206,3 +206,43 @@ double atod(char s[], int precision)
 	return (result / i) * 10;
 }
 
+_Bool massert(_Bool assertion, char* message){
+	if (!assertion && message) fprintf(stderr, "%s", message);
+	return !assertion;
+}
+void cassert(_Bool assertion, char* message){
+	if (!assertion && message){
+		fprintf(stderr, "%s", message);
+		exit(EXIT_FAILURE);
+	}
+}
+
+void InitString(String* s, size_t init_cap){
+	s->cap = init_cap;
+	s->len = 0;
+	s->p = malloc(s->cap);
+	cassert(s->p, "Coudln't initialize string");
+	*s->p = '\0';
+}
+void FreeString(String* s){
+	if (!s || !s->p) return;
+	free(c_str(s));
+}
+
+void CatString(String* s, char* c, size_t len){
+	if (massert(s, "No string passed...")) return;
+	cassert(s, "Can't concatinate : String not initialized");
+
+	if (s->cap <= len + s->len){
+		size_t req_cap = s->cap ? s->cap : 1; // avoid 0
+		while (req_cap <= len + s->len) req_cap *= 2;
+		char* tmp = realloc(c_str(s), req_cap);
+		cassert(tmp, "String couldn't grow\n");
+		s->cap = req_cap;
+		c_str(s) = tmp;
+	}
+
+	memcpy(c_str(s) + s->len, c, len);
+	s->len += len;
+	*(c_str(s) + s->len) = '\0';
+}

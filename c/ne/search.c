@@ -1,13 +1,13 @@
-/*
 #include "search.h"
 #include "node.h"
-#include "../util.h"
+#include "../lib/util/util.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stddef.h>
 #include "stdio.h"
 #include "string.h"
+
 
 static inline void swap_double(double *a, double *b)
 {
@@ -16,9 +16,6 @@ static inline void swap_double(double *a, double *b)
     *b = t;
 }
 
-struct Connection* FindNeighbours(Node* node){
-	return node->neighbours;
-}
 
 // AI GENERATED CODE FOR QUICK_SELECT
 static int partition_desc_double(double arr[], int left, int right)
@@ -122,7 +119,7 @@ Node** FilterNodeNeighboursByActivation(Node* node, int_fast64_t percentage, siz
 		return NULL;
 
 	for (size_t i = 0; i < node->ncount; i++) {
-		values[i] = node->neighbours[i].activation;
+		values[i] =  node->neighbours[i].activation;
 	}
 
 	double threshold = quickselect_desc_double(values, node->ncount, top_n - 1);
@@ -134,7 +131,7 @@ Node** FilterNodeNeighboursByActivation(Node* node, int_fast64_t percentage, siz
 
 	for (size_t i = 0; i < node->ncount; i++) {
 		if (node->neighbours[i].activation >= threshold) {
-			result[(*count)++] = node->neighbours[i].target;
+			result[(*count)++] = NodeAt(node->neighbours[i].target);
 		}
 	}
 
@@ -167,13 +164,14 @@ Node** FilterNodeNeighboursByWeight(Node* node, int_fast64_t percentage, size_t 
 
 	for (size_t i = 0; i < node->ncount; i++) {
 		if (node->neighbours[i].activation >= threshold) {
-			result[(*count)++] = node->neighbours[i].target;
+			result[(*count)++] = NodeAt(node->neighbours[i].target);
 		}
 	}
 
 	return result;
 
 }
+
 
 // We assume the node exists, if not, too bad.
 char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth, double lastA, double lastW, size_t *count){
@@ -240,7 +238,7 @@ char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth,
 			char *item;
 			size_t len = 0;
 
-			item = recursive_step(node->neighbours[i].target, pA, pW, depth - 1, node->neighbours[i].activation, node->neighbours[i].weight, &len);
+			item = recursive_step(NodeAt(node->neighbours[i].target), pA, pW, depth - 1, node->neighbours[i].activation, node->neighbours[i].weight, &len);
 			if (!item) continue;
 
 			size_t new_capacity = capacity;
@@ -303,16 +301,20 @@ char* ComputeNodeFamily(Node* node, int_fast64_t percA, int_fast64_t percW, size
 	return base;
 }
 
-struct Connection **FilterConnectionsByActivation(struct Connection *container, size_t containerSize, int_fast64_t percentage, size_t *count){
-	return (struct Connection**) FilterTopPercent((void*) container, containerSize, sizeof(struct Connection), percentage, count, (GetValueFn) ReadConnectionActivation);
+Connection **FilterConnectionsByActivation(struct Connection *container, size_t containerSize, int_fast64_t percentage, size_t *count){
+	return (Connection**) FilterTopPercent((void*) container, containerSize, sizeof(Connection), percentage, count, (GetValueFn) readConnectionActivation);
 }
 
-struct Connection **FilterConnectionsByWeight(struct Connection *container, size_t containerSize, int_fast64_t percentage, size_t *count){
-	return (struct Connection**) FilterTopPercent((void*) container, containerSize, sizeof(struct Connection), percentage, count, (GetValueFn) ReadConnectionWeight);
+Connection **FilterConnectionsByWeight(struct Connection *container, size_t containerSize, int_fast64_t percentage, size_t *count){
+	return (Connection**) FilterTopPercent((void*) container, containerSize, sizeof(Connection), percentage, count, (GetValueFn) readConnectionWeight);
 }
 
 Node** FilterNodeByActivationGlobal(int_fast64_t percentage, size_t *count){
-	return (Node**) FilterTopPercent((void*)Nodes.items, Nodes.count, sizeof(Node), percentage, count, (GetValueFn) ReadNodeActivation);
+	return (Node**) FilterTopPercent((void*)Nodes.items, Nodes.count, sizeof(Node), percentage, count, (GetValueFn) readNodeActivation);
 }
 
-*/
+Node** FilterNodeByWeightGlobal(int_fast64_t percentage, size_t *count){
+	return (Node**) FilterTopPercent((void*)Nodes.items, Nodes.count, sizeof(Node), percentage, count, (GetValueFn) readNodeWeight);
+}
+
+

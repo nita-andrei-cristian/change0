@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "node.h"
-#include <../lib/jsonp/json.h>
 #include <../lib/util/util.h>
 
 static void AddNodeFromEntry(json_value *val, size_t context){
@@ -145,27 +144,8 @@ _Bool AddContextNodesFromJSON(char *JSON, size_t len){
 		return 0;
 	};
 
-
 	size_t context;
-	_Bool found = 0;
-
-	// Iterate once to find context
-	for (i = 0; i < document->u.object.length; i++){
-		json_object_entry entry = document->u.object.values[i];
-		if (strcmp(entry.name, "context") == 0 && entry.value->type == json_string){
-			// linear search (Small context sample)
-			for (uint_fast8_t i = 0; i < CONTEXT_COUNT; i++){
-				if (NodeExists(i) && strcmp(entry.value->u.string.ptr, NodeAt(Contexts[i])->label) == 0){
-					context = Contexts[i];
-					found = 1;
-					break;
-				}
-			}
-			break;
-		}
-	}
-
-	if (!found){
+	if (!ValidateContext(document, &context)){
 		fprintf(stderr, "Error: Context not found or doesn't exist\n");
 		return 0;
 	} 
@@ -290,4 +270,22 @@ _Bool ExportGraphTo(char* directory){
 	*p = '\0';
 
 	return WriteGraphAndFreeData(directory, buf);
+}
+
+_Bool ValidateContext(json_value *document, size_t *context){
+	// Iterate once to find context
+	for (size_t i = 0; i < document->u.object.length; i++){
+		json_object_entry entry = document->u.object.values[i];
+		if (strcmp(entry.name, "context") == 0 && entry.value->type == json_string){
+			// linear search (Small context sample)
+			for (uint_fast8_t i = 0; i < CONTEXT_COUNT; i++){
+				if (NodeExists(i) && strcmp(entry.value->u.string.ptr, NodeAt(Contexts[i])->label) == 0){
+					*context = Contexts[i];
+					return 1;
+				}
+			}
+			return 0;
+		}
+	}
+	return 0;
 }

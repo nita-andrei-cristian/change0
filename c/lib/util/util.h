@@ -35,3 +35,29 @@ char* searchFirstNonDigitWithComma(char *source);
 char* searchFirstNonDigit(char *source);
 
 #endif
+
+#ifndef ASSERTION_CUSTOM
+#define ASSERTION_CUSTOM
+
+_Bool massert(_Bool assertion, char* message); // message assert
+void cassert(_Bool assertion, char* message); // critical assert
+
+#endif
+
+#ifndef STRING_CUSTOM_UTIL
+#define STRING_CUSTOM_UTIL
+
+#define c_str(s) ((s)->p)
+#define CatStringF(dest, source) (CatString((dest), (source), FSIZE((source))))
+
+typedef struct {
+	char* p;
+	size_t len;
+	size_t cap;
+} String;
+
+void InitString(String* s, size_t init_cap);
+void FreeString(String* s);
+void CatString(String* s, char* c, size_t len);
+
+#endif

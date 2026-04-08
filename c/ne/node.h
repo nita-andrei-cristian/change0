@@ -100,6 +100,9 @@ char context_labels[CONTEXT_COUNT][NODE_LABEL_CAP] = {
 };
 size_t Contexts[CONTEXT_COUNT];
 
-
+double readNodeActivation(Node* n);
+double readNodeWeight(Node* n);
+double readConnectionActivation(Connection* c);
+double readConnectionWeight(Connection* c);
 
 #endif

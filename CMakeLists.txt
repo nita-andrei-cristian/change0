@@ -14,6 +14,7 @@ add_library(util SHARED ${CMAKE_SOURCE_DIR}/c/lib/util/util.c)
 add_library(ui SHARED ${CMAKE_SOURCE_DIR}/c/cli/ui.c)
 add_library(engine SHARED ${CMAKE_SOURCE_DIR}/c/ne/engine.c)
 add_library(search SHARED ${CMAKE_SOURCE_DIR}/c/ne/search.c)
+add_library(deepsearch SHARED ${CMAKE_SOURCE_DIR}/c/ne/deep-search.c)
 
 target_include_directories(hd PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/hd)
 target_include_directories(jsonp PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/jsonp)
@@ -22,10 +23,11 @@ target_include_directories(util PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/util)
 target_include_directories(ui PUBLIC ${CMAKE_SOURCE_DIR}/c/cli)
 target_include_directories(engine PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 target_include_directories(search PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
+target_include_directories(deepsearch PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 
 target_link_libraries(jsonp PRIVATE m) # add math
 
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 
-target_link_libraries(change PRIVATE hd jsonp node util ui engine search)
+target_link_libraries(change PRIVATE hd jsonp node util ui engine search deepsearch)
 # target_link_libraries(change PRIVATE llama ggml)

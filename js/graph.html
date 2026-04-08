@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Graph Viewer</title>
   <style>
+    :root {
+      color-scheme: dark;
+    }
+
     html,
     body {
       margin: 0;
@@ -18,15 +22,124 @@
       font-family: system-ui, sans-serif;
     }
 
+    .ui {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 2;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      width: min(300px, calc(100vw - 32px));
+      padding: 0;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+    }
+
+    .ui button {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      width: 88%;
+      min-height: 42px;
+      font: 600 12px/1 system-ui, sans-serif;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 12px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition:
+        width 220ms cubic-bezier(0.2, 0.9, 0.24, 1),
+        background 160ms ease,
+        border-color 160ms ease,
+        opacity 160ms ease,
+        box-shadow 220ms ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .ui button:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .ui button.is-active {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.34);
+      width: 100%;
+      box-shadow: inset 0 0 0 999px rgba(255, 255, 255, 0.04);
+    }
+
+    .ui button:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .focus-node {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-6px);
+      z-index: 2;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #fff;
+      opacity: 0;
+      transition: opacity 160ms ease, transform 160ms ease;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .focus-node.is-visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .focus-node__ring {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 2px solid currentColor;
+      box-sizing: border-box;
+      flex: 0 0 auto;
+    }
+
+    .focus-node__label {
+      font: 600 13px/1 system-ui, sans-serif;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
     canvas {
       display: block;
       width: 100vw;
       height: 100vh;
       background: #000;
+      touch-action: none;
+      cursor: grab;
     }
   </style>
 </head>
 <body>
+  <div id="focus-node" class="focus-node" aria-live="polite">
+    <span id="focus-node-ring" class="focus-node__ring"></span>
+    <span id="focus-node-label" class="focus-node__label"></span>
+  </div>
+  <div class="ui">
+    <button id="explode-toggle" type="button">Explode Layers</button>
+  </div>
   <canvas id="graph" aria-label="Interactive graph viewer"></canvas>
   <script>
     (() => {
@@ -34,6 +147,10 @@
 
       const canvas = document.getElementById("graph");
       const ctx = canvas.getContext("2d");
+      const explodeToggle = document.getElementById("explode-toggle");
+      const focusNodeBadge = document.getElementById("focus-node");
+      const focusNodeRing = document.getElementById("focus-node-ring");
+      const focusNodeLabel = document.getElementById("focus-node-label");
 
       const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
       const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -48,17 +165,41 @@
         nodeById: new Map(),
         childrenByParent: new Map(),
         allEdges: [],
-        focusRoot: null,
+        focusPath: [],
+        explodeMode: false,
+        currentLayerParents: [],
         visibleNodes: [],
         visibleEdges: [],
+        visibleGroups: [],
         hoveredNode: null,
+        hoveredGroup: null,
+        hoveredEdge: null,
         selectedNode: null,
+        selectedEdge: null,
         loading: true,
         error: null,
         width: 0,
         height: 0,
         dpr: 1,
-        lastFrame: performance.now()
+        lastFrame: performance.now(),
+        camera: {
+          x: 0,
+          y: 0,
+          scale: 1
+        },
+        navPulse: null,
+        pointer: {
+          isDown: false,
+          dragging: false,
+          pointerId: null,
+          mode: "camera",
+          targetNode: null,
+          targetGroup: null,
+          startX: 0,
+          startY: 0,
+          lastX: 0,
+          lastY: 0
+        }
       };
 
       function generatedColorFromId(id) {
@@ -89,10 +230,6 @@
         canvas.width = Math.round(state.width * state.dpr);
         canvas.height = Math.round(state.height * state.dpr);
         ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
-
-        if (state.visibleNodes.length > 0) {
-          seedVisibleLayout();
-        }
       }
 
       function parseNodes(rawNodes) {
@@ -129,6 +266,10 @@
             y: 0,
             vx: 0,
             vy: 0,
+            pinned: false,
+            pinX: 0,
+            pinY: 0,
+            layoutGroupId: null,
             seed: ((id * 9301 + 49297) % 233280) / 233280
           };
 
@@ -236,52 +377,372 @@
         return edges;
       }
 
-      function seedVisibleLayout() {
-        const count = state.visibleNodes.length;
-        if (count === 0) {
+      function annotateHierarchy(nodes) {
+        const memo = new Map();
+
+        function visit(nodeId) {
+          if (memo.has(nodeId)) {
+            return memo.get(nodeId);
+          }
+
+          const children = state.childrenByParent.get(nodeId) || [];
+          let descendantCount = children.length;
+          let subtreeDepth = children.length > 0 ? 1 : 0;
+
+          for (const child of children) {
+            const childMeta = visit(child.id);
+            descendantCount += childMeta.descendantCount;
+            subtreeDepth = Math.max(subtreeDepth, childMeta.subtreeDepth + 1);
+          }
+
+          const meta = {
+            directChildCount: children.length,
+            descendantCount,
+            subtreeDepth
+          };
+          memo.set(nodeId, meta);
+          return meta;
+        }
+
+        for (const node of nodes) {
+          const meta = visit(node.id);
+          node.directChildCount = meta.directChildCount;
+          node.descendantCount = meta.descendantCount;
+          node.subtreeDepth = meta.subtreeDepth;
+        }
+      }
+
+      function getFocusNode() {
+        return state.focusPath.length === 0 ? null : state.focusPath[state.focusPath.length - 1];
+      }
+
+      function nodeHasChildren(node) {
+        return Boolean(node && node.directChildCount > 0);
+      }
+
+      function getBreadcrumbLabel() {
+        return state.focusPath.map((node) => node.name).join(" > ");
+      }
+
+      function getActiveDisplayNode() {
+        return state.selectedNode || getFocusNode();
+      }
+
+      function updateFocusNodeBadge() {
+        const activeNode = getActiveDisplayNode();
+
+        if (!activeNode) {
+          focusNodeBadge.classList.remove("is-visible");
+          focusNodeLabel.textContent = "";
           return;
         }
 
-        const centerX = state.width * 0.5;
-        const centerY = state.height * 0.5;
-        const averageRadius = state.visibleNodes.reduce((sum, node) => sum + node.radius, 0) / count;
-        const spacing = clamp(averageRadius * 1.45, 28, 42);
-        const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+        focusNodeBadge.classList.add("is-visible");
+        focusNodeBadge.style.color = activeNode.color;
+        focusNodeRing.style.borderColor = activeNode.color;
+        focusNodeLabel.textContent = activeNode.name;
+      }
 
-        for (let index = 0; index < count; index += 1) {
-          const node = state.visibleNodes[index];
-          const distance = count === 1 ? 0 : spacing * Math.sqrt(index + 0.5);
-          const angle = count === 1 ? -Math.PI * 0.5 : index * goldenAngle + node.seed * 0.6;
-          node.x = centerX + Math.cos(angle) * distance;
-          node.y = centerY + Math.sin(angle) * distance;
+      function getCurrentLayerParents() {
+        const focusNode = getFocusNode();
+        return focusNode === null
+          ? state.roots.slice()
+          : (state.childrenByParent.get(focusNode.id) || []).slice();
+      }
+
+      function buildExplodedGroups(parents) {
+        const groups = [];
+
+        for (const parent of parents) {
+          const members = (state.childrenByParent.get(parent.id) || []).slice();
+          if (members.length === 0) {
+            continue;
+          }
+
+          groups.push({
+            id: parent.id,
+            parent,
+            color: parent.color,
+            members,
+            anchorX: 0,
+            anchorY: 0,
+            targetRadius: 0,
+            centerX: 0,
+            centerY: 0,
+            radius: 0
+          });
+        }
+
+        groups.sort((a, b) => a.parent.id - b.parent.id);
+        return groups;
+      }
+
+      function clearNodeKinematics(nodes) {
+        for (const node of nodes) {
           node.vx = 0;
           node.vy = 0;
         }
       }
 
-      function recomputeVisibleGraph() {
-        const visibleNodes = state.focusRoot === null
-          ? state.roots.slice()
-          : (state.childrenByParent.get(state.focusRoot.id) || []).slice();
+      function seedCompactLayout(nodes, centerX = 0, centerY = 0, spread = null) {
+        const count = nodes.length;
+        if (count === 0) {
+          return;
+        }
+
+        const averageRadius = nodes.reduce((sum, node) => sum + node.radius, 0) / count;
+        const spacing = spread === null
+          ? clamp(averageRadius * 2.35, 40, 68)
+          : clamp(spread * 0.2, 24, 40);
+        const maxDistance = spread === null ? Infinity : spread;
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+
+        for (let index = 0; index < count; index += 1) {
+          const node = nodes[index];
+          const distance = count === 1 ? 0 : Math.min(spacing * Math.sqrt(index + 0.45), maxDistance);
+          const angle = count === 1 ? -Math.PI * 0.5 : index * goldenAngle + node.seed * 0.75;
+          node.x = centerX + Math.cos(angle) * distance;
+          node.y = centerY + Math.sin(angle) * distance;
+          node.vx = 0;
+          node.vy = 0;
+          node.layoutGroupId = null;
+        }
+      }
+
+      function seedExplodedLayout(groups) {
+        const count = groups.length;
+        if (count === 0) {
+          return;
+        }
+
+        const ringRadius = clamp(140 + count * 32, 180, 420);
+
+        for (let index = 0; index < count; index += 1) {
+          const group = groups[index];
+          const angle = count === 1
+            ? -Math.PI * 0.5
+            : -Math.PI * 0.5 + (Math.PI * 2 * index) / count + (group.parent.seed - 0.5) * 0.22;
+
+          group.anchorX = Math.cos(angle) * ringRadius;
+          group.anchorY = Math.sin(angle) * ringRadius * 0.72;
+          group.targetRadius = clamp(84 + Math.sqrt(group.members.length) * 26, 92, 210);
+
+          seedCompactLayout(
+            group.members,
+            group.anchorX,
+            group.anchorY,
+            group.targetRadius * 0.45
+          );
+
+          for (const member of group.members) {
+            member.layoutGroupId = group.id;
+          }
+        }
+      }
+
+      function refreshGroupGeometry() {
+        for (const group of state.visibleGroups) {
+          if (group.members.length === 0) {
+            group.centerX = group.anchorX;
+            group.centerY = group.anchorY;
+            group.radius = group.targetRadius;
+            continue;
+          }
+
+          let sumX = 0;
+          let sumY = 0;
+
+          for (const node of group.members) {
+            sumX += node.x;
+            sumY += node.y;
+          }
+
+          const averageX = sumX / group.members.length;
+          const averageY = sumY / group.members.length;
+          group.centerX = averageX * 0.72 + group.anchorX * 0.28;
+          group.centerY = averageY * 0.72 + group.anchorY * 0.28;
+
+          let radius = group.targetRadius;
+          for (const node of group.members) {
+            const dx = node.x - group.centerX;
+            const dy = node.y - group.centerY;
+            radius = Math.max(radius, Math.sqrt(dx * dx + dy * dy) + node.radius + 22);
+          }
+
+          group.radius = radius;
+        }
+      }
+
+      function computeDefaultScale() {
+        const count = Math.max(1, state.visibleNodes.length);
+        if (state.explodeMode) {
+          return clamp(1.04 - Math.sqrt(count) * 0.03, 0.54, 0.86);
+        }
+
+        if (getFocusNode() !== null) {
+          return clamp(1.12 - Math.sqrt(count) * 0.015, 0.8, 1.08);
+        }
+
+        return clamp(1.0 - Math.sqrt(count) * 0.012, 0.88, 0.98);
+      }
+
+      function setCameraForCurrentView() {
+        state.camera.x = 0;
+        state.camera.y = 0;
+        state.camera.scale = computeDefaultScale();
+      }
+
+      function startPulse(anchorX, anchorY, amplitude = 0.24, duration = 280) {
+        state.navPulse = {
+          start: performance.now(),
+          duration,
+          amplitude,
+          anchorX,
+          anchorY
+        };
+      }
+
+      function getSceneTransform(now = performance.now()) {
+        if (!state.navPulse) {
+          return {
+            pulseMultiplier: 1,
+            anchorX: state.width * 0.5,
+            anchorY: state.height * 0.5,
+            totalScale: state.camera.scale
+          };
+        }
+
+        const elapsed = now - state.navPulse.start;
+        const progress = elapsed / state.navPulse.duration;
+
+        if (progress >= 1) {
+          const anchorX = state.navPulse.anchorX;
+          const anchorY = state.navPulse.anchorY;
+          state.navPulse = null;
+          return {
+            pulseMultiplier: 1,
+            anchorX,
+            anchorY,
+            totalScale: state.camera.scale
+          };
+        }
+
+        const eased = Math.sin(progress * Math.PI);
+        const pulseMultiplier = 1 + state.navPulse.amplitude * eased;
+        return {
+          pulseMultiplier,
+          anchorX: state.navPulse.anchorX,
+          anchorY: state.navPulse.anchorY,
+          totalScale: state.camera.scale * pulseMultiplier
+        };
+      }
+
+      function worldToScreen(worldX, worldY, scene = getSceneTransform()) {
+        const baseX = (worldX - state.camera.x) * state.camera.scale + state.width * 0.5;
+        const baseY = (worldY - state.camera.y) * state.camera.scale + state.height * 0.5;
+
+        return {
+          x: scene.anchorX + (baseX - scene.anchorX) * scene.pulseMultiplier,
+          y: scene.anchorY + (baseY - scene.anchorY) * scene.pulseMultiplier
+        };
+      }
+
+      function screenToWorld(screenX, screenY, scene = getSceneTransform()) {
+        const baseX = scene.anchorX + (screenX - scene.anchorX) / scene.pulseMultiplier;
+        const baseY = scene.anchorY + (screenY - scene.anchorY) / scene.pulseMultiplier;
+
+        return {
+          x: state.camera.x + (baseX - state.width * 0.5) / state.camera.scale,
+          y: state.camera.y + (baseY - state.height * 0.5) / state.camera.scale
+        };
+      }
+
+      function updateExplodeButton() {
+        const hasDeeperLayer = getCurrentLayerParents().some((parent) => {
+          const children = state.childrenByParent.get(parent.id);
+          return Array.isArray(children) && children.length > 0;
+        });
+
+        explodeToggle.textContent = state.explodeMode ? "Collapse Layers" : "Explode Layers";
+        explodeToggle.classList.toggle("is-active", state.explodeMode);
+        explodeToggle.setAttribute("aria-pressed", String(state.explodeMode));
+        explodeToggle.disabled = state.explodeMode === false && hasDeeperLayer === false;
+      }
+
+      function recomputeVisibleGraph(options = {}) {
+        const currentLayerParents = getCurrentLayerParents();
+        state.currentLayerParents = currentLayerParents;
+
+        let visibleNodes;
+        let visibleGroups;
+
+        if (state.explodeMode) {
+          visibleGroups = buildExplodedGroups(currentLayerParents);
+          visibleNodes = visibleGroups.flatMap((group) => group.members);
+        } else {
+          visibleGroups = [];
+          visibleNodes = currentLayerParents.slice();
+          for (const node of visibleNodes) {
+            node.layoutGroupId = null;
+          }
+        }
 
         const visibleIds = new Set(visibleNodes.map((node) => node.id));
         const visibleEdges = state.allEdges.filter((edge) => (
           visibleIds.has(edge.source.id) && visibleIds.has(edge.target.id)
         ));
 
+        state.visibleGroups = visibleGroups;
         state.visibleNodes = visibleNodes;
         state.visibleEdges = visibleEdges;
 
+        for (const node of state.visibleNodes) {
+          node.pinned = false;
+          node.pinX = node.x;
+          node.pinY = node.y;
+        }
+
         if (state.hoveredNode && !visibleIds.has(state.hoveredNode.id)) {
           state.hoveredNode = null;
+        }
+
+        if (state.hoveredGroup && !state.visibleGroups.some((group) => group.id === state.hoveredGroup.id)) {
+          state.hoveredGroup = null;
+        }
+
+        if (state.hoveredEdge && !state.visibleEdges.includes(state.hoveredEdge)) {
+          state.hoveredEdge = null;
         }
 
         if (state.selectedNode && !visibleIds.has(state.selectedNode.id)) {
           state.selectedNode = null;
         }
 
+        if (state.selectedEdge && !state.visibleEdges.includes(state.selectedEdge)) {
+          state.selectedEdge = null;
+        }
+
+        if (state.explodeMode) {
+          seedExplodedLayout(state.visibleGroups);
+          refreshGroupGeometry();
+        } else {
+          seedCompactLayout(state.visibleNodes);
+        }
+
+        clearNodeKinematics(state.visibleNodes);
+        setCameraForCurrentView();
+        updateExplodeButton();
+        updateFocusNodeBadge();
         console.log("VISIBLE NODES", state.visibleNodes.map(summarizeNode));
-        seedVisibleLayout();
+
+        if (options.pulseAnchor) {
+          startPulse(
+            options.pulseAnchor.x,
+            options.pulseAnchor.y,
+            options.pulseAnchor.amplitude,
+            options.pulseAnchor.duration
+          );
+        }
       }
 
       function stepLayout(delta) {
@@ -290,11 +751,8 @@
           return;
         }
 
-        const centerX = state.width * 0.5;
-        const centerY = state.height * 0.5;
-        const repulsion = nodes.length > 20 ? 3400 : 2600;
-        const softMargin = 36;
-        const collisionPadding = 10;
+        const exploded = state.explodeMode && state.visibleGroups.length > 0;
+        const repulsionBase = exploded ? 2400 : nodes.length > 24 ? 2500 : 2200;
 
         for (let i = 0; i < nodes.length; i += 1) {
           const a = nodes[i];
@@ -310,24 +768,41 @@
               dy = Math.sin(angle) * 0.01;
             }
 
+            const sameGroup = exploded && a.layoutGroupId !== null && a.layoutGroupId === b.layoutGroupId;
             const distanceSquared = Math.max(dx * dx + dy * dy, 0.01);
             const distance = Math.sqrt(distanceSquared);
             const nx = dx / distance;
             const ny = dy / distance;
-            const repel = repulsion / distanceSquared;
+            const repulsion = repulsionBase * (sameGroup ? 0.76 : exploded ? 1.45 : 1);
 
-            a.vx -= nx * repel * delta;
-            a.vy -= ny * repel * delta;
-            b.vx += nx * repel * delta;
-            b.vy += ny * repel * delta;
+            a.vx -= nx * (repulsion / distanceSquared) * delta;
+            a.vy -= ny * (repulsion / distanceSquared) * delta;
+            b.vx += nx * (repulsion / distanceSquared) * delta;
+            b.vy += ny * (repulsion / distanceSquared) * delta;
 
-            const minDistance = a.radius + b.radius + collisionPadding;
+            const minDistance = a.radius + b.radius + (sameGroup ? 10 : exploded ? 18 : 12);
             if (distance < minDistance) {
-              const push = (minDistance - distance) * 0.16;
+              const push = (minDistance - distance) * 0.18;
               a.x -= nx * push;
               a.y -= ny * push;
               b.x += nx * push;
               b.y += ny * push;
+            }
+
+            if (state.hoveredNode && (a === state.hoveredNode || b === state.hoveredNode)) {
+              const hoveredNode = state.hoveredNode;
+              const otherNode = hoveredNode === a ? b : a;
+              const attraction = clamp(distance * 0.0008 * delta, 0, 0.12);
+              const towardHoveredX = hoveredNode.x - otherNode.x;
+              const towardHoveredY = hoveredNode.y - otherNode.y;
+              const towardDistance = Math.max(Math.sqrt(towardHoveredX * towardHoveredX + towardHoveredY * towardHoveredY), 0.01);
+              const tx = towardHoveredX / towardDistance;
+              const ty = towardHoveredY / towardDistance;
+
+              otherNode.vx += tx * attraction;
+              otherNode.vy += ty * attraction;
+              hoveredNode.vx -= tx * attraction * 0.12;
+              hoveredNode.vy -= ty * attraction * 0.12;
             }
           }
         }
@@ -338,12 +813,14 @@
           const distance = Math.max(Math.sqrt(dx * dx + dy * dy), 0.01);
           const nx = dx / distance;
           const ny = dy / distance;
+          const sameGroup = edge.source.layoutGroupId !== null && edge.source.layoutGroupId === edge.target.layoutGroupId;
           const desired = clamp(
-            edge.source.radius + edge.target.radius + 20 + edge.activation * 8,
-            54,
-            140
+            edge.source.radius + edge.target.radius + 18 + edge.activation * 7,
+            sameGroup ? 52 : 66,
+            sameGroup ? 130 : 180
           );
-          const spring = (distance - desired) * 0.004 * edge.weight * delta;
+          const springWeight = exploded && !sameGroup ? 0.0016 : 0.0036;
+          const spring = (distance - desired) * springWeight * edge.weight * delta;
 
           edge.source.vx += nx * spring;
           edge.source.vy += ny * spring;
@@ -351,44 +828,60 @@
           edge.target.vy -= ny * spring;
         }
 
+        if (exploded) {
+          for (const group of state.visibleGroups) {
+            for (const node of group.members) {
+              const dx = group.anchorX - node.x;
+              const dy = group.anchorY - node.y;
+              const distance = Math.max(Math.sqrt(dx * dx + dy * dy), 0.01);
+              const nx = dx / distance;
+              const ny = dy / distance;
+              const limit = Math.max(24, group.targetRadius - node.radius - 16);
+
+              node.vx += dx * 0.0065 * delta;
+              node.vy += dy * 0.0065 * delta;
+
+              if (distance > limit) {
+                const inward = (distance - limit) * 0.015 * delta;
+                node.vx += nx * inward;
+                node.vy += ny * inward;
+              }
+            }
+          }
+        } else {
+          for (const node of nodes) {
+            node.vx += -node.x * 0.004 * delta;
+            node.vy += -node.y * 0.004 * delta;
+          }
+        }
+
         for (const node of nodes) {
-          node.vx += (centerX - node.x) * 0.0036 * delta;
-          node.vy += (centerY - node.y) * 0.0036 * delta;
-
-          const left = softMargin + node.radius;
-          const right = state.width - softMargin - node.radius;
-          const top = softMargin + node.radius;
-          const bottom = state.height - softMargin - node.radius;
-
-          if (node.x < left) {
-            node.vx += (left - node.x) * 0.02 * delta;
-          } else if (node.x > right) {
-            node.vx -= (node.x - right) * 0.02 * delta;
+          if (node.pinned) {
+            node.vx += (node.pinX - node.x) * 0.18 * delta;
+            node.vy += (node.pinY - node.y) * 0.18 * delta;
           }
 
-          if (node.y < top) {
-            node.vy += (top - node.y) * 0.02 * delta;
-          } else if (node.y > bottom) {
-            node.vy -= (node.y - bottom) * 0.02 * delta;
-          }
-
-          node.vx *= 0.86;
-          node.vy *= 0.86;
-
+          node.vx *= exploded ? 0.9 : 0.87;
+          node.vy *= exploded ? 0.9 : 0.87;
           node.x += node.vx * delta;
           node.y += node.vy * delta;
+        }
 
-          node.x = clamp(node.x, node.radius + 4, state.width - node.radius - 4);
-          node.y = clamp(node.y, node.radius + 4, state.height - node.radius - 4);
+        if (exploded) {
+          refreshGroupGeometry();
         }
       }
 
-      function pickNode(x, y) {
+      function pickNode(screenX, screenY) {
+        const scene = getSceneTransform();
+        const world = screenToWorld(screenX, screenY, scene);
+        const worldPadding = 8 / Math.max(scene.totalScale, 0.001);
+
         for (let index = state.visibleNodes.length - 1; index >= 0; index -= 1) {
           const node = state.visibleNodes[index];
-          const dx = x - node.x;
-          const dy = y - node.y;
-          const radius = node.radius + 6;
+          const dx = world.x - node.x;
+          const dy = world.y - node.y;
+          const radius = node.radius + worldPadding;
           if (dx * dx + dy * dy <= radius * radius) {
             return node;
           }
@@ -397,18 +890,110 @@
         return null;
       }
 
-      function updateHover(x, y) {
-        state.hoveredNode = pickNode(x, y);
-        canvas.style.cursor = state.hoveredNode ? "pointer" : "default";
+      function distancePointToSegmentSquared(pointX, pointY, startX, startY, endX, endY) {
+        const dx = endX - startX;
+        const dy = endY - startY;
+
+        if (dx === 0 && dy === 0) {
+          const px = pointX - startX;
+          const py = pointY - startY;
+          return px * px + py * py;
+        }
+
+        const t = clamp(((pointX - startX) * dx + (pointY - startY) * dy) / (dx * dx + dy * dy), 0, 1);
+        const closestX = startX + dx * t;
+        const closestY = startY + dy * t;
+        const offsetX = pointX - closestX;
+        const offsetY = pointY - closestY;
+        return offsetX * offsetX + offsetY * offsetY;
+      }
+
+      function pickEdge(screenX, screenY) {
+        const scene = getSceneTransform();
+
+        for (let index = state.visibleEdges.length - 1; index >= 0; index -= 1) {
+          const edge = state.visibleEdges[index];
+          const source = worldToScreen(edge.source.x, edge.source.y, scene);
+          const target = worldToScreen(edge.target.x, edge.target.y, scene);
+          const lineWidth = clamp((0.9 + edge.weight * 0.7) * scene.totalScale * 0.7, 0.8, 3.2);
+          const threshold = Math.max(6, lineWidth + 5);
+          const distanceSquared = distancePointToSegmentSquared(
+            screenX,
+            screenY,
+            source.x,
+            source.y,
+            target.x,
+            target.y
+          );
+
+          if (distanceSquared <= threshold * threshold) {
+            return edge;
+          }
+        }
+
+        return null;
+      }
+
+      function pickGroup(screenX, screenY) {
+        if (state.visibleGroups.length === 0) {
+          return null;
+        }
+
+        const scene = getSceneTransform();
+        const world = screenToWorld(screenX, screenY, scene);
+
+        for (let index = state.visibleGroups.length - 1; index >= 0; index -= 1) {
+          const group = state.visibleGroups[index];
+          const dx = world.x - group.centerX;
+          const dy = world.y - group.centerY;
+          if (dx * dx + dy * dy <= group.radius * group.radius) {
+            return group;
+          }
+        }
+
+        return null;
+      }
+
+      function updateCursor() {
+        if (state.pointer.dragging) {
+          canvas.style.cursor = "grabbing";
+          return;
+        }
+
+        if (state.hoveredNode) {
+          canvas.style.cursor = nodeHasChildren(state.hoveredNode) ? "pointer" : "grab";
+          return;
+        }
+
+        if (state.hoveredEdge) {
+          canvas.style.cursor = "pointer";
+          return;
+        }
+
+        if (state.hoveredGroup) {
+          canvas.style.cursor = "grab";
+          return;
+        }
+
+        canvas.style.cursor = "grab";
+      }
+
+      function updateHover(screenX, screenY) {
+        state.hoveredNode = pickNode(screenX, screenY);
+        state.hoveredEdge = state.hoveredNode ? null : pickEdge(screenX, screenY);
+        state.hoveredGroup = state.hoveredNode || state.hoveredEdge ? null : pickGroup(screenX, screenY);
+        updateCursor();
       }
 
       function measurePanel(lines, font, lineHeight) {
         ctx.save();
         ctx.font = font;
         let width = 0;
+
         for (const line of lines) {
           width = Math.max(width, ctx.measureText(line).width);
         }
+
         ctx.restore();
         return {
           width: width + 20,
@@ -440,64 +1025,85 @@
         return size;
       }
 
-      function drawTooltip(node) {
-        if (!node) {
-          return;
-        }
-
-        const lines = [
-          `${node.name} (#${node.id})`,
-          `activation ${node.activation.toFixed(2)}`,
-          `weight ${node.weight.toFixed(2)}`
-        ];
-
-        if (node.hasParent === true && Number.isFinite(node.parentId)) {
-          lines.push(`parent ${node.parentId}`);
-        }
-
-        const font = "12px system-ui, sans-serif";
-        const lineHeight = 18;
-        const size = measurePanel(lines, font, lineHeight);
-        const x = clamp(node.x + node.radius + 14, 12, state.width - size.width - 12);
-        const y = clamp(node.y - size.height * 0.5, 12, state.height - size.height - 12);
-        drawPanel(x, y, lines, node.color);
+      function drawLabelPill(centerX, centerY, text, accent) {
+        ctx.save();
+        ctx.font = "600 12px system-ui, sans-serif";
+        const width = ctx.measureText(text).width + 18;
+        const height = 26;
+        const x = centerX - width * 0.5;
+        const y = centerY - height * 0.5;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.78)";
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(x, y, width, height, 13);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, centerX, centerY + 0.5);
+        ctx.restore();
       }
 
-      function drawStatus() {
-        const lines = [];
+      function drawGroups(scene) {
+        for (const group of state.visibleGroups) {
+          const position = worldToScreen(group.centerX, group.centerY, scene);
+          const radius = group.radius * scene.totalScale;
+          const hovered = state.hoveredGroup && state.hoveredGroup.id === group.id;
 
-        if (state.focusRoot === null) {
-          lines.push("View: roots");
-          lines.push("Click a root node to show its direct children");
-        } else {
-          lines.push(`View: children of ${state.focusRoot.name}`);
-          lines.push("Click a child node to pin it");
-          lines.push("Click empty background to return to roots");
+          ctx.save();
+          ctx.globalAlpha = hovered ? 0.16 : 0.1;
+          ctx.fillStyle = group.color;
+          ctx.beginPath();
+          ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          ctx.save();
+          ctx.strokeStyle = group.color;
+          ctx.lineWidth = hovered ? 2.2 : 1.6;
+          ctx.setLineDash([8, 8]);
+          ctx.beginPath();
+          ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+
+          drawLabelPill(position.x, position.y - radius - 18, group.parent.name, group.color);
         }
-
-        lines.push(`Visible nodes: ${state.visibleNodes.length}`);
-        drawPanel(14, 14, lines, state.focusRoot ? state.focusRoot.color : "rgba(255, 255, 255, 0.18)");
       }
 
-      function drawEdges() {
+      function drawEdges(scene) {
         ctx.save();
         ctx.lineCap = "round";
 
         for (const edge of state.visibleEdges) {
-          const alpha = clamp(0.08 + edge.activation * 0.03, 0.08, 0.2);
-          ctx.strokeStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
-          ctx.lineWidth = 0.8 + edge.weight * 0.7;
+          const source = worldToScreen(edge.source.x, edge.source.y, scene);
+          const target = worldToScreen(edge.target.x, edge.target.y, scene);
+          const sameGroup = edge.source.layoutGroupId !== null && edge.source.layoutGroupId === edge.target.layoutGroupId;
+          const hovered = state.hoveredEdge === edge;
+          const selected = state.selectedEdge === edge;
+          const alpha = clamp(
+            (0.06 + edge.activation * 0.028) * (sameGroup ? 1 : state.explodeMode ? 0.5 : 1) + (hovered ? 0.16 : 0) + (selected ? 0.22 : 0),
+            0.04,
+            0.5
+          );
+          ctx.strokeStyle = selected
+            ? edge.source.color
+            : hovered
+              ? "rgba(255, 255, 255, 0.92)"
+              : `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+          ctx.lineWidth = clamp((0.9 + edge.weight * 0.7) * scene.totalScale * 0.7 + (hovered ? 1.2 : 0) + (selected ? 1.8 : 0), 0.8, 5.2);
           ctx.beginPath();
-          ctx.moveTo(edge.source.x, edge.source.y);
-          ctx.lineTo(edge.target.x, edge.target.y);
+          ctx.moveTo(source.x, source.y);
+          ctx.lineTo(target.x, target.y);
           ctx.stroke();
         }
 
         ctx.restore();
       }
 
-      function drawNodes() {
-        const labelFontSize = state.visibleNodes.length > 24 ? 11 : 12;
+      function drawNodes(scene) {
         const orderedNodes = state.visibleNodes.slice().sort((a, b) => {
           const aPinned = state.selectedNode && a.id === state.selectedNode.id ? 1 : 0;
           const bPinned = state.selectedNode && b.id === state.selectedNode.id ? 1 : 0;
@@ -507,35 +1113,91 @@
         });
 
         ctx.save();
-        ctx.font = `500 ${labelFontSize}px system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
 
         for (const node of orderedNodes) {
           const hovered = state.hoveredNode && node.id === state.hoveredNode.id;
           const selected = state.selectedNode && node.id === state.selectedNode.id;
+          const position = worldToScreen(node.x, node.y, scene);
+          const hoverScale = hovered ? 1.1 : selected ? 1.04 : 1;
+          const radius = node.radius * scene.totalScale * hoverScale;
 
           if (hovered || selected) {
             ctx.beginPath();
-            ctx.arc(node.x, node.y, node.radius + 6, 0, Math.PI * 2);
+            ctx.arc(position.x, position.y, radius + 7, 0, Math.PI * 2);
             ctx.strokeStyle = hovered && !selected ? "rgba(255, 255, 255, 0.18)" : node.color;
             ctx.lineWidth = hovered && !selected ? 2 : 1.5;
             ctx.stroke();
           }
 
           ctx.beginPath();
-          ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+          ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
           ctx.fillStyle = "#000";
           ctx.fill();
           ctx.strokeStyle = node.color;
-          ctx.lineWidth = selected ? 4.5 : hovered ? 3.5 : 2.5;
+          ctx.lineWidth = selected ? 4 : hovered ? 3.2 : 2.3;
           ctx.stroke();
 
           ctx.fillStyle = "#fff";
-          ctx.fillText(node.name, node.x, node.y + node.radius + 7);
+          ctx.font = `500 ${clamp(11 * scene.totalScale + 2, 11, 14)}px system-ui, sans-serif`;
+          ctx.fillText(node.name, position.x, position.y + radius + 7);
         }
 
         ctx.restore();
+      }
+
+      function drawTooltip(node, scene) {
+        if (!node) {
+          return;
+        }
+
+        const position = worldToScreen(node.x, node.y, scene);
+        const radius = node.radius * scene.totalScale;
+        const lines = [
+          `${node.name} (#${node.id})`,
+          `activation ${node.activation.toFixed(2)}`,
+          `weight ${node.weight.toFixed(2)}`
+        ];
+
+        if (node.hasParent === true && Number.isFinite(node.parentId)) {
+          const parent = state.nodeById.get(node.parentId);
+          lines.push(`parent ${parent ? parent.name : node.parentId}`);
+        }
+
+        if (node.directChildCount > 0) {
+          lines.push(`children ${node.directChildCount}`);
+        }
+
+        const font = "12px system-ui, sans-serif";
+        const lineHeight = 18;
+        const size = measurePanel(lines, font, lineHeight);
+        const x = clamp(position.x + radius + 14, 12, state.width - size.width - 12);
+        const y = clamp(position.y - size.height * 0.5, 12, state.height - size.height - 12);
+        drawPanel(x, y, lines, node.color);
+      }
+
+      function drawEdgeTooltip(edge, scene) {
+        if (!edge) {
+          return;
+        }
+
+        const source = worldToScreen(edge.source.x, edge.source.y, scene);
+        const target = worldToScreen(edge.target.x, edge.target.y, scene);
+        const centerX = (source.x + target.x) * 0.5;
+        const centerY = (source.y + target.y) * 0.5;
+        const lines = [
+          `${edge.source.name} -> ${edge.target.name}`,
+          `weight ${edge.weight.toFixed(2)}`,
+          `activation ${edge.activation.toFixed(2)}`
+        ];
+
+        const font = "12px system-ui, sans-serif";
+        const lineHeight = 18;
+        const size = measurePanel(lines, font, lineHeight);
+        const x = clamp(centerX + 16, 12, state.width - size.width - 12);
+        const y = clamp(centerY - size.height * 0.5, 12, state.height - size.height - 12);
+        drawPanel(x, y, lines, edge.source.color);
       }
 
       function renderMessage(title, detail) {
@@ -569,58 +1231,256 @@
           return;
         }
 
-        drawEdges();
-        drawNodes();
-        drawStatus();
-        drawTooltip(state.selectedNode || state.hoveredNode || null);
+        const scene = getSceneTransform();
+        if (state.visibleGroups.length > 0) {
+          drawGroups(scene);
+        }
+        drawEdges(scene);
+        drawNodes(scene);
+        if (state.selectedEdge || state.hoveredEdge) {
+          drawEdgeTooltip(state.selectedEdge || state.hoveredEdge, scene);
+        } else {
+          drawTooltip(state.selectedNode || state.hoveredNode || null, scene);
+        }
 
         if (state.visibleNodes.length === 0) {
-          const message = state.focusRoot
-            ? "This root has no direct children"
-            : "No root nodes found";
-          renderMessage(message, "Click empty background to return to roots");
+          const message = state.explodeMode
+            ? "This layer has no deeper children"
+            : getFocusNode()
+              ? "This node has no direct children"
+              : "No root nodes found";
+          renderMessage(message, "Click empty background to return");
         }
       }
 
-      function onPointerMove(event) {
-        const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        updateHover(x, y);
-      }
-
-      function onPointerLeave() {
-        state.hoveredNode = null;
-        canvas.style.cursor = "default";
-      }
-
-      function onClick(event) {
-        const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        const hitNode = pickNode(x, y);
-
-        if (!hitNode) {
-          if (state.focusRoot !== null) {
-            state.focusRoot = null;
-            state.selectedNode = null;
-            recomputeVisibleGraph();
-          } else {
-            state.selectedNode = null;
+      function navigateToNode(node, screenX, screenY) {
+        state.focusPath = state.focusPath.concat(node);
+        state.explodeMode = false;
+        state.selectedNode = null;
+        state.selectedEdge = null;
+        state.hoveredGroup = null;
+        recomputeVisibleGraph({
+          pulseAnchor: {
+            x: screenX,
+            y: screenY,
+            amplitude: 0.28,
+            duration: 280
           }
+        });
+      }
+
+      function stepBackOneLevel() {
+        if (state.explodeMode) {
+          state.explodeMode = false;
+          state.selectedNode = null;
+          state.selectedEdge = null;
+          state.hoveredGroup = null;
+          recomputeVisibleGraph({
+            pulseAnchor: {
+              x: state.width * 0.5,
+              y: state.height * 0.5,
+              amplitude: 0.14,
+              duration: 200
+            }
+          });
+          return true;
+        }
+
+        if (state.focusPath.length > 0) {
+          state.focusPath = state.focusPath.slice(0, -1);
+          state.selectedNode = null;
+          state.selectedEdge = null;
+          state.hoveredGroup = null;
+          recomputeVisibleGraph({
+            pulseAnchor: {
+              x: state.width * 0.5,
+              y: state.height * 0.5,
+              amplitude: 0.16,
+              duration: 220
+            }
+          });
+          return true;
+        }
+
+        return false;
+      }
+
+      function handleCanvasClick(screenX, screenY) {
+        const hitNode = pickNode(screenX, screenY);
+        const hitEdge = hitNode ? null : pickEdge(screenX, screenY);
+
+        if (!hitNode && !hitEdge) {
+          if (!stepBackOneLevel()) {
+            state.selectedNode = null;
+            state.selectedEdge = null;
+            updateFocusNodeBadge();
+          }
+          updateCursor();
           return;
         }
 
-        if (state.focusRoot === null) {
-          if (hitNode.isRoot) {
-            state.focusRoot = hitNode;
-            state.selectedNode = null;
-            recomputeVisibleGraph();
-          }
+        if (nodeHasChildren(hitNode)) {
+          navigateToNode(hitNode, screenX, screenY);
+          updateCursor();
+          return;
+        }
+
+        if (hitEdge) {
+          state.selectedNode = null;
+          state.selectedEdge = hitEdge;
+          updateFocusNodeBadge();
+          updateCursor();
           return;
         }
 
         state.selectedNode = hitNode;
+        state.selectedEdge = null;
+        updateFocusNodeBadge();
+        updateCursor();
+      }
+
+      function onPointerDown(event) {
+        if (event.button !== 0) {
+          return;
+        }
+
+        const rect = canvas.getBoundingClientRect();
+        const screenX = event.clientX - rect.left;
+        const screenY = event.clientY - rect.top;
+        const targetNode = pickNode(screenX, screenY);
+        const targetGroup = targetNode ? null : pickGroup(screenX, screenY);
+
+        state.pointer.isDown = true;
+        state.pointer.dragging = false;
+        state.pointer.pointerId = event.pointerId;
+        state.pointer.mode = targetNode ? "node" : targetGroup ? "group" : "camera";
+        state.pointer.targetNode = targetNode;
+        state.pointer.targetGroup = targetGroup;
+        state.pointer.startX = screenX;
+        state.pointer.startY = screenY;
+        state.pointer.lastX = screenX;
+        state.pointer.lastY = screenY;
+        canvas.setPointerCapture(event.pointerId);
+        updateHover(screenX, screenY);
+      }
+
+      function onPointerMove(event) {
+        const rect = canvas.getBoundingClientRect();
+        const screenX = event.clientX - rect.left;
+        const screenY = event.clientY - rect.top;
+
+        if (state.pointer.isDown) {
+          const moveDistance = Math.hypot(screenX - state.pointer.startX, screenY - state.pointer.startY);
+          if (!state.pointer.dragging && moveDistance > 4) {
+            state.pointer.dragging = true;
+          }
+
+          if (state.pointer.dragging) {
+            const scene = getSceneTransform();
+            const previousWorld = screenToWorld(state.pointer.lastX, state.pointer.lastY, scene);
+            const currentWorld = screenToWorld(screenX, screenY, scene);
+            const deltaWorldX = currentWorld.x - previousWorld.x;
+            const deltaWorldY = currentWorld.y - previousWorld.y;
+
+            if (state.pointer.mode === "node" && state.pointer.targetNode) {
+              const node = state.pointer.targetNode;
+              node.x += deltaWorldX;
+              node.y += deltaWorldY;
+              node.pinX = node.x;
+              node.pinY = node.y;
+              node.pinned = true;
+              node.vx = 0;
+              node.vy = 0;
+            } else if (state.pointer.mode === "group" && state.pointer.targetGroup) {
+              const group = state.pointer.targetGroup;
+              group.anchorX += deltaWorldX;
+              group.anchorY += deltaWorldY;
+              group.centerX += deltaWorldX;
+              group.centerY += deltaWorldY;
+
+              for (const node of group.members) {
+                node.x += deltaWorldX;
+                node.y += deltaWorldY;
+                if (node.pinned) {
+                  node.pinX += deltaWorldX;
+                  node.pinY += deltaWorldY;
+                }
+                node.vx = 0;
+                node.vy = 0;
+              }
+            } else {
+              const dx = screenX - state.pointer.lastX;
+              const dy = screenY - state.pointer.lastY;
+              state.camera.x -= dx / Math.max(state.camera.scale, 0.001);
+              state.camera.y -= dy / Math.max(state.camera.scale, 0.001);
+            }
+
+            state.hoveredNode = null;
+            state.hoveredEdge = null;
+            state.hoveredGroup = null;
+            updateCursor();
+          } else {
+            updateHover(screenX, screenY);
+          }
+        } else {
+          updateHover(screenX, screenY);
+        }
+
+        state.pointer.lastX = screenX;
+        state.pointer.lastY = screenY;
+      }
+
+      function endPointer(event) {
+        const rect = canvas.getBoundingClientRect();
+        const screenX = event.clientX - rect.left;
+        const screenY = event.clientY - rect.top;
+        const wasDragging = state.pointer.dragging;
+
+        state.pointer.isDown = false;
+        state.pointer.dragging = false;
+
+        if (state.pointer.pointerId !== null) {
+          canvas.releasePointerCapture(state.pointer.pointerId);
+          state.pointer.pointerId = null;
+        }
+
+        state.pointer.mode = "camera";
+        state.pointer.targetNode = null;
+        state.pointer.targetGroup = null;
+
+        if (!wasDragging) {
+          handleCanvasClick(screenX, screenY);
+        }
+
+        updateHover(screenX, screenY);
+      }
+
+      function onPointerCancel() {
+        state.pointer.isDown = false;
+        state.pointer.dragging = false;
+        state.pointer.pointerId = null;
+        state.pointer.mode = "camera";
+        state.pointer.targetNode = null;
+        state.pointer.targetGroup = null;
+        state.hoveredNode = null;
+        state.hoveredEdge = null;
+        state.hoveredGroup = null;
+        updateCursor();
+      }
+
+      function onWheel(event) {
+        event.preventDefault();
+        state.camera.x += event.deltaX / Math.max(state.camera.scale, 0.001);
+        state.camera.y += event.deltaY / Math.max(state.camera.scale, 0.001);
+      }
+
+      function onPointerLeave() {
+        if (!state.pointer.isDown) {
+          state.hoveredNode = null;
+          state.hoveredEdge = null;
+          state.hoveredGroup = null;
+          updateCursor();
+        }
       }
 
       async function loadGraph() {
@@ -640,6 +1500,7 @@
           state.nodeById = parsed.nodeById;
           state.roots = state.allNodes.filter((node) => node.hasParent === false);
           state.childrenByParent = buildChildrenByParent(state.allNodes);
+          annotateHierarchy(state.allNodes);
           assignColors(state.allNodes, state.nodeById);
           state.allEdges = buildEdges(raw.connections, state.nodeById);
 
@@ -671,15 +1532,42 @@
         requestAnimationFrame(frame);
       }
 
-      canvas.addEventListener("mousemove", onPointerMove);
-      canvas.addEventListener("mouseleave", onPointerLeave);
-      canvas.addEventListener("click", onClick);
+      explodeToggle.addEventListener("click", () => {
+        state.explodeMode = !state.explodeMode;
+        state.selectedNode = null;
+        state.selectedEdge = null;
+        state.hoveredNode = null;
+        state.hoveredEdge = null;
+        recomputeVisibleGraph({
+          pulseAnchor: {
+            x: state.width - 120,
+            y: 44,
+            amplitude: 0.16,
+            duration: 220
+          }
+        });
+        updateCursor();
+      });
+
+      canvas.addEventListener("pointerdown", onPointerDown);
+      canvas.addEventListener("pointermove", onPointerMove);
+      canvas.addEventListener("pointerup", endPointer);
+      canvas.addEventListener("pointercancel", onPointerCancel);
+      canvas.addEventListener("pointerleave", onPointerLeave);
+      canvas.addEventListener("wheel", onWheel, { passive: false });
+
       window.addEventListener("resize", resizeCanvas);
       window.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
-          state.focusRoot = null;
-          state.selectedNode = null;
-          recomputeVisibleGraph();
+          if (!stepBackOneLevel()) {
+            state.selectedNode = null;
+            state.selectedEdge = null;
+            state.hoveredNode = null;
+            state.hoveredEdge = null;
+            state.hoveredGroup = null;
+            updateFocusNodeBadge();
+          }
+          updateCursor();
         }
       });
 

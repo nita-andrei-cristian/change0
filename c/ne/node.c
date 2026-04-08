@@ -159,3 +159,41 @@ Node* FindNode(char* target, uint_fast8_t length, Node* parent){
 	}
 	return NULL;
 }
+
+double readNodeActivation(Node* n){
+	double o = n->activation;
+	while (n->hasParent){
+		n = NodeAt(n->parent);
+		o *= n->activation;
+	}
+	return o;
+}
+
+double readNodeWeight(Node* n){
+	double o = n->weight;
+	while (n->hasParent){
+		n = NodeAt(n->parent);
+		o *= n->weight;
+	}
+	return o;
+}
+
+double readConnectionActivation(Connection* c){
+	double o = c->weight;
+	Node *n = NodeAt(c->target);
+	while (n->hasParent){
+		n = NodeAt(n->parent);
+		o *= n->weight;
+	}
+	return o;
+}
+
+double readConnectionWeight(Connection* c){
+	double o = c->weight;
+	Node *n = NodeAt(c->target);
+	while (n->hasParent){
+		n = NodeAt(n->parent);
+		o *= n->weight;
+	}
+	return o;
+}

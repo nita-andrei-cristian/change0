@@ -3,13 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../ne/node.h"
-//#include "../ne/engine.h"
 #include "../lib/util/util.h"
 #include "../ne/engine.h"
+#include "../ne/deep-search.h"
 #include <unistd.h>
 #include <termios.h>
 #include <string.h>
-//#include "../lib/deep-research/deep-research.h"
 
 // AI generated function
 static int getch_nowait_enterless(void) {
@@ -97,13 +96,11 @@ static void Run(int i){
 	}
 
 	if (INPUT_TYPE[i] == DEEPRESEARCH){
-		/*
-		char* out = DeepResearchStart();
+		char *out = start_ds_session();
 		if (out){
 			printf("Deep research result : \n\n%s\n", out);
 			free(out);
 		}
-		*/
 	}
 
 	WaitForInput();
