@@ -48,7 +48,7 @@ void cassert(_Bool assertion, char* message); // critical assert
 #define STRING_CUSTOM_UTIL
 
 #define c_str(s) ((s)->p)
-#define CatStringF(dest, source) (CatString((dest), (source), FSIZE((source))))
+#define CatFixed(dest, source) (CatString((dest), (source), FSIZE((source))))
 
 typedef struct {
 	char* p;

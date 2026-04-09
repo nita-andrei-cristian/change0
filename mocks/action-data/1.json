@@ -1,6 +1,7 @@
 {
   "command": 2,
-  "node": "viitor",
+  "context" : "Profesie",
+  "node": "asteptari",
   "percentage": 60,
   "criteria" : "weight"
 }

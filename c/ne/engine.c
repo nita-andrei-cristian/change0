@@ -279,7 +279,7 @@ _Bool ValidateContext(json_value *document, size_t *context){
 		if (strcmp(entry.name, "context") == 0 && entry.value->type == json_string){
 			// linear search (Small context sample)
 			for (uint_fast8_t i = 0; i < CONTEXT_COUNT; i++){
-				if (NodeExists(i) && strcmp(entry.value->u.string.ptr, NodeAt(Contexts[i])->label) == 0){
+				if (strcmp(entry.value->u.string.ptr, NodeAt(Contexts[i])->label) == 0){
 					*context = Contexts[i];
 					return 1;
 				}

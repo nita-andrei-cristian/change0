@@ -106,72 +106,35 @@ void **FilterTopPercent(
     return result;
 }
 
-// TODO : Refactor this since it's similar to FilterTopPercent function.
-Node** FilterNodeNeighboursByActivation(Node* node, int_fast64_t percentage, size_t *count){
-	percentage = CLAMP(0, 100, percentage);
-
-	int top_n = top_count_percent(node->ncount, percentage);
-	if (top_n <= 0)
-		return NULL;
-
-	double *values = malloc(node->ncount * sizeof(*values));
-	if (!values)
-		return NULL;
-
-	for (size_t i = 0; i < node->ncount; i++) {
-		values[i] =  node->neighbours[i].activation;
-	}
-
-	double threshold = quickselect_desc_double(values, node->ncount, top_n - 1);
-	free(values);
-
-	Node **result = malloc(node->ncount * sizeof(*result));
-	if (!result)
-		return NULL;
-
-	for (size_t i = 0; i < node->ncount; i++) {
-		if (node->neighbours[i].activation >= threshold) {
-			result[(*count)++] = NodeAt(node->neighbours[i].target);
-		}
-	}
-
-	return result;
-
+Connection** FilterNodeNeighboursByActivation(
+    Node* node,
+    int_fast64_t percentage,
+    size_t *count
+){
+    return (Connection**) FilterTopPercent(
+        (void*) node->neighbours,
+        node->ncount,
+        sizeof(Connection),
+        percentage,
+        count,
+        (GetValueFn) readConnectionActivation
+    );
 }
 
-// TODO : Refactor this since it's similar to FilterTopPercent function.
-Node** FilterNodeNeighboursByWeight(Node* node, int_fast64_t percentage, size_t *count){
-	percentage = CLAMP(0, 100, percentage);
-
-	int top_n = top_count_percent(node->ncount, percentage);
-	if (top_n <= 0)
-		return NULL;
-
-	double *values = malloc(node->ncount * sizeof(*values));
-	if (!values)
-		return NULL;
-
-	for (size_t i = 0; i < node->ncount; i++) {
-		values[i] = node->neighbours[i].weight;
-	}
-
-	double threshold = quickselect_desc_double(values, node->ncount, top_n - 1);
-	free(values);
-
-	Node **result = malloc(node->ncount * sizeof(*result));
-	if (!result)
-		return NULL;
-
-	for (size_t i = 0; i < node->ncount; i++) {
-		if (node->neighbours[i].activation >= threshold) {
-			result[(*count)++] = NodeAt(node->neighbours[i].target);
-		}
-	}
-
-	return result;
-
+Connection** FilterNodeNeighboursByWeight(
+    Node* node,
+    int_fast64_t percentage,
+    size_t *count
+){
+    return (Connection**) FilterTopPercent(
+        (void*) node->neighbours,
+        node->ncount,
+        sizeof(Connection),
+        percentage,
+        count,
+        (GetValueFn) readConnectionWeight
+    );
 }
-
 
 // We assume the node exists, if not, too bad.
 char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth, double lastA, double lastW, size_t *count){

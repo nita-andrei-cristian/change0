@@ -233,7 +233,7 @@ void CatString(String* s, char* c, size_t len){
 	if (massert(s, "No string passed...")) return;
 	cassert(s, "Can't concatinate : String not initialized");
 
-	if (s->cap <= len + s->len){
+	if (s->cap <= len + s->len + 1){
 		size_t req_cap = s->cap ? s->cap : 1; // avoid 0
 		while (req_cap <= len + s->len) req_cap *= 2;
 		char* tmp = realloc(c_str(s), req_cap);

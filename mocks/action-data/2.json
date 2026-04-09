@@ -1,7 +1,8 @@
 {
   "command": 3,
-  "node": "muzica",
-  "depth": 3,
-  "pWeight": 90,
-  "pActivation": 90
+  "context" : "Profesie",
+  "node": "asteptari",
+  "depth": 5,
+  "percW": 30,
+  "percA": 90
 }

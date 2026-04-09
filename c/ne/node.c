@@ -58,7 +58,7 @@ Node* AddNodeEx(char* label, size_t label_len, double activation, double weight,
 	node->ncount = 0;
 	node->globalIndex = Nodes.count;
 	node->neighbours = malloc(node->nsize * sizeof(Connection));
-	node->activation = NODE_INIT_ACT;
+	node->activation = NODE_INIT_ACT + (rand() % 100) * 0.05;
 	node->weight = NODE_INIT_WGHT;
 	node->hasParent = 0;
 	
@@ -161,39 +161,43 @@ Node* FindNode(char* target, uint_fast8_t length, Node* parent){
 }
 
 double readNodeActivation(Node* n){
-	double o = n->activation;
-	while (n->hasParent){
-		n = NodeAt(n->parent);
-		o *= n->activation;
-	}
-	return o;
+    double o = n->activation;
+    while (n->hasParent){
+        n = NodeAt(n->parent);
+        if (!n) break;
+        o *= n->activation;
+    }
+    return o;
 }
 
 double readNodeWeight(Node* n){
-	double o = n->weight;
-	while (n->hasParent){
-		n = NodeAt(n->parent);
-		o *= n->weight;
-	}
-	return o;
+    double o = n->weight;
+    while (n->hasParent){
+        n = NodeAt(n->parent);
+        if (!n) break;
+        o *= n->weight;
+    }
+    return o;
 }
 
 double readConnectionActivation(Connection* c){
-	double o = c->weight;
-	Node *n = NodeAt(c->target);
-	while (n->hasParent){
-		n = NodeAt(n->parent);
-		o *= n->weight;
-	}
-	return o;
+    double o = c->activation;  
+    Node *n = NodeAt(c->target);
+    while (n && n->hasParent){
+        n = NodeAt(n->parent);
+        if (!n) break;
+        o *= n->activation; 
+    }
+    return o;
 }
 
 double readConnectionWeight(Connection* c){
-	double o = c->weight;
-	Node *n = NodeAt(c->target);
-	while (n->hasParent){
-		n = NodeAt(n->parent);
-		o *= n->weight;
-	}
-	return o;
+    double o = c->weight;
+    Node *n = NodeAt(c->target);
+    while (n && n->hasParent){
+        n = NodeAt(n->parent);
+        if (!n) break;
+        o *= n->weight;
+    }
+    return o;
 }
