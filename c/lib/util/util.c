@@ -12,7 +12,6 @@ size_t mystrnlen(const char* s, size_t maxlen) {
     return i;
 }
 
-
 char* searchFirstDigit(char *source){
 	char* dest = source;
 	do{
@@ -204,6 +203,14 @@ double atod(char s[], int precision)
 	if (i == 0) return 0.0;
 
 	return (result / i) * 10;
+}
+
+void lowerAll(char** s, size_t len){
+	// A -> 65 
+	// a -> 97
+	char* a = *s;
+	for (int i = 0; i < len; i++)
+		a[i] = a[i] < 'a' ? a[i] + ('a' - 'A') : a[i];
 }
 
 _Bool massert(_Bool assertion, char* message){

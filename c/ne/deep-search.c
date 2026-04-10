@@ -45,16 +45,44 @@ static inline void cat_perc_to_buffer(String *buffer, int_fast64_t percentage){
 	}
 }
 
-static _Bool decompose_command_1_params(json_value *doc, String *ErrorBuff, int_fast64_t *percentage){
+static _Bool decompose_command_1_params(
+		json_value *doc, String *ErrorBuff,
+		int_fast64_t *percentage,
+		char (*criteria)[16], size_t *criteria_length,
+		String *intent
+		){
+	*criteria_length = 0;
 	*percentage = -1;
+
 	for (size_t i = 0; i < doc->u.object.length; i++){
 		json_object_entry entry = doc->u.object.values[i];
 		if (!strcmp(entry.name, "percentage") && entry.value->type == json_integer)
 			*percentage = CLAMP(0, 100, entry.value->u.integer);
+		if (!strcmp(entry.name, "criteria") && entry.value->type == json_string){
+			*criteria_length = MIN(entry.value->u.string.length, 15);
+			if (
+					strcmp(entry.value->u.string.ptr, "weight") != 0 &&
+					strcmp(entry.value->u.string.ptr, "activation") != 0
+			   ){
+				CatFixed(ErrorBuff, "Error : \"criteria\" parameter must be \"activation\" or \"weight\".\n");
+				return 0;
+			};
+
+			memcpy(*criteria, entry.value->u.string.ptr, *criteria_length);
+			(*criteria)[*criteria_length] = '\0';
+		}
+		if (!strcmp(entry.name, "intent") && entry.value->type == json_string){
+			CatString(intent, entry.value->u.string.ptr, entry.value->u.string.length);
+		}
 	}
 
 	if (*percentage == -1){
 		CatFixed(ErrorBuff, "\nError executing: No \"percentage\" argument passed (1-100)\n");
+		return 0;
+	};
+
+	if (*criteria_length == 0){
+		CatFixed(ErrorBuff, "\nError executing: You must pass a \"criteria\" parameter (\"activation\" or \"weight\").\n");
 		return 0;
 	};
 
@@ -65,11 +93,27 @@ static void run1(json_value* doc, String *dynamic_mem){
 	if (!dynamic_mem || !doc) return;
 
 	int_fast64_t percentage = -1;
+	char criteria[16];
+	size_t criteria_length;
+	String intent; InitString(&intent, 256);
 	
-	if (decompose_command_1_params(doc, dynamic_mem, &percentage) == 0) return;
+	if (decompose_command_1_params(doc, dynamic_mem, &percentage, &criteria, &criteria_length, &intent) == 0) return;
 
 	size_t count = 0;
-	Node** result = FilterNodeByActivationGlobal(percentage, &count);
+
+	Node** result;
+
+	_Bool isActivation;
+
+	if (!strcmp(criteria, "activation")){
+		result = FilterNodeByActivationGlobal(percentage, &count);
+		isActivation = 1;
+	}else if(!strcmp(criteria, "weight")){
+		result = FilterNodeByWeightGlobal(percentage, &count);
+		isActivation = 0;
+	}else {
+		cassert(0, "You shouldn t arrive here unless the compiler is brain damaged :( \n");
+	}
 
 	if (!result){
 		return;
@@ -80,12 +124,19 @@ static void run1(json_value* doc, String *dynamic_mem){
 	InitString(&data, count * (NODE_LABEL_CAP * 2 + 32) + 32);
 	cassert(data.p, "Failed to allocate memory for data.\n");
 
-	CatFixed(&data, "Top ");
+	if (*intent.p != '\0'){
+		CatFixed(&data, "Model Intention : \"");
+		CatString(&data, intent.p, intent.len);
+		CatFixed(&data, "\"\n\nTop ");
+	}else{
+		CatFixed(&data, "Top ");
+	}
 
 	// convert 0-100 to string
 	cat_perc_to_buffer(&data, percentage);
 
-	CatFixed(&data, "% nodes:\n");
+	char s[256];
+	CatString(&data, s, sprintf(s, "%c nodes by [%s]:\nCommand Result: ", '%', criteria));
 
 	for (size_t i = 0; i < count; i++){
 		char buffer[NODE_LABEL_CAP * 2 + 32];
@@ -117,13 +168,12 @@ static _Bool decompose_command_2_params(
 		int_fast64_t *percentage, 
 		char (*target)[NODE_LABEL_CAP], size_t *target_length, 
 		char (*criteria)[16], size_t *criteria_length,
-		int_fast64_t *context){
+		int_fast64_t *context,
+		String *intent){
 	*percentage = -1;
 	*target_length = 0;
 	*criteria_length = 0;
 	*context = -1;
-
-	memcpy(*criteria, "activation", FSIZE("activation"));
 
 	for (size_t i = 0; i < doc->u.object.length; i++){
 		json_object_entry entry = doc->u.object.values[i];
@@ -135,17 +185,21 @@ static _Bool decompose_command_2_params(
 			(*target)[*target_length] = '\0';
 		}
 		if (!strcmp(entry.name, "criteria") && entry.value->type == json_string){
-			*criteria_length = MIN(entry.value->u.string.length, 16);
+			*criteria_length = MIN(entry.value->u.string.length, 15);
 
 			if (
 					strcmp(entry.value->u.string.ptr, "weight") != 0 &&
 					strcmp(entry.value->u.string.ptr, "activation") != 0
-			   ) continue;
+			   ){
+				CatFixed(ErrorBuff, "Error : \"criteria\" parameter must be \"activation\" or \"weight\".\n");
+				return 0;
+			};
 
 			memcpy(*criteria, entry.value->u.string.ptr, *criteria_length);
 			(*criteria)[*criteria_length] = '\0';
 		}
 		if (!strcmp(entry.name, "context") && entry.value->type == json_string){
+			lowerAll(&entry.value->u.string.ptr, entry.value->u.string.length);
 			for (uint_fast8_t i = 0; i < CONTEXT_COUNT; i++){
 				if (strcmp(entry.value->u.string.ptr, NodeAt(Contexts[i])->label) == 0){
 					*context = Contexts[i];
@@ -158,10 +212,12 @@ static _Bool decompose_command_2_params(
 				return 0;
 			}
 		}
-			
+		if (!strcmp(entry.name, "intent") && entry.value->type == json_string){
+			CatString(intent, entry.value->u.string.ptr, entry.value->u.string.length);
+		}
 	}
 
-	if (*percentage == -1 || *target_length == 0 || *context == -1){
+	if (*percentage == -1 || *target_length == 0 || *context == -1 || *criteria_length == 0){
 		CatFixed(ErrorBuff, "Error : You must pass a \"percentage\" argument (1-100), a filter \"criteria\" (activation / weight) and a \"context\" (Node parent) in command 2. Available Contexts:\n");
 		print_global_context_nodes(ErrorBuff, "\n\n");
 		return 0;
@@ -183,7 +239,9 @@ static void run2(json_value* doc, String *dynamic_mem){
 	char criteria[16];
 	size_t criteria_length;
 
-	if (!decompose_command_2_params(doc, dynamic_mem, &percentage, &target, &target_length, &criteria, &criteria_length, &context)) return;
+	String intent; InitString(&intent, 256);
+
+	if (!decompose_command_2_params(doc, dynamic_mem, &percentage, &target, &target_length, &criteria, &criteria_length, &context, &intent)) return;
 
 	Node* node = FindNode(target, target_length, NodeAt(context));
 
@@ -213,12 +271,18 @@ static void run2(json_value* doc, String *dynamic_mem){
 	InitString(&data, count * (NODE_LABEL_CAP + 128) + 32);
 	cassert(data.p, "Can't allocate memory for string here.\n");
 
-	CatFixed(&data, "Top ");
+	if (*intent.p != '\0'){
+		CatFixed(&data, "Model Intention : \"");
+		CatString(&data, intent.p, intent.len);
+		CatFixed(&data, "\"\n\nTop ");
+	}else{
+		CatFixed(&data, "Top ");
+	}
 
 	cat_perc_to_buffer(&data, percentage);
 
 	char s[256];
-	size_t len = sprintf(s, "%c nodes related to [\"%s\"] by relative %s:\n", '%', target, criteria);
+	size_t len = sprintf(s, "%c nodes related to [\"%s\"] by %s:\nCommand Result: ", '%', target, criteria);
 
 	CatString(&data, s, len);
 
@@ -251,7 +315,8 @@ static _Bool decompose_command_3_params(
 	char (*target)[NODE_LABEL_CAP], size_t *target_length,
 	int_fast64_t *context,
 	int_fast64_t *percA, int_fast64_t *percW,
-	int_fast64_t *depth
+	int_fast64_t *depth,
+	String *intent
 	){
 
 	*target_length = 0;
@@ -274,6 +339,7 @@ static _Bool decompose_command_3_params(
 		if (!strcmp(entry.name, "percW") && entry.value->type == json_integer)
 			*percW = entry.value->u.integer;
 		if (!strcmp(entry.name, "context") && entry.value->type == json_string){
+			lowerAll(&entry.value->u.string.ptr, entry.value->u.string.length);
 			for (uint_fast8_t i = 0; i < CONTEXT_COUNT; i++){
 				if (strcmp(entry.value->u.string.ptr, NodeAt(Contexts[i])->label) == 0){
 					*context = Contexts[i];
@@ -286,7 +352,9 @@ static _Bool decompose_command_3_params(
 				return 0;
 			}
 		}
-			
+		if (!strcmp(entry.name, "intent") && entry.value->type == json_string){
+			CatString(intent, entry.value->u.string.ptr, entry.value->u.string.length);
+		}
 	}
 
 	if ((*percW == -1 && *percA == -1) || *target_length == 0 || *context == -1){
@@ -312,8 +380,9 @@ static void run3(json_value* doc, String *dynamic_mem){
 	size_t target_length = 0;
 
 	int_fast64_t percA, percW, depth, context;
+	String intent; InitString(&intent, 256);
 
-	if (!decompose_command_3_params(doc, dynamic_mem, &target, &target_length, &context, &percA, &percW, &depth)) return;
+	if (!decompose_command_3_params(doc, dynamic_mem, &target, &target_length, &context, &percA, &percW, &depth, &intent)) return;
 					  
 	Node* node = FindNode(target, target_length, NodeAt(context));
 
@@ -327,6 +396,14 @@ static void run3(json_value* doc, String *dynamic_mem){
 	
 	size_t res_length = 0;
 	char* result = ComputeNodeFamily(node, percA, percW, depth, &res_length);
+
+	if (*intent.p != '\0'){
+		CatFixed(dynamic_mem, "Model Intention : \"");
+		CatString(dynamic_mem, intent.p, intent.len);
+		CatFixed(dynamic_mem, "\nCommand Result: ");
+	}else{
+		CatFixed(dynamic_mem, "Command Result: ");
+	}
 
 	CatString(dynamic_mem, result, res_length);
 
@@ -371,8 +448,7 @@ static void exec_response(json_value* doc, String *dynamic_mem, size_t depth, ch
 }
 
 // TODO : handle cassert
-static void think(DS_memory *mem, String *out, size_t depth){
-
+static _Bool think(DS_memory *mem, String *out, size_t depth){
 	// Setup prompt
 	String prompt;
 	InitString(&prompt, mem->dynamic.len + mem->persistent.len + 1);
@@ -385,8 +461,8 @@ static void think(DS_memory *mem, String *out, size_t depth){
 	cassert(response, "Error : Coudln't read response");
 
 	char header[32];
-	CatString(&mem->dynamic, header, sprintf(header, "Round [%zu]:\n", depth));
-	CatString(&mem->dynamic, response, respsize);
+	CatString(&mem->dynamic, header, sprintf(header, "\n\n------------- Round [%zu]:\n\n", depth));
+	//CatString(&mem->dynamic, response, respsize);
 
 	// Parse JSON
 	json_value *doc = json_parse(response, respsize);
@@ -414,7 +490,7 @@ static void think(DS_memory *mem, String *out, size_t depth){
 			free(response);
 			json_value_free(doc);
 
-			return;
+			return 0;
 		}
 		free(conclusion);
 	}
@@ -423,18 +499,27 @@ static void think(DS_memory *mem, String *out, size_t depth){
 	free(response);
 	json_value_free(doc);
 
-	think(mem, out, depth + 1);
+	return 1;
 }
 
-char* start_ds_session(){
+char* start_ds_session(Task *task){
 	DS_memory mem;
 	if (massert(init_ds_memory(&mem), "Couldn't allocate memory for ds session"))
 		return NULL;
 
 	String out;
 	InitString(&out, DS_OUT_MEMORY_SIZE);
+	
+	size_t req_space = sprintf(mem.persistent.p, DS_PERSISTENT_PROMPT, task->name);
+	cassert(req_space < mem.persistent.cap - 1, "Error : Increase Persistent memory size (Macro) to solve this.\n");
+	mem.persistent.len = req_space;
 
-	think(&mem, &out, 0);
+	size_t depth = 0;
+	do{
+		_Bool status = think(&mem, &out, depth++);
+		if (status == 0) break;
+		cassert(depth < 100, "Depth went way too high");
+	} while (1);
 
 	printf("Memory : %s", mem.dynamic.p);
 	free_ds_memory(&mem);

@@ -51,6 +51,8 @@ Node* AddNodeEx(char* label, size_t label_len, double activation, double weight,
 		Nodes.items = tmp;
 		Nodes.capacity = new_capacity;
 	}
+	
+	lowerAll(&label, label_len);
 
 	Node* node = NodeAt(Nodes.count);
 	node->labelLength = label_len;
@@ -72,11 +74,10 @@ Node* AddNodeEx(char* label, size_t label_len, double activation, double weight,
 		node->hasParent = 1;
 	}
 
-	if (fertile){
+	if (fertile)
 		node->childrenIndex = dic_new(INIT_CHILDREN_COUNT);
-	}else{
+	else
 		node->childrenIndex = NULL;
-	}
 
 	Nodes.count ++;
 
@@ -125,9 +126,12 @@ _Bool UniLinkEx(Node* A, Node* B, double activation, double weight){
 		A->nsize = new_capacity;
 	}
 
-	A->neighbours[A->ncount].activation = activation;
-	A->neighbours[A->ncount].weight = weight;
-	A->neighbours[A->ncount].target = B->globalIndex;
+	Connection* c = A->neighbours + A->ncount;
+	c->activation = activation;
+	c->weight = weight;
+
+	c->target = B->globalIndex;
+	c->source = A->globalIndex;
 
 	A->ncount ++;
 
@@ -149,8 +153,10 @@ _Bool BiLinkEx(Node* A, Node* B, double activation, double weight){
 	return UniLinkEx(A, B, activation, weight) && UniLinkEx(B, A, activation, weight);
 }
 
+// TODO : Remove lowerAll by assuring it's imposibile for uppercase characters to appear in the first place.
 Node* FindNode(char* target, uint_fast8_t length, Node* parent){
 	if (parent == NULL || target == NULL || length == 0) return NULL;
+	lowerAll(&target, (size_t) length);
 
 	if (dic_find(parent->childrenIndex, (void*)target, length)){
 		long index = *parent->childrenIndex->value;
@@ -200,4 +206,26 @@ double readConnectionWeight(Connection* c){
         o *= n->weight;
     }
     return o;
+}
+
+void inceraseNodeActivation(Node* n){
+	n->activation += NODE_ACT_INCR;
+}
+
+void inceraseNodeWeight(Node* n){
+	n->weight += NODE_WGHT_INCR;
+}
+
+void increaseConnectionActivation(Connection *count, size_t neighbour_index){
+	count->activation += CONN_ACT_INCR;
+	// The mirror should have same index on the other side
+	Connection *mirror = NodeAt(count->target)->neighbours + neighbour_index;
+	mirror->activation += CONN_ACT_INCR;
+}
+
+void increaseConnectionWeight(Connection *count, size_t neighbour_index){
+	count->weight += CONN_WGHT_INCR;
+	// The mirror should have same index on the other side
+	Connection *mirror = NodeAt(count->target)->neighbours + neighbour_index;
+	mirror->weight += CONN_WGHT_INCR;
 }

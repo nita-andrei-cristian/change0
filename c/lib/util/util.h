@@ -50,6 +50,8 @@ void cassert(_Bool assertion, char* message); // critical assert
 #define c_str(s) ((s)->p)
 #define CatFixed(dest, source) (CatString((dest), (source), FSIZE((source))))
 
+void lowerAll(char** s, size_t len);
+
 typedef struct {
 	char* p;
 	size_t len;

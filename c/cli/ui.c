@@ -41,6 +41,13 @@ static void SetUpContexts(){
 	}
 }
 
+static void make_mock_task(Task* task){
+	char str[] = "Help Mark launch become rich.";
+
+	memcpy(task->name, str, FSIZE(str));
+	task->minDepth = 10;
+}
+
 void UIStart(){
 	InitNodes();
 	SetUpContexts();
@@ -96,7 +103,11 @@ static void Run(int i){
 	}
 
 	if (INPUT_TYPE[i] == DEEPRESEARCH){
-		char *out = start_ds_session();
+		Task task;
+
+		make_mock_task(&task);
+
+		char *out = start_ds_session(&task);
 		if (out){
 			printf("Deep research result : \n\n%s\n", out);
 			free(out);

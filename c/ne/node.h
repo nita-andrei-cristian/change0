@@ -12,12 +12,14 @@
 #define NODE_NBRS_CAP 4 // NEIGHBOURS
 
 #define NODE_ACT_DECAY 0.95
+#define NODE_WGHT_DECAY 0.99
 #define CONN_ACT_DECAY 0.95
 #define CONN_WGT_DECAY 0.99
 
 #define NODE_ACT_INCR 0.05
+#define NODE_WGHT_INCR 0.01
 #define CONN_ACT_INCR 0.05
-#define CONN_WGT_INCR 0.01
+#define CONN_WGHT_INCR 0.01
 
 #define NODE_INIT_ACT 1
 #define NODE_INIT_WGHT 1
@@ -54,6 +56,7 @@ typedef struct ConnectionType {
 	double activation;
 	double weight;
 	size_t target;
+	size_t source;
 } Connection;
 
 struct {
@@ -92,11 +95,11 @@ _Bool BiLinkEx(Node* A, Node* B, double activation, double weight);
 size_t ConnectionCount = 0;
 
 char context_labels[CONTEXT_COUNT][NODE_LABEL_CAP] = {
-	"Profesie",
-	"Emotie",
-	"Pasiuni",
-	"Generalitati",
-	"Subiectiv",
+	"profesie",
+	"emotie",
+	"pasiuni",
+	"generalitati",
+	"subiectiv",
 };
 size_t Contexts[CONTEXT_COUNT];
 
@@ -104,5 +107,10 @@ double readNodeActivation(Node* n);
 double readNodeWeight(Node* n);
 double readConnectionActivation(Connection* c);
 double readConnectionWeight(Connection* c);
+
+void inceraseNodeActivation(Node* n);
+void inceraseNodeWeight(Node* n);
+void increaseConnectionActivation(Connection *count, size_t neighbour_index);
+void increaseConnectionWeight(Connection *count, size_t neighbour_index);
 
 #endif

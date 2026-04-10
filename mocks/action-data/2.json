@@ -2,7 +2,8 @@
   "command": 3,
   "context" : "Profesie",
   "node": "asteptari",
-  "depth": 5,
+  "depth": 1,
   "percW": 30,
-  "percA": 90
+  "percA": 90,
+  "intent" : "Let me do a quick deep search here... Maybe I will follow this thread."
 }

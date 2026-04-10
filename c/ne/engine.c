@@ -63,36 +63,31 @@ static void AddNodesFromEntry(json_object_entry* entry, size_t context){
 	
 }
 
-static void ProcessArrayLinkage(json_value *entry, double weight, double activation, size_t context){
-	if (!entry) return;
-	if (entry->type != json_array || entry->u.array.length < 2) return;
-	for (size_t i = 0; i < entry->u.array.length; i++){
-		size_t j = (i + 1) % entry->u.array.length;
+static _Bool ProcessArrayLinkage(json_value *entry, double weight, double activation, size_t context){
+	if (!entry) return 0;
 
-		json_value* a = entry->u.array.values[i];
-		json_value* b = entry->u.array.values[j];
+	if (entry->type != json_array && entry->u.array.length != 2) return 0;
 
-		if (a->type != json_string) continue;
-		if (b->type != json_string) continue;
+	json_value* a = entry->u.array.values[0];
+	json_value* b = entry->u.array.values[1];
 
-		Node* A = FindNode(a->u.string.ptr, a->u.string.length, NodeAt(context));
-		if (!A) continue;
-		Node* B = FindNode(b->u.string.ptr, b->u.string.length, NodeAt(context));
-		if (!B) continue;
 
-		printf("Linking %s, %s\n", A->label, B->label);
+	cassert(a->type == json_string && b->type == json_string, "Error: Nodes are not strings");
 
-		UniLink(A, B);
-		A->neighbours[A->ncount - 1].activation = activation;
-		A->neighbours[A->ncount - 1].weight = weight;
+	Node* A = FindNode(a->u.string.ptr, a->u.string.length, NodeAt(context));
+	if (!A) return 1;
+	Node* B = FindNode(b->u.string.ptr, b->u.string.length, NodeAt(context));
+	if (!B) return 1;
 
-	}
+	BiLink(A, B);
+
+	return 1;
 }
 
 // link a->b b->c c->d d->a
 static void AddConnectionFromEntry(json_value* val, size_t context){
 	if (!val) return;
-	ProcessArrayLinkage(val, NODE_INIT_ACT, NODE_INIT_WGHT, context); // just in case we're working with a direct array
+	//cassert(ProcessArrayLinkage(val, NODE_INIT_ACT, NODE_INIT_WGHT, context), "Problem when direct adding nodes"); // just in case we're working with a direct array
 	if (val->type != json_object) return;
 	
 	double activation = NODE_INIT_ACT;
@@ -118,7 +113,7 @@ static void AddConnectionFromEntry(json_value* val, size_t context){
 		}
 	}
 
-	ProcessArrayLinkage(arr, weight, activation, context);
+	cassert(ProcessArrayLinkage(arr, weight, activation, context), "Problem when creaing connections list, btw size must be two.");
 	
 }
 
@@ -278,6 +273,7 @@ _Bool ValidateContext(json_value *document, size_t *context){
 		json_object_entry entry = document->u.object.values[i];
 		if (strcmp(entry.name, "context") == 0 && entry.value->type == json_string){
 			// linear search (Small context sample)
+			lowerAll(&entry.value->u.string.ptr, entry.value->u.string.length);
 			for (uint_fast8_t i = 0; i < CONTEXT_COUNT; i++){
 				if (strcmp(entry.value->u.string.ptr, NodeAt(Contexts[i])->label) == 0){
 					*context = Contexts[i];
@@ -288,4 +284,18 @@ _Bool ValidateContext(json_value *document, size_t *context){
 		}
 	}
 	return 0;
+}
+
+void heartbeat(){
+	// decrease connection and activation on every instance
+	for (size_t i = 0; i < Nodes.count; i++){
+		Node* n = NodeAt(i);
+		n->activation *= NODE_ACT_DECAY;
+		n->weight *= NODE_WGHT_DECAY;
+
+		for (size_t j = 0; j < n->ncount; j++){
+			n->neighbours[j].activation *= CONN_ACT_DECAY;
+			n->neighbours[j].weight *= CONN_WGT_DECAY;
+		}
+	}
 }

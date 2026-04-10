@@ -20,6 +20,7 @@ void **FilterTopPercent(
 );
 
 Node** FilterNodeByActivationGlobal(int_fast64_t percentage, size_t *count);
+Node** FilterNodeByWeightGlobal(int_fast64_t percentage, size_t *count);
 
 Connection** FilterNodeNeighboursByActivation(
     Node* node,

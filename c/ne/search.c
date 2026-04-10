@@ -136,15 +136,14 @@ Connection** FilterNodeNeighboursByWeight(
     );
 }
 
-// We assume the node exists, if not, too bad.
-char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth, double lastA, double lastW, size_t *count){
+char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth, double last_conn_a, double last_conn_w, size_t *count){
 	if (depth == 0 || node == NULL) return NULL;
 	if (depth == 1){
 		// last one
 		char* out = malloc(128 + NODE_LABEL_CAP);
 		if (!out) return NULL;
-		if (lastA || lastW)
-			*count = sprintf(out, "{\"NodeName\" : \"%s\", \"act\" : %.2f, \"wght\" : %.2f},", node->label, lastA, lastW);
+		if (last_conn_a || last_conn_w)
+			*count = sprintf(out, "{\"NodeName\": \"%s\", \"node_act\": %.2f, \"node_wght\": %.2f, \"connection_act\": %.2f, \"connection_wght\": %.2f},", node->label, node->activation, node->weight, last_conn_a, last_conn_w);
 		else
 			*count = sprintf(out, "{\"NodeName\" : \"%s\"},", node->label);
 		
@@ -189,10 +188,10 @@ char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth,
 
 	char buff[256 + NODE_LABEL_CAP];
 	size_t header_len;
-	if (lastA || lastW)
-		header_len = sprintf(buff, "{\"NodeName\" : \"%s\", \"act\" : %.2f, \"wght\" : %.2f, \"children\" : [", node->label, lastA, lastW);
+	if (last_conn_a || last_conn_w)
+		header_len = sprintf(buff, "{\"NodeName\" : \"%s\", \"connection_act\": %.2f, \"connection_wght\": %.2f, \"node_act\": %.2f, \"node_wght\": %.2f, \"connectedTo\" : [", node->label, last_conn_a, last_conn_w, node->activation, node->weight);
 	else
-		header_len = sprintf(buff, "{\"NodeName\" : \"%s\", \"children\" : [", node->label);
+		header_len = sprintf(buff, "{\"NodeName\" : \"%s\", \"connectedTo\" : [", node->label);
 
 	memcpy(out, buff, header_len); *count += header_len;
 
@@ -257,6 +256,8 @@ char* ComputeNodeFamily(Node* node, int_fast64_t percA, int_fast64_t percW, size
 
 	if (count > 0 && root[count-1] == ',') count--;
 	memcpy(base + *length, root, count); *length += count;
+	base[*length] = '\n'; (*length)++;
+	base[*length] = '\n'; (*length)++;
 	base[*length] = '\0';
 
 	free(root);
