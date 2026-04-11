@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "time.h"
 #include "../lib/hd/hashdict.h"
 
 #define CONTEXT_COUNT 5
@@ -39,6 +40,7 @@
 
 typedef struct NodeType {
 	char label[NODE_LABEL_CAP];
+	_Bool hasParent;
 	uint_fast8_t labelLength;
 
 	double weight;
@@ -47,7 +49,9 @@ typedef struct NodeType {
 	struct ConnectionType *neighbours;
 	size_t nsize, ncount, globalIndex;
 
-	_Bool hasParent;
+	time_t lastAccessedActivation;
+	time_t lastAccessedWidth;
+
 	size_t parent;
 	struct dictionary *childrenIndex;
 } Node;
@@ -55,6 +59,8 @@ typedef struct NodeType {
 typedef struct ConnectionType {
 	double activation;
 	double weight;
+	time_t lastAccessedActivation;
+	time_t lastAccessedWidth;
 	size_t target;
 	size_t source;
 } Connection;
@@ -86,6 +92,8 @@ Node* AddInfertileNodeInParent(
 		size_t label_len,
 		size_t parent
 		);
+
+Connection* LinkExists(Node* A, Node* B);
 
 _Bool UniLinkEx(Node* A, Node* B, double activation, double weight);
 _Bool UniLink(Node* A, Node* B);

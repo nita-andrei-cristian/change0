@@ -63,6 +63,9 @@ Node* AddNodeEx(char* label, size_t label_len, double activation, double weight,
 	node->activation = NODE_INIT_ACT + (rand() % 100) * 0.05;
 	node->weight = NODE_INIT_WGHT;
 	node->hasParent = 0;
+
+	node->lastAccessedActivation = time(NULL);
+	node->lastAccessedWidth = time(NULL);
 	
 	memcpy(node->label, label, node->labelLength);
 	node->label[node->labelLength] = '\0';
@@ -96,12 +99,15 @@ Connection* LinkExists(Node* A, Node* B){
 		if (A->neighbours[i].target == B->globalIndex){
 			// HIT
 			// TODO when adding a new connection, increase activation based on its initial activation
-			
-			/*
-			A->neighbours[i].activation += CONN_ACT_INCR;
-			A->neighbours[i].weight += CONN_WGT_INCR;
-			*/
 			return &(A->neighbours[i]);
+		};
+	}
+
+	for (size_t i = 0; i < B->ncount; i++){
+		if (B->neighbours[i].target == A->globalIndex){
+			// HIT
+			// TODO when adding a new connection, increase activation based on its initial activation
+			return &(B->neighbours[i]);
 		};
 	}
 
@@ -127,11 +133,15 @@ _Bool UniLinkEx(Node* A, Node* B, double activation, double weight){
 	}
 
 	Connection* c = A->neighbours + A->ncount;
+
 	c->activation = activation;
 	c->weight = weight;
 
 	c->target = B->globalIndex;
 	c->source = A->globalIndex;
+
+	c->lastAccessedActivation = time(NULL);
+	c->lastAccessedWidth = time(NULL);
 
 	A->ncount ++;
 

@@ -6,13 +6,6 @@
 #include <../lib/util/util.h>
 
 static void AddNodeFromEntry(json_value *val, size_t context){
-	if (val->type == json_string){
-		printf("Adding [%s]\n", val->u.string.ptr);
-
-		AddInfertileNodeInParent(val->u.string.ptr, val->u.string.length, context); 
-
-		return;
-	}
 	if (val->type != json_object) return;
 	if (val->u.object.length == 0) return;
 
@@ -49,7 +42,12 @@ static void AddNodeFromEntry(json_value *val, size_t context){
 
 	}
 
-	if (constructable)
+	if (!constructable) return;
+
+	Node* existing = FindNode(name, len, NodeAt(context));
+	if (existing)
+		existing->lastAccessedActivation = time(NULL);
+	else
 		AddNodeEx(name, len, activation, weight, 1, context, 0);
 }
 
@@ -76,10 +74,17 @@ static _Bool ProcessArrayLinkage(json_value *entry, double weight, double activa
 
 	Node* A = FindNode(a->u.string.ptr, a->u.string.length, NodeAt(context));
 	if (!A) return 1;
+	A->lastAccessedActivation = time(NULL);
 	Node* B = FindNode(b->u.string.ptr, b->u.string.length, NodeAt(context));
 	if (!B) return 1;
+	B->lastAccessedActivation = time(NULL);
 
-	BiLink(A, B);
+	Connection* existing = LinkExists(A, B);
+
+	if(existing)
+		existing->lastAccessedActivation = time(NULL);
+	else
+		BiLink(A, B);
 
 	return 1;
 }
