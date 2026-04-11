@@ -235,3 +235,10 @@ void touch_node(Node *n, uint_fast8_t power, time_t now)
     n->lastAccessedActivation = now;
     n->pendingActivationTouches += power;
 }
+
+void touch_connection(Connection *c, uint_fast8_t power, time_t now)
+{
+    if (!c) return;
+    c->lastAccessedActivation = now;
+    c->pendingActivationTouches += power;
+}

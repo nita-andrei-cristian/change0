@@ -10,6 +10,6 @@ _Bool ExportGraphTo(char* path);
 
 _Bool ValidateContext(json_value *document, size_t *context);
 
-void RefreshNodes();
+void RefreshItems();
 
 #endif

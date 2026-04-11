@@ -119,5 +119,6 @@ double readConnectionActivation(Connection* c);
 double readConnectionWeight(Connection* c);
 
 void touch_node(Node *n, uint_fast8_t, time_t now);
+void touch_connection(Connection *c, uint_fast8_t, time_t now);
 
 #endif

@@ -64,7 +64,7 @@ static void AddNodesFromEntry(json_object_entry* entry, size_t context){
 	
 }
 
-static _Bool ProcessArrayLinkage(json_value *entry, double weight, double activation, size_t context){
+static _Bool ProcessArrayLinkage(json_value *entry, double weight, double activation, size_t context, time_t now){
 	if (!entry) return 0;
 
 	if (entry->type != json_array && entry->u.array.length != 2) return 0;
@@ -85,7 +85,7 @@ static _Bool ProcessArrayLinkage(json_value *entry, double weight, double activa
 	Connection* existing = LinkExists(A, B);
 
 	if(existing)
-		existing->lastAccessedActivation = time(NULL);
+		touch_connection(existing, (uint_fast8_t) (activation / CONN_INIT_ACT), now);
 	else
 		BiLink(A, B);
 
@@ -93,7 +93,7 @@ static _Bool ProcessArrayLinkage(json_value *entry, double weight, double activa
 }
 
 // link a->b b->c c->d d->a
-static void AddConnectionFromEntry(json_value* val, size_t context){
+static void AddConnectionFromEntry(json_value* val, size_t context, time_t now){
 	if (!val) return;
 	//cassert(ProcessArrayLinkage(val, NODE_INIT_ACT, NODE_INIT_WGHT, context), "Problem when direct adding nodes"); // just in case we're working with a direct array
 	if (val->type != json_object) return;
@@ -121,7 +121,7 @@ static void AddConnectionFromEntry(json_value* val, size_t context){
 		}
 	}
 
-	cassert(ProcessArrayLinkage(arr, weight, activation, context), "Problem when creaing connections list, btw size must be two.");
+	cassert(ProcessArrayLinkage(arr, weight, activation, context, now), "Problem when creaing connections list, btw size must be two.");
 	
 }
 
@@ -129,9 +129,10 @@ static void AddConnectionsFromEntry(json_object_entry* entry, size_t context){
 	if (entry->value == NULL) return;
 	if (entry->value->type != json_array) return;
 
+	time_t now = time(NULL);
 	for (size_t i = 0; i < entry->value->u.array.length; i++)
 		// Adding a connection
-		AddConnectionFromEntry(entry->value->u.array.values[i], context);
+		AddConnectionFromEntry(entry->value->u.array.values[i], context, now);
 
 }
 
@@ -308,6 +309,22 @@ static double decay_from_to(double value, time_t from, time_t to)
     return value * pow(2.0, -dt / ACT_HALFTIME);
 }
 
+
+void refresh_connection(Connection *c, time_t now, double boost_per_touch)
+{
+    if (!c) return;
+
+    // First decay old accumulated activation
+    c->activation = decay_from_to(c->activation, c->lastAccessedActivation, now);
+
+    // Then add pending touches
+    //n->activation += boost_per_touch * (double)n->pendingActivationTouches;
+    c->activation += boost_per_touch * log1p((double)c->pendingActivationTouches);// TODO Try to switch here to see if the formula is better, this is smoother
+
+    c->pendingActivationTouches = 0;
+    c->lastAccessedActivation = now;
+}
+
 void refresh_node(Node *n, time_t now, double boost_per_touch)
 {
     if (!n) return;
@@ -323,12 +340,14 @@ void refresh_node(Node *n, time_t now, double boost_per_touch)
     n->lastAccessedActivation = now;
 }
 
-void RefreshNodes(){
+void RefreshItems(){
 	// decrease connection and activation on every instance
 	time_t currTime = time(NULL);
 
 	for (size_t i = 0; i < Nodes.count; i++){
 		Node* n = NodeAt(i);
+		for (size_t j = 0; j < n->ncount; j++)
+			refresh_connection(&n->neighbours[j], currTime, CONN_ACT_INCR);
 		refresh_node(n, currTime, NODE_ACT_INCR);
 	}
 }

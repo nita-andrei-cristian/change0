@@ -26,8 +26,8 @@ void free_ds_memory(DS_memory *d){
 
 static char* mock_ai_run(char* prompt, size_t *size){
 	char path[128];
-	//sprintf(path, "/home/nita/dev/c/change2/mocks/action-data/%d.json", rand() % 4);
-	sprintf(path, "/home/nita/dev/c/change2/mocks/action-data/%d.json", 0);
+	sprintf(path, "/home/nita/dev/c/change2/mocks/action-data/%d.json", rand() % 4);
+	//sprintf(path, "/home/nita/dev/c/change2/mocks/action-data/%d.json", 0);
 	return readFile(path, size);
 }
 
@@ -521,14 +521,22 @@ char* start_ds_session(Task *task){
 	cassert(req_space < mem.persistent.cap - 1, "Error : Increase Persistent memory size (Macro) to solve this.\n");
 	mem.persistent.len = req_space;
 
-	RefreshNodes();
+	RefreshItems();
 
 	size_t depth = 0;
-	do{
+#if 0   
+	do {
 		_Bool status = think(&mem, &out, depth++);
 		if (status == 0) break;
 		cassert(depth < 100, "Depth went way too high");
 	} while (0);
+#else
+	do {
+		_Bool status = think(&mem, &out, depth++);
+		if (status == 0) break;
+		cassert(depth < 100, "Depth went way too high");
+	} while (1);
+#endif
 
 	printf("Memory : %s", mem.dynamic.p);
 	free_ds_memory(&mem);
