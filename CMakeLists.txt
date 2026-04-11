@@ -26,6 +26,8 @@ target_include_directories(search PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 target_include_directories(deepsearch PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 
 target_link_libraries(jsonp PRIVATE m) # add math
+target_link_libraries(engine PRIVATE m) # add math
+target_link_libraries(node PRIVATE m) # add math
 
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 

@@ -3,8 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../lib/jsonp/json.h"
-#include "../lib/util//util.h"
+#include "../lib/util/util.h"
 #include "search.h"
+#include "engine.h"
 
 _Bool init_ds_memory(DS_memory *d){
 	if (!d) return 0;
@@ -25,7 +26,8 @@ void free_ds_memory(DS_memory *d){
 
 static char* mock_ai_run(char* prompt, size_t *size){
 	char path[128];
-	sprintf(path, "/home/nita/dev/c/change2/mocks/action-data/%d.json", rand() % 4);
+	//sprintf(path, "/home/nita/dev/c/change2/mocks/action-data/%d.json", rand() % 4);
+	sprintf(path, "/home/nita/dev/c/change2/mocks/action-data/%d.json", 0);
 	return readFile(path, size);
 }
 
@@ -502,6 +504,11 @@ static _Bool think(DS_memory *mem, String *out, size_t depth){
 	return 1;
 }
 
+// TODO Implement a score mechanism as a third way of searching andd the default one.
+// a node value is (weight * 0.8) + (activation * 0.3)
+// Or even make it in more "human" formats like variants of a * weight + b * activation
+// where a and b depend on the context
+
 char* start_ds_session(Task *task){
 	DS_memory mem;
 	if (massert(init_ds_memory(&mem), "Couldn't allocate memory for ds session"))
@@ -514,12 +521,14 @@ char* start_ds_session(Task *task){
 	cassert(req_space < mem.persistent.cap - 1, "Error : Increase Persistent memory size (Macro) to solve this.\n");
 	mem.persistent.len = req_space;
 
+	RefreshNodes();
+
 	size_t depth = 0;
 	do{
 		_Bool status = think(&mem, &out, depth++);
 		if (status == 0) break;
 		cassert(depth < 100, "Depth went way too high");
-	} while (1);
+	} while (0);
 
 	printf("Memory : %s", mem.dynamic.p);
 	free_ds_memory(&mem);

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "node.h"
 #include "../lib/util/util.h"
@@ -37,7 +38,7 @@ _Bool InitNodes(){
 }
 
 // Parent can be Nullable
-Node* AddNodeEx(char* label, size_t label_len, double activation, double weight, _Bool hasParent, size_t parent, _Bool fertile){
+Node* AddNodeEx(char* label, size_t label_len, double activation, double weight, _Bool hasParent, size_t parent, _Bool fertile, time_t now){
 	if (!label || !Nodes.init || !Nodes.items) return NULL;
 	if (label_len > NODE_LABEL_CAP - 2) label[NODE_LABEL_CAP-1] = '\0';
 
@@ -64,8 +65,10 @@ Node* AddNodeEx(char* label, size_t label_len, double activation, double weight,
 	node->weight = NODE_INIT_WGHT;
 	node->hasParent = 0;
 
-	node->lastAccessedActivation = time(NULL);
-	node->lastAccessedWidth = time(NULL);
+	node->lastAccessedActivation = now;
+	node->lastAccessedWidth = now;
+	node->pendingActivationTouches = 0;
+	node->pendingWeightTouches = 0;
 	
 	memcpy(node->label, label, node->labelLength);
 	node->label[node->labelLength] = '\0';
@@ -85,10 +88,6 @@ Node* AddNodeEx(char* label, size_t label_len, double activation, double weight,
 	Nodes.count ++;
 
 	return node;
-}
-
-Node* AddInfertileNodeInParent(char* label, size_t label_len, size_t parent){
-	return AddNodeEx(label, label_len, NODE_INIT_ACT, NODE_INIT_WGHT, 1, parent, 0);
 }
 
 Connection* LinkExists(Node* A, Node* B){
@@ -142,6 +141,8 @@ _Bool UniLinkEx(Node* A, Node* B, double activation, double weight){
 
 	c->lastAccessedActivation = time(NULL);
 	c->lastAccessedWidth = time(NULL);
+	c->pendingActivationTouches = 0;
+	c->pendingWeightTouches = 0;
 
 	A->ncount ++;
 
@@ -218,24 +219,19 @@ double readConnectionWeight(Connection* c){
     return o;
 }
 
-void inceraseNodeActivation(Node* n){
-	n->activation += NODE_ACT_INCR;
+// TODO make lamda time modifyiable in JS
+static double decay_from_to(double value, time_t from, time_t to)
+{
+    double dt = difftime(to, from);
+    if (dt <= 0.0) return value;
+
+    // half-life = 100 seconds
+    return value * pow(2.0, -dt / 100.0);
 }
 
-void inceraseNodeWeight(Node* n){
-	n->weight += NODE_WGHT_INCR;
-}
-
-void increaseConnectionActivation(Connection *count, size_t neighbour_index){
-	count->activation += CONN_ACT_INCR;
-	// The mirror should have same index on the other side
-	Connection *mirror = NodeAt(count->target)->neighbours + neighbour_index;
-	mirror->activation += CONN_ACT_INCR;
-}
-
-void increaseConnectionWeight(Connection *count, size_t neighbour_index){
-	count->weight += CONN_WGHT_INCR;
-	// The mirror should have same index on the other side
-	Connection *mirror = NodeAt(count->target)->neighbours + neighbour_index;
-	mirror->weight += CONN_WGHT_INCR;
+void touch_node(Node *n, uint_fast8_t power, time_t now)
+{
+    if (!n) return;
+    n->lastAccessedActivation = now;
+    n->pendingActivationTouches += power;
 }

@@ -17,10 +17,12 @@
 #define CONN_ACT_DECAY 0.95
 #define CONN_WGT_DECAY 0.99
 
-#define NODE_ACT_INCR 0.05
+#define NODE_ACT_INCR 0.5
 #define NODE_WGHT_INCR 0.01
-#define CONN_ACT_INCR 0.05
+#define CONN_ACT_INCR 0.5
 #define CONN_WGHT_INCR 0.01
+
+#define ACT_HALFTIME 100.0
 
 #define NODE_INIT_ACT 1
 #define NODE_INIT_WGHT 1
@@ -51,6 +53,8 @@ typedef struct NodeType {
 
 	time_t lastAccessedActivation;
 	time_t lastAccessedWidth;
+	uint_fast32_t pendingActivationTouches;
+	uint_fast32_t pendingWeightTouches;
 
 	size_t parent;
 	struct dictionary *childrenIndex;
@@ -61,6 +65,8 @@ typedef struct ConnectionType {
 	double weight;
 	time_t lastAccessedActivation;
 	time_t lastAccessedWidth;
+	uint_fast32_t pendingActivationTouches;
+	uint_fast32_t pendingWeightTouches;
 	size_t target;
 	size_t source;
 } Connection;
@@ -85,13 +91,9 @@ Node* AddNodeEx(
 		double weight,
 		_Bool hasParent,
 		size_t parent,
-		_Bool fertile
+		_Bool fertile,
+		time_t now
 	       );
-Node* AddInfertileNodeInParent(
-		char* label,
-		size_t label_len,
-		size_t parent
-		);
 
 Connection* LinkExists(Node* A, Node* B);
 
@@ -116,9 +118,6 @@ double readNodeWeight(Node* n);
 double readConnectionActivation(Connection* c);
 double readConnectionWeight(Connection* c);
 
-void inceraseNodeActivation(Node* n);
-void inceraseNodeWeight(Node* n);
-void increaseConnectionActivation(Connection *count, size_t neighbour_index);
-void increaseConnectionWeight(Connection *count, size_t neighbour_index);
+void touch_node(Node *n, uint_fast8_t, time_t now);
 
 #endif

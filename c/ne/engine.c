@@ -3,9 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 #include "node.h"
+#include "math.h"
 #include <../lib/util/util.h>
 
-static void AddNodeFromEntry(json_value *val, size_t context){
+static void AddNodeFromEntry(json_value *val, size_t context, size_t now){
 	if (val->type != json_object) return;
 	if (val->u.object.length == 0) return;
 
@@ -46,17 +47,19 @@ static void AddNodeFromEntry(json_value *val, size_t context){
 
 	Node* existing = FindNode(name, len, NodeAt(context));
 	if (existing)
-		existing->lastAccessedActivation = time(NULL);
+		touch_node(existing, (uint_fast8_t)(activation / NODE_INIT_ACT), now);
 	else
-		AddNodeEx(name, len, activation, weight, 1, context, 0);
+		AddNodeEx(name, len, activation, weight, 1, context, 0, now);
+
 }
 
 static void AddNodesFromEntry(json_object_entry* entry, size_t context){
 	if (!entry->value) return;
 	if (entry->value->type != json_array || entry->value->u.array.length == 0) return;
 
+	time_t now = time(NULL);
 	for (size_t i = 0; i < entry->value->u.array.length; i++){
-		AddNodeFromEntry(entry->value->u.array.values[i], context);
+		AddNodeFromEntry(entry->value->u.array.values[i], context, now);
 	}
 	
 }
@@ -291,16 +294,41 @@ _Bool ValidateContext(json_value *document, size_t *context){
 	return 0;
 }
 
-void heartbeat(){
+// AI GENERATED CODE
+// TODO
+// 100 means every 100s the nodes half in activation
+// It's actually denoted as lambda in a weird formula so you might want to be more accurate
+// Don't forget to implement this in JS
+static double decay_from_to(double value, time_t from, time_t to)
+{
+    double dt = difftime(to, from);
+    if (dt <= 0.0) return value;
+
+    // half-life = 100 seconds
+    return value * pow(2.0, -dt / ACT_HALFTIME);
+}
+
+void refresh_node(Node *n, time_t now, double boost_per_touch)
+{
+    if (!n) return;
+
+    // First decay old accumulated activation
+    n->activation = decay_from_to(n->activation, n->lastAccessedActivation, now);
+
+    // Then add pending touches
+    //n->activation += boost_per_touch * (double)n->pendingActivationTouches;
+    n->activation += boost_per_touch * log1p((double)n->pendingActivationTouches);// TODO Try to switch here to see if the formula is better, this is smoother
+
+    n->pendingActivationTouches = 0;
+    n->lastAccessedActivation = now;
+}
+
+void RefreshNodes(){
 	// decrease connection and activation on every instance
+	time_t currTime = time(NULL);
+
 	for (size_t i = 0; i < Nodes.count; i++){
 		Node* n = NodeAt(i);
-		n->activation *= NODE_ACT_DECAY;
-		n->weight *= NODE_WGHT_DECAY;
-
-		for (size_t j = 0; j < n->ncount; j++){
-			n->neighbours[j].activation *= CONN_ACT_DECAY;
-			n->neighbours[j].weight *= CONN_WGT_DECAY;
-		}
+		refresh_node(n, currTime, NODE_ACT_INCR);
 	}
 }

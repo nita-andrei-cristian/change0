@@ -31,8 +31,9 @@ static inline void clear(){
 }
 
 static void SetUpContexts(){
+	time_t now = time(NULL);
 	for (int i = 0; i < CONTEXT_COUNT; i++){
-		Node *n = AddNodeEx(context_labels[i], strlen(context_labels[i]), NODE_INIT_ACT, NODE_INIT_WGHT, PARENTLESS, -1, FERTILE);
+		Node *n = AddNodeEx(context_labels[i], strlen(context_labels[i]), NODE_INIT_ACT, NODE_INIT_WGHT, PARENTLESS, -1, FERTILE, now);
 		if(!n){
 			fprintf(stderr, "Critical Error: Couldn't initialize contexts for neuro engine\n");
 			exit(EXIT_FAILURE);
