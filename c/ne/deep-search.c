@@ -27,7 +27,7 @@ void free_ds_memory(DS_memory *d){
 
 static char* mock_ai_run(char* prompt, size_t *size){
 	char path[128];
-	sprintf(path, DEFAULT_MOCK_DIRECTORY "action-data/%d.json", rand() % DEFAULT_MOCK_ACTIONS_COUNT);
+	sprintf(path, DEFAULT_MOCK_DIRECTORY "action-data/action_%03u.json", rand() % DEFAULT_MOCK_ACTIONS_COUNT);
 	return readFile(path, size);
 }
 

@@ -50,7 +50,7 @@ static void AddNodeFromEntry(json_value *val, size_t context, time_t now){
 	if (existing)
 		touch_node(existing, activation, now);
 	else
-		AddNodeEx(name, len, activation, weight, 1, context, 0, now);
+		AddNodeEx(name, len, activation, NODE_INIT_WGHT + weight / 10 , 1, context, 0, now);
 
 }
 
@@ -226,8 +226,8 @@ _Bool ExportGraphTo(char* directory){
 					p,
 					"{\"name\":\"%s\",\"activation\":%.2f,\"weight\":%.2f,\"parent\":%zu,\"id\":%zu}\n",
 					n->label,
-					n->_activation,
-					n->_weight,
+					read_node_activation(n),
+					read_node_weight(n),
 					n->parent,
 					n->globalIndex
 				    );
@@ -236,8 +236,8 @@ _Bool ExportGraphTo(char* directory){
 					p,
 					"{\"name\":\"%s\",\"activation\":%.2f,\"weight\":%.2f,\"id\":%zu}\n",
 					n->label,
-					n->_activation,
-					n->_weight,
+					read_node_activation(n),
+					read_node_weight(n),
 					n->globalIndex
 				    );
 	}
@@ -266,8 +266,8 @@ _Bool ExportGraphTo(char* directory){
 				"{\"nodes\":[%zu,%zu],\"weight\":%.2f,\"activation\":%.2f}\n",
 				n->globalIndex,
 				c.target,
-				c._weight,
-				c._activation
+				read_connection_weight(&c),
+				read_connection_activation(&c)
 			);
 		}
 	}

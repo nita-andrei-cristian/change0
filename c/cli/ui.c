@@ -71,7 +71,7 @@ static void Run(int i){
 	if (INPUT_TYPE[i] == MESSAGE){
 		// mock something
 		char path[64];
-		sprintf(path, DEFAULT_MOCK_DIRECTORY "nodes/%d.json", rand() % DEFAULT_MOCK_NODES_COUNT);
+		sprintf(path, DEFAULT_MOCK_DIRECTORY "nodes/graph_%03u.json", rand() % DEFAULT_MOCK_NODES_COUNT);
 
 		size_t size = 0;
 		char* content = readFile(path, &size);
@@ -86,7 +86,7 @@ static void Run(int i){
 		for (int i = 0; i < DEFAULT_MOCK_NODES_COUNT; i++){
 			// mock something
 			char path[64];
-			sprintf(path, DEFAULT_MOCK_DIRECTORY "nodes/%d.json", i);
+			sprintf(path, DEFAULT_MOCK_DIRECTORY "nodes/graph_%03u.json", i);
 
 			size_t size = 0;
 			char* content = readFile(path, &size);

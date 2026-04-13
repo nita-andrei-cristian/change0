@@ -1,6 +1,0 @@
-{
-  "command": 1,
-  "percentage": 5,
-  "criteria" : "activation",
-  "intent" : "Maybe I should see the most relevant of nodes by activation."
-}

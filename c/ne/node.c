@@ -62,8 +62,8 @@ Node* AddNodeEx(char* label, size_t label_len, double activation, double weight,
 	node->ncount = 0;
 	node->globalIndex = Nodes.count;
 	node->neighbours = malloc(node->nsize * sizeof(Connection));
-	node->_activation = NODE_INIT_ACT + (rand() % 100) * 0.05;
-	node->_weight = NODE_INIT_WGHT;
+	node->_activation = activation;
+	node->_weight = weight;
 	node->hasParent = 0;
 	node->times_seen = 0;
 	node->times_used = 0;

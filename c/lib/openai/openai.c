@@ -14,7 +14,7 @@
 
 #define AI_OPENAI_HOST "api.openai.com"
 #define AI_OPENAI_PORT "443"
-#define AI_OPENAI_RAW_CAP (256 * 1024)
+#define AI_OPENAI_RAW_CAP (4 * 1024 * 1024)
 
 typedef struct {
     int fd;
@@ -288,7 +288,7 @@ ai_openai_status ai_openai_create_response(
     }
 
     size_t body_len = strlen(json_body);
-    size_t cap = body_len + strlen(api_key) + 1024;
+    size_t cap = body_len + strlen(api_key) + 2048;
     char *req = malloc(cap);
     if (!req) return AI_OPENAI_ERR_ALLOC;
 
@@ -328,7 +328,7 @@ ai_openai_status ai_openai_get_response(
         return AI_OPENAI_ERR_ENV;
     }
 
-    size_t cap = strlen(response_id) + strlen(api_key) + 1024;
+    size_t cap = strlen(response_id) + strlen(api_key) + 2048;
     char *req = malloc(cap);
     if (!req) return AI_OPENAI_ERR_ALLOC;
 
