@@ -45,30 +45,29 @@ typedef struct NodeType {
 	_Bool hasParent;
 	uint_fast8_t labelLength;
 
-	double weight;
-	double activation;
+	double _weight;
+	double _activation;
 
 	struct ConnectionType *neighbours;
 	size_t nsize, ncount, globalIndex;
 
-	time_t lastAccessedActivation;
-	time_t lastAccessedWidth;
-	uint_fast32_t pendingActivationTouches;
-	uint_fast32_t pendingWeightTouches;
+	// for activation
+	time_t lastTouched;
+	double pendingTouches;
+
+	uint_fast64_t times_seen;
+	uint_fast64_t times_used;
 
 	size_t parent;
 	struct dictionary *childrenIndex;
 } Node;
 
 typedef struct ConnectionType {
-	double activation;
-	double weight;
-	time_t lastAccessedActivation;
-	time_t lastAccessedWidth;
-	uint_fast32_t pendingActivationTouches;
-	uint_fast32_t pendingWeightTouches;
+	double _activation;
+	double _weight;
+	time_t lastTouched;
+	uint_fast32_t pendingTouches;
 	size_t target;
-	size_t source;
 } Connection;
 
 struct {
@@ -76,6 +75,7 @@ struct {
 	size_t capacity;
 	size_t count;
 
+	_Bool needsRefresh;
 	_Bool init;
 } Nodes;
 
@@ -113,12 +113,12 @@ char context_labels[CONTEXT_COUNT][NODE_LABEL_CAP] = {
 };
 size_t Contexts[CONTEXT_COUNT];
 
-double readNodeActivation(Node* n);
-double readNodeWeight(Node* n);
-double readConnectionActivation(Connection* c);
-double readConnectionWeight(Connection* c);
+double read_node_activation(Node* n);
+double read_node_weight(Node* n);
+double read_connection_activation(Connection* c);
+double read_connection_weight(Connection* c);
 
-void touch_node(Node *n, uint_fast8_t, time_t now);
-void touch_connection(Connection *c, uint_fast8_t, time_t now);
+void touch_node(Node *n, double power, time_t now);
+void touch_connection(Connection *n, double power, time_t now);
 
 #endif

@@ -1,12 +1,11 @@
 #include "engine.h"
 #include <string.h>
 #include <stdio.h>
-#include <string.h>
 #include "node.h"
 #include "math.h"
 #include <../lib/util/util.h>
 
-static void AddNodeFromEntry(json_value *val, size_t context, size_t now){
+static void AddNodeFromEntry(json_value *val, size_t context, time_t now){
 	if (val->type != json_object) return;
 	if (val->u.object.length == 0) return;
 
@@ -45,9 +44,10 @@ static void AddNodeFromEntry(json_value *val, size_t context, size_t now){
 
 	if (!constructable) return;
 
+	// TODO Quick reminder this only makes sense if NODE_INIT_ACT is 1.0 (same for the connections below)
 	Node* existing = FindNode(name, len, NodeAt(context));
 	if (existing)
-		touch_node(existing, (uint_fast8_t)(activation / NODE_INIT_ACT), now);
+		touch_node(existing, activation, now);
 	else
 		AddNodeEx(name, len, activation, weight, 1, context, 0, now);
 
@@ -67,7 +67,7 @@ static void AddNodesFromEntry(json_object_entry* entry, size_t context){
 static _Bool ProcessArrayLinkage(json_value *entry, double weight, double activation, size_t context, time_t now){
 	if (!entry) return 0;
 
-	if (entry->type != json_array && entry->u.array.length != 2) return 0;
+	if (entry->type != json_array || entry->u.array.length != 2) return 0;
 
 	json_value* a = entry->u.array.values[0];
 	json_value* b = entry->u.array.values[1];
@@ -77,15 +77,15 @@ static _Bool ProcessArrayLinkage(json_value *entry, double weight, double activa
 
 	Node* A = FindNode(a->u.string.ptr, a->u.string.length, NodeAt(context));
 	if (!A) return 1;
-	A->lastAccessedActivation = time(NULL);
+	A->lastTouched = time(NULL);
 	Node* B = FindNode(b->u.string.ptr, b->u.string.length, NodeAt(context));
 	if (!B) return 1;
-	B->lastAccessedActivation = time(NULL);
+	B->lastTouched = time(NULL);
 
 	Connection* existing = LinkExists(A, B);
 
 	if(existing)
-		touch_connection(existing, (uint_fast8_t) (activation / CONN_INIT_ACT), now);
+		touch_connection(existing, activation, now);
 	else
 		BiLink(A, B);
 
@@ -153,6 +153,8 @@ _Bool AddContextNodesFromJSON(char *JSON, size_t len){
 		fprintf(stderr, "Error: Context not found or doesn't exist\n");
 		return 0;
 	} 
+
+	Nodes.needsRefresh = 1;
 
 	for (i = 0; i < document->u.object.length; i++){
 		json_object_entry entry = document->u.object.values[i];
@@ -223,8 +225,8 @@ _Bool ExportGraphTo(char* directory){
 					p,
 					"{\"name\":\"%s\",\"activation\":%.2f,\"weight\":%.2f,\"parent\":%zu,\"id\":%zu}\n",
 					n->label,
-					n->activation,
-					n->weight,
+					n->_activation,
+					n->_weight,
 					n->parent,
 					n->globalIndex
 				    );
@@ -233,8 +235,8 @@ _Bool ExportGraphTo(char* directory){
 					p,
 					"{\"name\":\"%s\",\"activation\":%.2f,\"weight\":%.2f,\"id\":%zu}\n",
 					n->label,
-					n->activation,
-					n->weight,
+					n->_activation,
+					n->_weight,
 					n->globalIndex
 				    );
 	}
@@ -263,8 +265,8 @@ _Bool ExportGraphTo(char* directory){
 				"{\"nodes\":[%zu,%zu],\"weight\":%.2f,\"activation\":%.2f}\n",
 				n->globalIndex,
 				c.target,
-				c.weight,
-				c.activation
+				c._weight,
+				c._activation
 			);
 		}
 	}
@@ -310,44 +312,99 @@ static double decay_from_to(double value, time_t from, time_t to)
 }
 
 
-void refresh_connection(Connection *c, time_t now, double boost_per_touch)
+static void refresh_connection(Connection *c, time_t now, double boost_per_touch)
 {
     if (!c) return;
 
-    // First decay old accumulated activation
-    c->activation = decay_from_to(c->activation, c->lastAccessedActivation, now);
+    c->_activation = decay_from_to(c->_activation, c->lastTouched, now);
 
     // Then add pending touches
     //n->activation += boost_per_touch * (double)n->pendingActivationTouches;
-    c->activation += boost_per_touch * log1p((double)c->pendingActivationTouches);// TODO Try to switch here to see if the formula is better, this is smoother
+    c->_activation += boost_per_touch * log1p((double)c->pendingTouches);// TODO Try to switch here to see if the formula is better, this is smoother
 
-    c->pendingActivationTouches = 0;
-    c->lastAccessedActivation = now;
+    c->pendingTouches = 0;
+    c->lastTouched = now;
 }
 
-void refresh_node(Node *n, time_t now, double boost_per_touch)
+static void set_activation(Node *n, time_t now, double boost_per_touch)
 {
     if (!n) return;
 
-    // First decay old accumulated activation
-    n->activation = decay_from_to(n->activation, n->lastAccessedActivation, now);
+    n->_activation = decay_from_to(n->_activation, n->lastTouched, now);
 
     // Then add pending touches
     //n->activation += boost_per_touch * (double)n->pendingActivationTouches;
-    n->activation += boost_per_touch * log1p((double)n->pendingActivationTouches);// TODO Try to switch here to see if the formula is better, this is smoother
+    n->_activation += boost_per_touch * log1p((double)n->pendingTouches);// TODO Try to switch here to see if the formula is better, this is smoother
 
-    n->pendingActivationTouches = 0;
-    n->lastAccessedActivation = now;
+    n->pendingTouches = 0;
+    n->lastTouched = now;
 }
 
-void RefreshItems(){
+void RefreshGraph(){
+	//if (!Nodes.needsRefresh) return;
+	if (!Nodes.init || Nodes.count == 0) return;
+	
 	// decrease connection and activation on every instance
 	time_t currTime = time(NULL);
 
+	double k = 0.2; // TODO make this a constant
+	double c = 0.2; // also this, the penalty of ncount
+		
+	double mx_seen = -1, mx_used = -1, mx_support = -1;
+
+	double *support_buffer = malloc(sizeof(double) * Nodes.count);
+	cassert(support_buffer, "Couldn't allocate memory for support\n");
+
+	// compute maxes for normalziation
 	for (size_t i = 0; i < Nodes.count; i++){
 		Node* n = NodeAt(i);
-		for (size_t j = 0; j < n->ncount; j++)
+
+		if (n->times_seen > mx_seen) mx_seen = n->times_seen;
+		if (n->times_used > mx_used) mx_used = n->times_used;
+
+		// calculate support
+		double support = 0;
+
+		for (size_t j = 0; j < n->ncount; j++){
 			refresh_connection(&n->neighbours[j], currTime, CONN_ACT_INCR);
-		refresh_node(n, currTime, NODE_ACT_INCR);
+			support += read_connection_weight(&n->neighbours[j]) + k * read_connection_activation(&n->neighbours[j]);
+		}
+
+		support /= 1 + 0.2 * n->ncount;
+		support_buffer[i] = support;
+
+		if (support > mx_support) mx_support = support;
 	}
+
+
+	for (size_t i = 0; i < Nodes.count; i++){
+		Node* n = NodeAt(i);
+
+		double seen_norm = 0;
+		double used_norm = 0;
+		double support_norm = 0;
+
+		if (mx_used > 0)
+			used_norm = log1p(n->times_used) / log1p(mx_used);
+		if (mx_seen > 0)
+			seen_norm = log1p(n->times_seen) / log1p(mx_seen);
+		if (mx_support > 0)
+			support_norm = log1p(support_buffer[i]) / log1p(mx_support);
+
+		// TODO turn scalars into constants
+		double merit = 0.6 * support_norm + 0.4 * used_norm;
+		double confidence = seen_norm;
+		double base = NODE_INIT_WGHT;
+		double old_weight = n->_weight;
+		double target_weight = confidence * merit + (1.0 - seen_norm) * base;
+
+		// set weight
+		n->_weight = 0.95 * old_weight + 0.05 * target_weight;
+		
+
+		set_activation(n, currTime, NODE_ACT_INCR);
+	}
+
+	free(support_buffer);
+	Nodes.needsRefresh = 0;
 }

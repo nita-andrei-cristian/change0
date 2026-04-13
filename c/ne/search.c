@@ -117,7 +117,7 @@ Connection** FilterNodeNeighboursByActivation(
         sizeof(Connection),
         percentage,
         count,
-        (GetValueFn) readConnectionActivation
+        (GetValueFn) read_connection_activation
     );
 }
 
@@ -132,18 +132,21 @@ Connection** FilterNodeNeighboursByWeight(
         sizeof(Connection),
         percentage,
         count,
-        (GetValueFn) readConnectionWeight
+        (GetValueFn) read_connection_weight
     );
 }
 
-char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth, double last_conn_a, double last_conn_w, size_t *count){
-	if (depth == 0 || node == NULL) return NULL;
+char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth, double last_conn_a, double last_conn_w, size_t root, _Bool isRoot, size_t *count){
+	if (depth == 0 || node == NULL || (node->globalIndex == root && !isRoot)) return NULL;
 	if (depth == 1){
 		// last one
+		
+		node->times_seen ++;
+		
 		char* out = malloc(128 + NODE_LABEL_CAP);
 		if (!out) return NULL;
 		if (last_conn_a || last_conn_w)
-			*count = sprintf(out, "{\"NodeName\": \"%s\", \"node_act\": %.2f, \"node_wght\": %.2f, \"connection_act\": %.2f, \"connection_wght\": %.2f},", node->label, node->activation, node->weight, last_conn_a, last_conn_w);
+			*count = sprintf(out, "{\"NodeName\": \"%s\", \"node_act\": %.2f, \"node_wght\": %.2f, \"connection_act\": %.2f, \"connection_wght\": %.2f},", node->label, node->_activation, node->_weight, last_conn_a, last_conn_w);
 		else
 			*count = sprintf(out, "{\"NodeName\" : \"%s\"},", node->label);
 		
@@ -172,8 +175,8 @@ char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth,
 	}
 
 	for (size_t i = 0; i < node->ncount; i++) {
-		valuesA[i] = node->neighbours[i].activation;
-		valuesW[i] = node->neighbours[i].weight;
+		valuesA[i] = node->neighbours[i]._activation;
+		valuesW[i] = node->neighbours[i]._weight;
 	}
 
 	double thresholdA = quickselect_desc_double(valuesA, node->ncount, top_n_A - 1);
@@ -189,18 +192,21 @@ char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth,
 	char buff[256 + NODE_LABEL_CAP];
 	size_t header_len;
 	if (last_conn_a || last_conn_w)
-		header_len = sprintf(buff, "{\"NodeName\" : \"%s\", \"connection_act\": %.2f, \"connection_wght\": %.2f, \"node_act\": %.2f, \"node_wght\": %.2f, \"connectedTo\" : [", node->label, last_conn_a, last_conn_w, node->activation, node->weight);
+		header_len = sprintf(buff, "{\"NodeName\" : \"%s\", \"connection_act\": %.2f, \"connection_wght\": %.2f, \"node_act\": %.2f, \"node_wght\": %.2f, \"connectedTo\" : [", node->label, last_conn_a, last_conn_w, node->_activation, node->_weight);
 	else
 		header_len = sprintf(buff, "{\"NodeName\" : \"%s\", \"connectedTo\" : [", node->label);
 
 	memcpy(out, buff, header_len); *count += header_len;
 
+	node->times_seen ++;
+
 	for (size_t i = 0; i < node->ncount; i++) {
-		if (node->neighbours[i].activation >= thresholdA && node->neighbours[i].weight >= thresholdW) {
+		if (node->neighbours[i]._activation >= thresholdA && node->neighbours[i]._weight >= thresholdW) {
 			char *item;
 			size_t len = 0;
+			Node* target = NodeAt(node->neighbours[i].target);
 
-			item = recursive_step(NodeAt(node->neighbours[i].target), pA, pW, depth - 1, node->neighbours[i].activation, node->neighbours[i].weight, &len);
+			item = recursive_step(target, pA, pW, depth - 1, node->neighbours[i]._activation, node->neighbours[i]._weight, root, 0, &len);
 			if (!item) continue;
 
 			size_t new_capacity = capacity;
@@ -236,10 +242,12 @@ char* ComputeNodeFamily(Node* node, int_fast64_t percA, int_fast64_t percW, size
 	if (!node || !length) return NULL;
 	if (depth > MAX_FAMILY_DEPTH) depth = MAX_FAMILY_DEPTH;
 
+	node->times_used ++;
+
 	*length = 0;
 
 	size_t count;
-	char* root = recursive_step(node, percA, percW, depth, 0, 0, &count);
+	char* root = recursive_step(node, percA, percW, depth, 0, 0, node->globalIndex, 1, &count);
 	if(!root) {
 		return NULL;
 	}
@@ -266,19 +274,19 @@ char* ComputeNodeFamily(Node* node, int_fast64_t percA, int_fast64_t percW, size
 }
 
 Connection **FilterConnectionsByActivation(struct Connection *container, size_t containerSize, int_fast64_t percentage, size_t *count){
-	return (Connection**) FilterTopPercent((void*) container, containerSize, sizeof(Connection), percentage, count, (GetValueFn) readConnectionActivation);
+	return (Connection**) FilterTopPercent((void*) container, containerSize, sizeof(Connection), percentage, count, (GetValueFn) read_connection_activation);
 }
 
 Connection **FilterConnectionsByWeight(struct Connection *container, size_t containerSize, int_fast64_t percentage, size_t *count){
-	return (Connection**) FilterTopPercent((void*) container, containerSize, sizeof(Connection), percentage, count, (GetValueFn) readConnectionWeight);
+	return (Connection**) FilterTopPercent((void*) container, containerSize, sizeof(Connection), percentage, count, (GetValueFn) read_connection_weight);
 }
 
 Node** FilterNodeByActivationGlobal(int_fast64_t percentage, size_t *count){
-	return (Node**) FilterTopPercent((void*)Nodes.items, Nodes.count, sizeof(Node), percentage, count, (GetValueFn) readNodeActivation);
+	return (Node**) FilterTopPercent((void*)Nodes.items, Nodes.count, sizeof(Node), percentage, count, (GetValueFn) read_node_activation);
 }
 
 Node** FilterNodeByWeightGlobal(int_fast64_t percentage, size_t *count){
-	return (Node**) FilterTopPercent((void*)Nodes.items, Nodes.count, sizeof(Node), percentage, count, (GetValueFn) readNodeWeight);
+	return (Node**) FilterTopPercent((void*)Nodes.items, Nodes.count, sizeof(Node), percentage, count, (GetValueFn) read_node_weight);
 }
 
 

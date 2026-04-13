@@ -144,12 +144,16 @@ static void run1(json_value* doc, String *dynamic_mem){
 		char buffer[NODE_LABEL_CAP * 2 + 32];
 		size_t len = sprintf(	
 				buffer, 
-				"{\"name\" : \"%s\", \"activation\" : %.2f, \"parent\" : \"%s\"}\n",
+				"{\"name\" : \"%s\", \"%s\" : %.2f, \"parent\" : \"%s\"}\n",
 				result[i]->label,
-				readNodeActivation(result[i]),
+				criteria,
+				isActivation ? read_node_activation(result[i]) : read_node_weight(result[i]),
 				result[i]->hasParent ? NodeAt(result[i]->parent)->label : "NONE"
 		       );
 		CatString(&data, buffer, len);
+
+		// count node as seen
+		result[i]->times_seen ++;
 	}
 
 	CatString(dynamic_mem, c_str(&data), data.len);
@@ -252,6 +256,8 @@ static void run2(json_value* doc, String *dynamic_mem){
 		return;
 	}
 
+	node->times_used ++;
+
 	size_t count = 0;
 	Connection** result;
 	_Bool isActivation;
@@ -291,8 +297,8 @@ static void run2(json_value* doc, String *dynamic_mem){
 	for (size_t i = 0; i < count; i++){
 		char buffer[NODE_LABEL_CAP + 128];
 		Node* target = NodeAt(result[i]->target);
-		double relative = isActivation ? readConnectionActivation(result[i]) : readConnectionWeight(result[i]);
-		double local = isActivation ? readNodeActivation(target) : readNodeWeight(target);
+		double relative = isActivation ? read_connection_activation(result[i]) : read_connection_weight(result[i]);
+		double local = isActivation ? read_node_activation(target) : read_node_weight(target);
 		size_t len = sprintf(	
 				buffer, 
 				"{\"name\": \"%s\", \"connection_%s\": %.2f, \"node_%s\": %.2f}\n",
@@ -303,6 +309,9 @@ static void run2(json_value* doc, String *dynamic_mem){
 				local
 		       );
 		cassert(len < sizeof(buffer), "Here buffer is too small\n");
+
+		target->times_seen ++;
+
 		CatString(&data, buffer, len);
 	}
 	CatFixed(&data, "\n");
@@ -521,7 +530,7 @@ char* start_ds_session(Task *task){
 	cassert(req_space < mem.persistent.cap - 1, "Error : Increase Persistent memory size (Macro) to solve this.\n");
 	mem.persistent.len = req_space;
 
-	RefreshItems();
+	RefreshGraph();
 
 	size_t depth = 0;
 #if 0   

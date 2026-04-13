@@ -26,6 +26,7 @@ _Bool InitNodes(){
 	Nodes.capacity = INIT_NODE_CAP;
 	Nodes.count = 0;
 	Nodes.items = (Node*)malloc(sizeof(Node) * INIT_NODE_CAP);
+	Nodes.needsRefresh = 0;
 
 	if (Nodes.items == NULL) {
 		Nodes.capacity = 0;
@@ -61,14 +62,14 @@ Node* AddNodeEx(char* label, size_t label_len, double activation, double weight,
 	node->ncount = 0;
 	node->globalIndex = Nodes.count;
 	node->neighbours = malloc(node->nsize * sizeof(Connection));
-	node->activation = NODE_INIT_ACT + (rand() % 100) * 0.05;
-	node->weight = NODE_INIT_WGHT;
+	node->_activation = NODE_INIT_ACT + (rand() % 100) * 0.05;
+	node->_weight = NODE_INIT_WGHT;
 	node->hasParent = 0;
+	node->times_seen = 0;
+	node->times_used = 0;
 
-	node->lastAccessedActivation = now;
-	node->lastAccessedWidth = now;
-	node->pendingActivationTouches = 0;
-	node->pendingWeightTouches = 0;
+	node->lastTouched = now;
+	node->pendingTouches = 0;
 	
 	memcpy(node->label, label, node->labelLength);
 	node->label[node->labelLength] = '\0';
@@ -133,16 +134,13 @@ _Bool UniLinkEx(Node* A, Node* B, double activation, double weight){
 
 	Connection* c = A->neighbours + A->ncount;
 
-	c->activation = activation;
-	c->weight = weight;
+	c->_activation = activation;
+	c->_weight = weight;
 
 	c->target = B->globalIndex;
-	c->source = A->globalIndex;
 
-	c->lastAccessedActivation = time(NULL);
-	c->lastAccessedWidth = time(NULL);
-	c->pendingActivationTouches = 0;
-	c->pendingWeightTouches = 0;
+	c->lastTouched = time(NULL);
+	c->pendingTouches = 0;
 
 	A->ncount ++;
 
@@ -177,44 +175,44 @@ Node* FindNode(char* target, uint_fast8_t length, Node* parent){
 	return NULL;
 }
 
-double readNodeActivation(Node* n){
-    double o = n->activation;
+double read_node_activation(Node* n){
+    double o = n->_activation;
     while (n->hasParent){
         n = NodeAt(n->parent);
         if (!n) break;
-        o *= n->activation;
+        o *= n->_activation;
     }
     return o;
 }
 
-double readNodeWeight(Node* n){
-    double o = n->weight;
+double read_node_weight(Node* n){
+    double o = n->_weight;
     while (n->hasParent){
         n = NodeAt(n->parent);
         if (!n) break;
-        o *= n->weight;
+        o *= n->_weight;
     }
     return o;
 }
 
-double readConnectionActivation(Connection* c){
-    double o = c->activation;  
+double read_connection_activation(Connection* c){
+    double o = c->_activation;  
     Node *n = NodeAt(c->target);
     while (n && n->hasParent){
         n = NodeAt(n->parent);
         if (!n) break;
-        o *= n->activation; 
+        o *= n->_activation; 
     }
     return o;
 }
 
-double readConnectionWeight(Connection* c){
-    double o = c->weight;
+double read_connection_weight(Connection* c){
+    double o = c->_weight;
     Node *n = NodeAt(c->target);
     while (n && n->hasParent){
         n = NodeAt(n->parent);
         if (!n) break;
-        o *= n->weight;
+        o *= n->_weight;
     }
     return o;
 }
@@ -229,16 +227,15 @@ static double decay_from_to(double value, time_t from, time_t to)
     return value * pow(2.0, -dt / 100.0);
 }
 
-void touch_node(Node *n, uint_fast8_t power, time_t now)
+void touch_node(Node *n, double power, time_t now)
 {
     if (!n) return;
-    n->lastAccessedActivation = now;
-    n->pendingActivationTouches += power;
+    n->lastTouched = now;
+    n->pendingTouches += log1p(power);
 }
 
-void touch_connection(Connection *c, uint_fast8_t power, time_t now)
-{
+void touch_connection(Connection *c, double power, time_t now){
     if (!c) return;
-    c->lastAccessedActivation = now;
-    c->pendingActivationTouches += power;
+    c->lastTouched = now;
+    c->pendingTouches += log1p(power);
 }
