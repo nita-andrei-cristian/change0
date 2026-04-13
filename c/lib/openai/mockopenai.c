@@ -1,5 +1,4 @@
 #include "mockopenai.h"
-#include "../../config.h"
 #include <stdio.h>
 
 _Bool RegenMocksOpenAI(){
