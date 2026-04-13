@@ -1,9 +1,10 @@
 #include "engine.h"
-#include <string.h>
-#include <stdio.h>
 #include "node.h"
 #include "math.h"
-#include <../lib/util/util.h>
+#include "../lib/util/util.h"
+
+#include <string.h>
+#include <stdio.h>
 
 static void AddNodeFromEntry(json_value *val, size_t context, time_t now){
 	if (val->type != json_object) return;

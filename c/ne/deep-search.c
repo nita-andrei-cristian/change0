@@ -4,6 +4,7 @@
 #include <string.h>
 #include "../lib/jsonp/json.h"
 #include "../lib/util/util.h"
+#include "../config.h"
 #include "search.h"
 #include "engine.h"
 
@@ -26,8 +27,7 @@ void free_ds_memory(DS_memory *d){
 
 static char* mock_ai_run(char* prompt, size_t *size){
 	char path[128];
-	sprintf(path, "/home/nita/dev/c/change2/mocks/action-data/%d.json", rand() % 4);
-	//sprintf(path, "/home/nita/dev/c/change2/mocks/action-data/%d.json", 0);
+	sprintf(path, DEFAULT_MOCK_DIRECTORY "action-data/%d.json", rand() % DEFAULT_MOCK_ACTIONS_COUNT);
 	return readFile(path, size);
 }
 

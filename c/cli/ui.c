@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include "../ne/node.h"
 #include "../lib/util/util.h"
+#include "../lib/openai/mockopenai.h"
 #include "../ne/engine.h"
 #include "../ne/deep-search.h"
+#include "../config.h"
 #include <unistd.h>
 #include <termios.h>
 #include <string.h>
@@ -62,7 +64,6 @@ static inline void WaitForInput(void) {
     }
 }
 
-int index = 8;
 static void Run(int i){
 	clear();
 	printf("------------- [ %c ] -------------\n", INPUT_CHAR[i]);
@@ -70,8 +71,7 @@ static void Run(int i){
 	if (INPUT_TYPE[i] == MESSAGE){
 		// mock something
 		char path[64];
-		//sprintf(path, "/home/nita/dev/c/change2/mocks/nodes/%d.json", rand() % 10);
-		sprintf(path, "/home/nita/dev/c/change2/mocks/nodes/%d.json", index);
+		sprintf(path, DEFAULT_MOCK_DIRECTORY "nodes/%d.json", rand() % DEFAULT_MOCK_NODES_COUNT);
 
 		size_t size = 0;
 		char* content = readFile(path, &size);
@@ -83,10 +83,10 @@ static void Run(int i){
 	}
 
 	if (INPUT_TYPE[i] == MESSAGEX10){
-		for (int i = 0; i < 10; i++){
+		for (int i = 0; i < DEFAULT_MOCK_NODES_COUNT; i++){
 			// mock something
 			char path[64];
-			sprintf(path, "/home/nita/dev/c/change2/mocks/nodes/%d.json", i);
+			sprintf(path, DEFAULT_MOCK_DIRECTORY "nodes/%d.json", i);
 
 			size_t size = 0;
 			char* content = readFile(path, &size);
@@ -100,7 +100,7 @@ static void Run(int i){
 	}
 
 	if (INPUT_TYPE[i] == EXPORT){
-		ExportGraphTo("/home/nita/dev/c/change2/js/export.json");
+		ExportGraphTo(DEFAULT_GRAPH_EXPORT);
 	}
 
 	if (INPUT_TYPE[i] == DEEPRESEARCH){
@@ -113,6 +113,10 @@ static void Run(int i){
 			printf("Deep research result : \n\n%s\n", out);
 			free(out);
 		}
+	}
+
+	if (INPUT_TYPE[i] == REGEN_OPENAI){
+		RegenMocksOpenAI();
 	}
 
 	WaitForInput();
