@@ -262,6 +262,11 @@ static void run2(json_value* doc, String *dynamic_mem){
 	Connection** result;
 	_Bool isActivation;
 
+	if (node->ncount == 0){
+		CatFixed(dynamic_mem, "Node has no neighbours.\n");
+		return;
+	}
+
 	if (!strcmp(criteria, "activation")){
 		result = FilterNodeNeighboursByActivation(node, percentage, &count);
 		isActivation = 1;
@@ -473,7 +478,7 @@ static _Bool think(DS_memory *mem, String *out, size_t depth){
 
 	char header[32];
 	CatString(&mem->dynamic, header, sprintf(header, "\n\n------------- Round [%zu]:\n\n", depth));
-	//CatString(&mem->dynamic, response, respsize);
+	CatString(&mem->dynamic, response, respsize);
 
 	// Parse JSON
 	json_value *doc = json_parse(response, respsize);
@@ -509,6 +514,11 @@ static _Bool think(DS_memory *mem, String *out, size_t depth){
 	FreeString(&prompt);
 	free(response);
 	json_value_free(doc);
+
+	return 1;
+}
+
+static _Bool judge_result(){
 
 	return 1;
 }

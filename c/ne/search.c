@@ -11,145 +11,148 @@
 
 static inline void swap_double(double *a, double *b)
 {
-    double t = *a;
-    *a = *b;
-    *b = t;
+	double t = *a;
+	*a = *b;
+	*b = t;
 }
 
 
 // AI GENERATED CODE FOR QUICK_SELECT
 static int partition_desc_double(double arr[], int left, int right)
 { double pivot = arr[right];
-    int store = left;
+	int store = left;
 
-    for (int i = left; i < right; i++) {
-        if (arr[i] > pivot) {
-            swap_double(&arr[i], &arr[store]);
-            store++;
-        }
-    }
+	for (int i = left; i < right; i++) {
+		if (arr[i] > pivot) {
+			swap_double(&arr[i], &arr[store]);
+			store++;
+		}
+	}
 
-    swap_double(&arr[store], &arr[right]);
-    return store;
+	swap_double(&arr[store], &arr[right]);
+	return store;
 }
 
 static double quickselect_desc_double(double arr[], int count, int k)
 {
-    int left = 0;
-    int right = count - 1;
+	int left = 0;
+	int right = count - 1;
 
-    while (left <= right) {
-        int pivot_index = partition_desc_double(arr, left, right);
+	while (left <= right) {
+		int pivot_index = partition_desc_double(arr, left, right);
 
-        if (pivot_index == k)
-            return arr[pivot_index];
+		if (pivot_index == k)
+			return arr[pivot_index];
 
-        if (k < pivot_index)
-            right = pivot_index - 1;
-        else
-            left = pivot_index + 1;
-    }
+		if (k < pivot_index)
+			right = pivot_index - 1;
+		else
+			left = pivot_index + 1;
+	}
 
-    return arr[k];
+	return arr[k];
 }
 
 static inline int top_count_percent(int total, int percent)
 {
-    return (total * percent + 99) / 100;
+	return (total * percent + 99) / 100;
 }
 
 // Used AI to recreate a generic function
 void **FilterTopPercent(
-    void *container,
-    size_t containerSize,
-    size_t elemSize,
-    int_fast64_t percentage,
-    size_t *count,
-    GetValueFn getValue
-){
-    if (!container || containerSize == 0 || !count || !getValue)
-        return NULL;
+		void *container,
+		size_t containerSize,
+		size_t elemSize,
+		int_fast64_t percentage,
+		size_t *count,
+		GetValueFn getValue
+		){
+	if (!container || containerSize == 0 || !count || !getValue){
+		return NULL;
+	}
 
-    *count = 0;
-    percentage = CLAMP(0, 100, percentage);
+	*count = 0;
+	percentage = CLAMP(0, 100, percentage);
 
-    int n = (int)containerSize;
-    int top_n = top_count_percent(n, percentage);
-    if (top_n <= 0)
-        return NULL;
+	int n = (int)containerSize;
+	int top_n = top_count_percent(n, percentage);
+	if (top_n <= 0){
+		return NULL;
+	}
 
-    int k = top_n - 1;
+	int k = top_n - 1;
 
-    double *values = malloc(n * sizeof(*values));
-    if (!values)
-        return NULL;
+	double *values = malloc(n * sizeof(*values));
+	if (!values){
+		return NULL;
+	}
 
-    for (size_t i = 0; i < containerSize; i++) {
-        void *elem = (char*)container + i * elemSize; // use char to symbolize one byte
-        values[i] = getValue(elem);
-    }
+	for (size_t i = 0; i < containerSize; i++) {
+		void *elem = (char*)container + i * elemSize; // use char to symbolize one byte
+		values[i] = getValue(elem);
+	}
 
-    double threshold = quickselect_desc_double(values, n, k);
-    free(values);
+	double threshold = quickselect_desc_double(values, n, k);
+	free(values);
 
-    void **result = malloc(containerSize * sizeof(*result));
-    if (!result)
-        return NULL;
+	void **result = malloc(containerSize * sizeof(*result));
+	if (!result)
+		return NULL;
 
-    for (size_t i = 0; i < containerSize; i++) {
-        void *elem = (char*)container + i * elemSize;
-        if (getValue(elem) >= threshold) {
-            result[(*count)++] = elem;
-        }
-    }
+	for (size_t i = 0; i < containerSize; i++) {
+		void *elem = (char*)container + i * elemSize;
+		if (getValue(elem) >= threshold) {
+			result[(*count)++] = elem;
+		}
+	}
 
-    return result;
+	return result;
 }
 
 Connection** FilterNodeNeighboursByActivation(
-    Node* node,
-    int_fast64_t percentage,
-    size_t *count
-){
-    return (Connection**) FilterTopPercent(
-        (void*) node->neighbours,
-        node->ncount,
-        sizeof(Connection),
-        percentage,
-        count,
-        (GetValueFn) read_connection_activation
-    );
+		Node* node,
+		int_fast64_t percentage,
+		size_t *count
+		){
+	return (Connection**) FilterTopPercent(
+			(void*) node->neighbours,
+			node->ncount,
+			sizeof(Connection),
+			percentage,
+			count,
+			(GetValueFn) read_connection_activation
+			);
 }
 
 Connection** FilterNodeNeighboursByWeight(
-    Node* node,
-    int_fast64_t percentage,
-    size_t *count
-){
-    return (Connection**) FilterTopPercent(
-        (void*) node->neighbours,
-        node->ncount,
-        sizeof(Connection),
-        percentage,
-        count,
-        (GetValueFn) read_connection_weight
-    );
+		Node* node,
+		int_fast64_t percentage,
+		size_t *count
+		){
+	return (Connection**) FilterTopPercent(
+			(void*) node->neighbours,
+			node->ncount,
+			sizeof(Connection),
+			percentage,
+			count,
+			(GetValueFn) read_connection_weight
+			);
 }
 
 char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth, double last_conn_a, double last_conn_w, size_t root, _Bool isRoot, size_t *count){
 	if (depth == 0 || node == NULL || (node->globalIndex == root && !isRoot)) return NULL;
 	if (depth == 1){
 		// last one
-		
+
 		node->times_seen ++;
-		
+
 		char* out = malloc(128 + NODE_LABEL_CAP);
 		if (!out) return NULL;
 		if (last_conn_a || last_conn_w)
 			*count = sprintf(out, "{\"NodeName\": \"%s\", \"node_act\": %.2f, \"node_wght\": %.2f, \"connection_act\": %.2f, \"connection_wght\": %.2f},", node->label, node->_activation, node->_weight, last_conn_a, last_conn_w);
 		else
 			*count = sprintf(out, "{\"NodeName\" : \"%s\"},", node->label);
-		
+
 		return out;
 	}
 
@@ -211,7 +214,7 @@ char* recursive_step(Node* node, int_fast64_t pA, int_fast64_t pW, size_t depth,
 
 			size_t new_capacity = capacity;
 			while(*count + len + 3 >= new_capacity){ // we append 3 chars at the end
-				// out of bounds;
+								 // out of bounds;
 				new_capacity *= 2;
 			}
 

@@ -1,1 +1,1 @@
-{"command":3,"node":"frustrare","context":"emotie","percA":65,"percW":48,"depth":2,"intent":"follow emotional escalation paths linked to frustration"}
+{"command":2,"percentage":60,"node":"curiozitate","criteria":"activation","context":"pasiuni","intent":"follow passion nodes that energize exploration"}

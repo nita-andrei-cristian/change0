@@ -1,1 +1,1 @@
-{"command":2,"percentage":72,"node":"anxietate","criteria":"activation","context":"emotie","intent":"map strongest emotional neighbors around anxiety"}
+{"command":2,"percentage":50,"node":"oboseala_emotionala","criteria":"weight","context":"emotie","intent":"check stable emotional dependencies"}
