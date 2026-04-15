@@ -26,20 +26,61 @@ void free_ds_memory(DS_memory *d){
 	FreeString(&d->dynamic);
 }
 	// TODO : handle cassert
-static _Bool think(DS_memory *mem, String *out, size_t depth){
-	// Setup prompt
+
+static void set_prompt(String *prompt, DS_memory **mem){
+}
+
+static char* process_ai_call(DS_memory **mem, size_t *respsize){
 	String prompt;
-	InitString(&prompt, mem->dynamic.len + mem->persistent.len + 1);
-	CatString(&prompt, mem->dynamic.p, mem->dynamic.len);
-	CatString(&prompt, mem->persistent.p, mem->persistent.len);
 
-	// Get response
-	size_t respsize;
-	char* response = mock_ai_action(c_str(&prompt), &respsize);
-	cassert(response, "Error : Coudln't read response");
+	InitString(&prompt, (*mem)->dynamic.len + (*mem)->persistent.len + 1);
+	CatString(&prompt, (*mem)->dynamic.p, (*mem)->dynamic.len);
+	CatString(&prompt, (*mem)->persistent.p, (*mem)->persistent.len);
 
+	char* response = mock_ai_action(c_str(&prompt), respsize);
+
+	cassert(response, "Error : Coudln't read respons&e");
+	FreeString(&prompt);
+
+	return response;
+}
+
+static void write_round_header(DS_memory** mem, size_t depth){
 	char header[32];
-	CatString(&mem->dynamic, header, sprintf(header, "\n\n------------- Round [%zu]:\n\n", depth));
+	CatString(&(*mem)->dynamic, header, sprintf(header, "\n\n------------- Round [%zu]:\n\n", depth));
+}
+
+static void fail_finish(DS_memory *mem, String *conclusion, size_t depth){
+	char *buff = malloc(conclusion->len + 256);
+	cassert(buff, "Can't allocate quick memory to fill a buffer");
+
+	size_t size = sprintf(buff, "Agent tried to finish early, but minimum round is 10, reason : [%s]\n", c_str(conclusion));
+
+	CatString(&mem->dynamic, buff, size);
+	free(buff);
+}
+
+_Bool try_terminate(json_value* doc, DS_memory *mem, String *out, size_t depth, String *conclusion){
+
+	if (conclusion->len > 0){
+		if (depth < 10){
+			fail_finish(mem, conclusion, depth);
+			return 0; // did not finish
+		}else{
+			CopyString(out, conclusion);
+			return 1; // did finish
+		}
+	}
+
+	return 0; // did not finish
+}
+
+static _Bool think(DS_memory *mem, String *out, size_t depth){
+
+	size_t respsize;
+	char* response = process_ai_call(&mem, &respsize);
+
+	write_round_header(&mem, depth);
 	CatString(&mem->dynamic, response, respsize);
 
 	// Parse JSON
@@ -48,35 +89,17 @@ static _Bool think(DS_memory *mem, String *out, size_t depth){
 	cassert(doc->type == json_object, "Error : json is not an object.\n");
 
 	// check if finished
-	char* conclusion = NULL;
-	size_t conclusionSize = 0;
-	exec_response(doc, &mem->dynamic, depth, &conclusion, &conclusionSize);
 
-	if (conclusion){
-		if (depth < 10){
-			char *buff = malloc(conclusionSize + 256);
-			cassert(buff, "Can't allocate quick memory to fill a buffer");
+	String conclusion; InitString(&conclusion, 1024);
+	exec_response(doc, &mem->dynamic, depth, &conclusion);
 
-			size_t size = sprintf(buff, "Agent tried to finish early, but minimum round is 10, reason : [%s]\n", conclusion);
-			CatString(&mem->dynamic, buff, size);
-			free(buff);
-		}else{
-			CatString(out, conclusion, conclusionSize);
-
-			FreeString(&prompt);
-			free(response);
-			json_value_free(doc);
-
-			return 0;
-		}
-		free(conclusion);
-	}
+	_Bool terminated = try_terminate(doc, mem, out, depth, &conclusion);
 	
-	FreeString(&prompt);
 	free(response);
 	json_value_free(doc);
+	FreeString(&conclusion);
 
-	return 1;
+	return terminated;
 }
 
 static void write_feedback(String* mem, String* reason){
@@ -148,7 +171,7 @@ char* start_ds_session(Task *task){
 
 		while(idepth++) {
 			_Bool status = think(&mem, &out, idepth);
-			if (status == 0) break;
+			if (status == 1) break;
 			cassert(idepth < 100, "Error : Internal Depth went way too high\n");
 		}
 

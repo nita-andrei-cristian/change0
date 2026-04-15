@@ -5,7 +5,7 @@
 #include "ai-action.h"
 #include "command-parsing.h"
 
-void exec_response(json_value* doc, String *dynamic_mem, size_t depth, char** conclusion, size_t *conclusionSize){
+void exec_response(json_value* doc, String *dynamic_mem, size_t depth, String *conclusion){
 
 	_Bool finished = 0;
 	json_value* original_conclusion = NULL;
@@ -16,11 +16,7 @@ void exec_response(json_value* doc, String *dynamic_mem, size_t depth, char** co
 	cassert(!(finished && !original_conclusion), "Error : Finished but no conclusion passed");
 
 	if (finished && original_conclusion){
-		*conclusion = malloc(original_conclusion->u.string.length + 1);
-		cassert(*conclusion, "Can't get memory to generate conclusion\n.");
-		memcpy(*conclusion, original_conclusion->u.string.ptr, original_conclusion->u.string.length);
-		(*conclusion)[original_conclusion->u.string.length] = '\0';
-		*conclusionSize = original_conclusion->u.string.length;
+		CatString(conclusion, original_conclusion->u.string.ptr, original_conclusion->u.string.length);
 		return;
 	}
 
