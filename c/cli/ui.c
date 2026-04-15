@@ -6,8 +6,9 @@
 #include "../lib/util/util.h"
 #include "../lib/openai/mockopenai.h"
 #include "../ne/engine.h"
-#include "../ne/deep-search.h"
+#include "../ne/deep-search-session.h"
 #include "../config.h"
+#include "../ne/mocks.h"
 #include <unistd.h>
 #include <termios.h>
 #include <string.h>
@@ -42,13 +43,6 @@ static void SetUpContexts(){
 		}
 		Contexts[i] = n->globalIndex;
 	}
-}
-
-static void make_mock_task(Task* task){
-	char str[] = "Help Mark launch become rich.";
-
-	memcpy(task->name, str, FSIZE(str));
-	task->minDepth = 10;
 }
 
 void UIStart(){

@@ -1,8 +1,9 @@
-#ifndef DEEP_SEARCH_C
-#define DEEP_SEARCH_C
+#ifndef DEEP_SEARCH_SESSION_C
+#define DEEP_SEARCH_SESSION_C
 
 #include <stddef.h>
 #include "../lib/util/util.h"
+#include "node.h"
 
 #define DS_PERSISTENT_MEMORY_SIZE 2048
 #define DS_DYNAMIC_MEMORY_SIZE 2048
@@ -14,11 +15,6 @@ typedef struct {
 	String dynamic;
 	String persistent;
 } DS_memory;
-
-typedef struct {
-	char name[2048];
-	size_t minDepth;
-} Task;
 
 _Bool init_ds_memory(DS_memory *d);
 void free_ds_memory(DS_memory *d);

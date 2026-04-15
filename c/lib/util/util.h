@@ -61,5 +61,7 @@ typedef struct {
 void InitString(String* s, size_t init_cap);
 void FreeString(String* s);
 void CatString(String* s, char* c, size_t len);
+void CopyString(String* a, String* b);
+void EmptyString(String* a);
 
 #endif

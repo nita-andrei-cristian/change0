@@ -225,7 +225,7 @@ void cassert(_Bool assertion, char* message){
 }
 
 void InitString(String* s, size_t init_cap){
-	s->cap = init_cap;
+	s->cap = init_cap + 1;
 	s->len = 0;
 	s->p = malloc(s->cap);
 	cassert(s->p, "Coudln't initialize string");
@@ -252,4 +252,15 @@ void CatString(String* s, char* c, size_t len){
 	memcpy(c_str(s) + s->len, c, len);
 	s->len += len;
 	*(c_str(s) + s->len) = '\0';
+}
+
+// A becomes B
+void CopyString(String* a, String *b){
+	EmptyString(a);
+	CatString(a, c_str(b), b->len);
+}
+
+void EmptyString(String* a){
+	a->len = 0;
+	*c_str(a) = '\0';
 }

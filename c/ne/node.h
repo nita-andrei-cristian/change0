@@ -79,6 +79,11 @@ struct {
 	_Bool init;
 } Nodes;
 
+typedef struct {
+	char name[2048];
+	size_t minDepth;
+} Task;
+
 _Bool InitNodes();
 _Bool FreeNodes();
 
