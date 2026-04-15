@@ -25,17 +25,13 @@ void free_ds_memory(DS_memory *d){
 	FreeString(&d->persistent);
 	FreeString(&d->dynamic);
 }
-	// TODO : handle cassert
 
-static void set_prompt(String *prompt, DS_memory **mem){
-}
-
-static char* process_ai_call(DS_memory **mem, size_t *respsize){
+static char* process_ai_call(DS_memory *mem, size_t *respsize){
 	String prompt;
 
-	InitString(&prompt, (*mem)->dynamic.len + (*mem)->persistent.len + 1);
-	CatString(&prompt, (*mem)->dynamic.p, (*mem)->dynamic.len);
-	CatString(&prompt, (*mem)->persistent.p, (*mem)->persistent.len);
+	InitString(&prompt, mem->dynamic.len + mem->persistent.len + 1);
+	CatString(&prompt, mem->dynamic.p, mem->dynamic.len);
+	CatString(&prompt, mem->persistent.p, mem->persistent.len);
 
 	char* response = mock_ai_action(c_str(&prompt), respsize);
 
@@ -45,9 +41,9 @@ static char* process_ai_call(DS_memory **mem, size_t *respsize){
 	return response;
 }
 
-static void write_round_header(DS_memory** mem, size_t depth){
+static void write_round_header(DS_memory* mem, size_t depth){
 	char header[32];
-	CatString(&(*mem)->dynamic, header, sprintf(header, "\n\n------------- Round [%zu]:\n\n", depth));
+	CatString(&mem->dynamic, header, sprintf(header, "\n\n------------- Round [%zu]:\n\n", depth));
 }
 
 static void fail_finish(DS_memory *mem, String *conclusion, size_t depth){
@@ -60,7 +56,7 @@ static void fail_finish(DS_memory *mem, String *conclusion, size_t depth){
 	free(buff);
 }
 
-_Bool try_terminate(json_value* doc, DS_memory *mem, String *out, size_t depth, String *conclusion){
+_Bool try_terminate(DS_memory *mem, String *out, size_t depth, String *conclusion){
 
 	if (conclusion->len > 0){
 		if (depth < 10){
@@ -73,33 +69,6 @@ _Bool try_terminate(json_value* doc, DS_memory *mem, String *out, size_t depth, 
 	}
 
 	return 0; // did not finish
-}
-
-static _Bool think(DS_memory *mem, String *out, size_t depth){
-
-	size_t respsize;
-	char* response = process_ai_call(&mem, &respsize);
-
-	write_round_header(&mem, depth);
-	CatString(&mem->dynamic, response, respsize);
-
-	// Parse JSON
-	json_value *doc = json_parse(response, respsize);
-	cassert(doc, "Error : Can't parse resp as json.\n");
-	cassert(doc->type == json_object, "Error : json is not an object.\n");
-
-	// check if finished
-
-	String conclusion; InitString(&conclusion, 1024);
-	exec_response(doc, &mem->dynamic, depth, &conclusion);
-
-	_Bool terminated = try_terminate(doc, mem, out, depth, &conclusion);
-	
-	free(response);
-	json_value_free(doc);
-	FreeString(&conclusion);
-
-	return terminated;
 }
 
 static void write_feedback(String* mem, String* reason){
@@ -148,6 +117,33 @@ static _Bool judge_result(String *out, String* reason){
 // Or even make it in more "human" formats like variants of a * weight + b * activation
 // where a and b depend on the context
 
+static _Bool think(DS_memory *mem, String *out, size_t depth){
+
+	size_t respsize;
+	char* response = process_ai_call(mem, &respsize);
+
+	write_round_header(mem, depth);
+	CatString(&mem->dynamic, response, respsize);
+
+	// Parse JSON
+	json_value *doc = json_parse(response, respsize);
+	cassert(doc, "Error : Can't parse resp as json.\n");
+	cassert(doc->type == json_object, "Error : json is not an object.\n");
+
+	// check if finished
+
+	String conclusion; InitString(&conclusion, 1024);
+	exec_response(doc, &mem->dynamic, depth, &conclusion);
+
+	_Bool terminated = try_terminate(mem, out, depth, &conclusion);
+	
+	free(response);
+	json_value_free(doc);
+	FreeString(&conclusion);
+
+	return terminated;
+}
+
 char* start_ds_session(Task *task){
 	DS_memory mem;
 	if (massert(init_ds_memory(&mem), "Couldn't allocate memory for ds session"))
@@ -169,6 +165,7 @@ char* start_ds_session(Task *task){
 	while (edepth++){
 		cassert(edepth < 10, "Error : External Depth went way too hight\n");
 
+		idepth = 1;
 		while(idepth++) {
 			_Bool status = think(&mem, &out, idepth);
 			if (status == 1) break;
