@@ -50,14 +50,6 @@ void UIStart(){
 	SetUpContexts();
 }
 
-// AI generated function
-static inline void WaitForInput(void) {
-    int c;
-
-    while ((c = getchar()) != '\n' && c != EOF) {
-    }
-}
-
 static void Run(int i){
 	clear();
 	printf("------------- [ %c ] -------------\n", INPUT_CHAR[i]);
@@ -67,12 +59,14 @@ static void Run(int i){
 		char path[64];
 		sprintf(path, DEFAULT_MOCK_DIRECTORY "nodes/graph_%03u.json", rand() % DEFAULT_MOCK_NODES_COUNT);
 
-		size_t size = 0;
-		char* content = readFile(path, &size);
-		if (content){
-			 if (!AddContextNodesFromJSON(content,size))
-				fprintf(stderr, "Couldn't add to graph the following json \n%s\n", content);
-			free(content);
+		char *input = NULL;
+		size_t input_size = 0;
+
+		int read = mygetline(&input, &input_size, stdin);
+
+		if (input){
+			DecomposeInputIntoGraph(input, input_size);
+			free(input);
 		}
 	}
 
@@ -109,9 +103,8 @@ static void Run(int i){
 		}
 	}
 
-	if (INPUT_TYPE[i] == REGEN_OPENAI){
+	if (INPUT_TYPE[i] == REGEN_OPENAI)
 		RegenMocksOpenAI();
-	}
 
 	WaitForInput();
 }

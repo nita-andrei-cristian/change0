@@ -2,7 +2,7 @@
 #include "node.h"
 #include "math.h"
 #include "../lib/util/util.h"
-
+#include "mocks.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -168,6 +168,24 @@ _Bool AddContextNodesFromJSON(char *JSON, size_t len){
 	json_value_free(document);
 
 	return 1;
+}
+
+void DecomposeInputIntoGraph(char* input, size_t input_size){
+	
+	for (uint_fast8_t i = 0; i < CONTEXT_COUNT; i++){
+		char* context = NodeAt(Contexts[i])->label;
+			
+		char prompt[1024];
+		size_t prompt_size = sprintf(prompt, DECOMPOSITION_INTO_CONTEXT_PROMPT, input, context);
+
+		// ai process
+		size_t resp_size = 0;
+		char* resp = mock_ai_action(prompt, &resp_size);
+		
+		_Bool status = AddContextNodesFromJSON(resp, resp_size);
+		cassert(status, "Error : Coudln't process decomposed JSON");
+	}
+
 }
 
 static _Bool WriteGraphAndFreeData(char* directory, char *buf){
@@ -409,3 +427,4 @@ void RefreshGraph(){
 	free(support_buffer);
 	Nodes.needsRefresh = 0;
 }
+

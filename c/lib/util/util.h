@@ -12,7 +12,16 @@ size_t mystrnlen(const char* s, size_t maxlen);
 #endif
 
 #ifndef READ_FILE_FUNC
+#define READ_FILE_FUNC
+
+#include <stdio.h>
+
 char* readFile(char* filename, size_t *bytes);
+
+void WaitForInput(void);
+
+size_t mygetline(char **lineptr, size_t *n, FILE *stream);
+
 #endif
 
 #ifndef CONVERSION_FUNCTIONS
