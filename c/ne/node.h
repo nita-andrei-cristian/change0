@@ -88,6 +88,7 @@ _Bool InitNodes();
 _Bool FreeNodes();
 
 Node* FindNode(char* target, uint_fast8_t length, Node* parent);
+Node* FindNodeGlobal(char* target, uint_fast8_t length, size_t stop);
 
 Node* AddNodeEx(
 		char* label,

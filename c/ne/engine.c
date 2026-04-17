@@ -2,7 +2,6 @@
 #include "node.h"
 #include "math.h"
 #include "../lib/util/util.h"
-#include "mocks.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -137,55 +136,43 @@ static void AddConnectionsFromEntry(json_object_entry* entry, size_t context){
 
 }
 
-_Bool AddContextNodesFromJSON(char *JSON, size_t len){
-	if (!JSON) return 0;
+_Bool AddContextNodesFromJSON(json_object_entry* context_data){
+	cassert(context_data, "No context data provided. Json entry.\n");
 
-	json_value* document = json_parse(JSON, len);
-	size_t i;
+	cassert(context_data->value->type == json_object, "Context provided, but is not an object \n");
 
-	if (!document) return 0;
-	if (document->type != json_object){
-		json_value_free(document);
-		return 0;
-	};
+	json_value *root = context_data->value;
 
-	size_t context;
-	if (!ValidateContext(document, &context)){
-		fprintf(stderr, "Error: Context not found or doesn't exist\n");
-		return 0;
-	} 
+	Node* context = FindNodeGlobal(context_data->name, context_data->name_length, CONTEXT_COUNT);
+	cassert(context, "Context not found. Be carefull, there is also an edge case where the context exists but is not withing the first CONTEXT_COUNT nodes.\n");
 
-	Nodes.needsRefresh = 1;
+	size_t context_id = context->globalIndex;
 
-	for (i = 0; i < document->u.object.length; i++){
-		json_object_entry entry = document->u.object.values[i];
-		if (strcmp(entry.name, "nodes") == 0) AddNodesFromEntry(&entry, context);
-		else if(strcmp(entry.name, "connections") == 0) AddConnectionsFromEntry(&entry, context);
+	for (size_t i = 0; i < root->u.object.length; i++){
+		json_object_entry entry = root->u.object.values[i];
+		if (strcmp(entry.name, "nodes") == 0) AddNodesFromEntry(&entry, context_id);
+		else if(strcmp(entry.name, "connections") == 0) AddConnectionsFromEntry(&entry, context_id);
 	}
 
 	printf("JSON parsed successfully\n\n");
 
-	json_value_free(document);
+	json_value_free(root);
 
 	return 1;
 }
 
 void DecomposeInputIntoGraph(char* input, size_t input_size){
+	json_value* doc = json_parse(input, input_size);
+	cassert(doc, "Doc doesn't seem to exist \n");
+	cassert(doc->type == json_object, "Doc exists but is not an object \n");
+
+	cassert(doc->u.object.length == CONTEXT_COUNT, "Doc has not CONTEXT_COUNT children. But it exists and it is an object\n");
+
+	for (size_t i = 0; i < doc->u.object.length; i++)
+		AddContextNodesFromJSON(&doc->u.object.values[i]);
 	
-	for (uint_fast8_t i = 0; i < CONTEXT_COUNT; i++){
-		char* context = NodeAt(Contexts[i])->label;
-			
-		char prompt[1024];
-		size_t prompt_size = sprintf(prompt, DECOMPOSITION_INTO_CONTEXT_PROMPT, input, context);
 
-		// ai process
-		size_t resp_size = 0;
-		char* resp = mock_ai_action(prompt, &resp_size);
-		
-		_Bool status = AddContextNodesFromJSON(resp, resp_size);
-		cassert(status, "Error : Coudln't process decomposed JSON");
-	}
-
+	json_value_free(doc);
 }
 
 static _Bool WriteGraphAndFreeData(char* directory, char *buf){

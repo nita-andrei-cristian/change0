@@ -175,6 +175,16 @@ Node* FindNode(char* target, uint_fast8_t length, Node* parent){
 	return NULL;
 }
 
+Node* FindNodeGlobal(char* target, uint_fast8_t length, size_t stop){
+	if(stop == 0) stop = Nodes.count;
+
+	for (size_t i = 0; i < stop; i++)
+		if (strcmp(NodeAt(i)->label, target) == 0)
+			return NodeAt(i);
+
+	return 0;
+}
+
 double read_node_activation(Node* n){
     double o = n->_activation;
     while (n->hasParent){
