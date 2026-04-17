@@ -59,32 +59,24 @@ static void Run(int i){
 		char path[64];
 		sprintf(path, DEFAULT_MOCK_DIRECTORY "nodes/graph_%03u.json", rand() % DEFAULT_MOCK_NODES_COUNT);
 
-		char *input = NULL;
+		char *input_raw = NULL;
 		size_t input_size = 0;
 
-		int read = mygetline(&input, &input_size, stdin);
+		printf("Please write a message: \n");
+		int read = mygetline(&input_raw, &input_size, stdin);
 
-		if (input){
-			DecomposeInputIntoGraph(input, input_size);
-			free(input);
+		if (read > 0){
+			String input; InitString(&input, input_size + 1);
+			CatString(&input, input_raw, input_size);
+
+			DecomposeInputIntoGraph(&input);
+			
+			FreeString(&input);
 		}
 	}
 
 	if (INPUT_TYPE[i] == MESSAGEX10){
-		for (int i = 0; i < DEFAULT_MOCK_NODES_COUNT; i++){
-			// mock something
-			char path[64];
-			sprintf(path, DEFAULT_MOCK_DIRECTORY "nodes/graph_%03u.json", i);
-
-			size_t size = 0;
-			char* content = readFile(path, &size);
-			if (content){
-				if (!AddContextNodesFromJSON(content,size)){
-					fprintf(stderr, "Couldn't add to graph the following json \n%s\n", content);
-				}
-				free(content);
-			}
-		}
+		printf("Work in progress");
 	}
 
 	if (INPUT_TYPE[i] == EXPORT){

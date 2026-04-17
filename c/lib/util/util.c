@@ -322,3 +322,61 @@ size_t mygetline(char **lineptr, size_t *n, FILE *stream) {
     return pos;
 }
 
+char *json_escape_dup(const char *src){
+	cassert(src, "json_escape_dup got NULL.\n");
+
+	size_t need = 1;
+	for (const unsigned char *p = (const unsigned char*)src; *p; p++){
+		switch (*p){
+			case '\"':
+			case '\\':
+			case '\b':
+			case '\f':
+			case '\n':
+			case '\r':
+			case '\t':
+				need += 2;
+				break;
+			default:
+				if (*p < 32) need += 6;
+				else need += 1;
+				break;
+		}
+	}
+
+	char *out = malloc(need);
+	cassert(out, "Failed to allocate escaped json string.\n");
+
+	char *w = out;
+	for (const unsigned char *p = (const unsigned char*)src; *p; p++){
+		switch (*p){
+			case '\"': *w++='\\'; *w++='\"'; break;
+			case '\\': *w++='\\'; *w++='\\'; break;
+			case '\b': *w++='\\'; *w++='b';  break;
+			case '\f': *w++='\\'; *w++='f';  break;
+			case '\n': *w++='\\'; *w++='n';  break;
+			case '\r': *w++='\\'; *w++='r';  break;
+			case '\t': *w++='\\'; *w++='t';  break;
+			default:
+				if (*p < 32){
+					sprintf(w, "\\u%04x", *p);
+					w += 6;
+				}else{
+					*w++ = (char)*p;
+				}
+				break;
+		}
+	}
+	*w = '\0';
+	return out;
+}
+
+void dump_to_file(const char *path, const char *data, size_t len){
+    FILE *f = fopen(path, "wb");
+    cassert(f, "Failed to open debug file.\n");
+
+    size_t written = fwrite(data, 1, len, f);
+    cassert(written == len, "Failed to write full buffer to file.\n");
+
+    fclose(f);
+}

@@ -15,10 +15,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#ifndef PATH_CAP
-#define PATH_CAP 512
-#endif
-
 
 /* ---------------- JSON helpers ---------------- */
 
@@ -31,7 +27,6 @@ static json_value* json_obj_get(json_value *obj, const char *key){
     return NULL;
 }
 
-/* 🔥 direct extraction (NO recursion anymore) */
 static const char* extract_output_text_bundle(json_value *root){
     json_value *output = json_obj_get(root, "output");
     if (!output || output->type != json_array) return NULL;
@@ -75,56 +70,6 @@ static void json_write_escaped(FILE *f, const char *s){
         else fputc(*s, f);
     }
     fputc('"', f);
-}
-
-static char* json_escape_dup(const char *src){
-    cassert(src != NULL, "json_escape_dup got NULL\n");
-
-    size_t len = 0;
-    for (const unsigned char *p = (const unsigned char*)src; *p; p++){
-        switch (*p){
-            case '\"':
-            case '\\':
-            case '\b':
-            case '\f':
-            case '\n':
-            case '\r':
-            case '\t':
-                len += 2;
-                break;
-            default:
-                if (*p < 32) len += 6;
-                else len += 1;
-                break;
-        }
-    }
-
-    char *out = (char*)malloc(len + 1);
-    cassert(out != NULL, "Failed to allocate escaped JSON string\n");
-
-    char *w = out;
-    for (const unsigned char *p = (const unsigned char*)src; *p; p++){
-        switch (*p){
-            case '\"': *w++='\\'; *w++='\"'; break;
-            case '\\': *w++='\\'; *w++='\\'; break;
-            case '\b': *w++='\\'; *w++='b';  break;
-            case '\f': *w++='\\'; *w++='f';  break;
-            case '\n': *w++='\\'; *w++='n';  break;
-            case '\r': *w++='\\'; *w++='r';  break;
-            case '\t': *w++='\\'; *w++='t';  break;
-            default:
-                if (*p < 32){
-                    sprintf(w, "\\u%04x", *p);
-                    w += 6;
-                }else{
-                    *w++ = (char)*p;
-                }
-                break;
-        }
-    }
-
-    *w = '\0';
-    return out;
 }
 
 static void json_write_value(FILE *f, json_value *v){
@@ -215,7 +160,7 @@ static char* BuildOpenAIRequestBody(void){
             "}"
           "}"
         "}",
-        OPENAI_MODEL,
+        "gpt-5.4",
         escaped_prompt,
         OPENAI_SCHEMA_JSON
     );
@@ -283,13 +228,13 @@ _Bool RegenMocksOpenAI(){
     cassert(acts   && acts->type   == json_array, "bad action_mocks");
 
     for (unsigned i = 0; i < graphs->u.array.length; i++){
-        char path[PATH_CAP];
+        char path[OPENAI_PATH_CAP];
         snprintf(path, sizeof(path), "%sgraph_%03u.json", nodes, i);
         cassert(write_json_file(path, graphs->u.array.values[i]), "write graph failed");
     }
 
     for (unsigned i = 0; i < acts->u.array.length; i++){
-        char path[PATH_CAP];
+        char path[OPENAI_PATH_CAP];
         snprintf(path, sizeof(path), "%saction_%03u.json", actions, i);
         cassert(write_json_file(path, acts->u.array.values[i]), "write action failed");
     }

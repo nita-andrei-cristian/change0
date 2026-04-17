@@ -3,6 +3,10 @@
 
 #include <stddef.h>
 
+#ifndef OPENAI_PATH_CAP
+#define OPENAI_PATH_CAP 512
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

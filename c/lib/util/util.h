@@ -22,6 +22,10 @@ void WaitForInput(void);
 
 size_t mygetline(char **lineptr, size_t *n, FILE *stream);
 
+char *json_escape_dup(const char *src);
+
+void dump_to_file(const char *path, const char *data, size_t len);
+
 #endif
 
 #ifndef CONVERSION_FUNCTIONS
