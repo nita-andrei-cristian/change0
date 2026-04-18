@@ -1,0 +1,26 @@
+HTTP/1.1 400 Bad Request
+Date: Sat, 18 Apr 2026 14:09:26 GMT
+Content-Type: application/json
+Content-Length: 327
+Connection: close
+Server: cloudflare
+openai-version: 2020-10-01
+openai-organization: user-e52vhis9p1095rsr3wufkpva
+openai-project: proj_NHLYZPhBcYwYHNXl1IdcRIi6
+x-request-id: req_89d7783004174138aaa099380d733816
+openai-processing-ms: 15
+cf-cache-status: DYNAMIC
+set-cookie: __cf_bm=KycrBZp6tzQjlJg7Aee.v8PVIVYTZL6icDwQdqnowok-1776521366.1284044-1.0.1.1-lujO.Jz6rXesOQcRbYh8ucPZP04J2VUfFnxU0X121aXZA7nV5Kwbee.yahI4XZkM_TcgYrE627wzca2hQoeeKV2PViGx594cefUWyBr1qw4JcDMZnImJHe2oSP3Blzsz; HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Sat, 18 Apr 2026 14:39:26 GMT
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+CF-RAY: 9ee43f4a4aef06d2-AMS
+alt-svc: h3=":443"; ma=86400
+
+{
+  "error": {
+    "message": "Invalid schema for response_format 'deep_search_action': In context=(), 'required' is required to be supplied and to be an array including every key in properties. Missing 'command'.",
+    "type": "invalid_request_error",
+    "param": "text.format.schema",
+    "code": "invalid_json_schema"
+  }
+}

@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ai-action.h"
+#include "openai.h"
+#include "util.h"
 #include "command-parsing.h"
 
 void exec_response(json_value* doc, String *dynamic_mem, size_t depth, String *conclusion){
@@ -28,3 +30,83 @@ void exec_response(json_value* doc, String *dynamic_mem, size_t depth, String *c
 		run3(doc, dynamic_mem);
 }
 
+// Half is AI generated
+static json_value *call_gpt_deep_search(DS_memory *mem){
+	cassert(mem, "Error: NULL DS_memory passed.\n");
+	cassert(mem->persistent.p, "Error: persistent prompt is NULL.\n");
+	cassert(mem->dynamic.p, "Error: dynamic prompt is NULL.\n");
+
+	/* persistent first, dynamic second */
+	String prompt;
+	InitString(&prompt, mem->persistent.len + mem->dynamic.len + 2);
+	cassert(prompt.p, "Error: Failed to allocate prompt buffer.\n");
+
+	CatString(&prompt, mem->persistent.p, mem->persistent.len);
+	CatFixed(&prompt, "\n");
+	CatString(&prompt, mem->dynamic.p, mem->dynamic.len);
+
+	char *escaped_prompt = json_escape_dup(c_str(&prompt));
+	cassert(escaped_prompt, "Error: Failed to escape prompt for JSON.\n");
+
+	size_t body_cap =
+		strlen(escaped_prompt) +
+		sizeof(OPENAI_DEEP_SEARCH_SCHEMA_JSON) +
+		1024;
+
+	char *json_body = malloc(body_cap);
+	cassert(json_body, "Error: Failed to allocate OpenAI request body.\n");
+
+	int body_size = snprintf(
+		json_body, body_cap,
+		"{"
+			"\"model\":\"gpt-5.4-mini\","
+			"\"input\":\"%s\","
+			"\"text\":{"
+				"\"format\":{"
+					"\"type\":\"json_schema\","
+					"\"strict\":true,"
+					"\"name\":\"deep_search_action\","
+					"\"schema\":%s"
+				"}"
+			"}"
+		"}",
+		escaped_prompt,
+		OPENAI_DEEP_SEARCH_SCHEMA_JSON
+	);
+
+	cassert(body_size > 0 && (size_t)body_size < body_cap,
+		"Error: Failed to build OpenAI request body.\n");
+
+	printf("Waiting for OPENAI resposne...\n");
+
+	ai_openai_response created = {0};
+	ai_openai_status st = ai_openai_create_response(json_body, &created);
+
+	free(escaped_prompt);
+	free(json_body);
+	FreeString(&prompt);
+
+	cassert(st == AI_OPENAI_OK, (char*) ai_openai_strerror(st));
+	cassert(created.body.data, "Error: OpenAI returned empty body.\n");
+
+	json_value *root = json_parse(created.body.data, created.body.len);
+	cassert(root, "Error: Failed to parse OpenAI response body.\n");
+
+	ai_openai_response_free(&created);
+
+	return root;
+}
+
+char* process_ai_call(DS_memory *mem, size_t *respsize){
+	cassert(mem, "Error: mem is NULL.\n");
+	cassert(respsize, "Error: respsize is NULL.\n");
+
+	json_value *root = call_gpt_deep_search(mem);
+	cassert(root, "Error: OpenAI root response is NULL.\n");
+
+	char *response = openai_extract_output_text_dup(root, respsize);
+	cassert(response, "Error: Failed to extract validated OpenAI JSON text.\n");
+
+	json_value_free(root);
+	return response;
+}

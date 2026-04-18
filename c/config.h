@@ -4,7 +4,7 @@
 #define PROJECT_ROOT "/home/nita/dev/c/change2/"
 
 #define DEFAULT_MOCK_DIRECTORY PROJECT_ROOT "mocks/"
-#define DEFAULT_GRAPH_EXPORT "/home/nita/dev/c/change2/js/export.json"
+#define DEFAULT_GRAPH_EXPORT PROJECT_ROOT "js/export.json"
 
 #define CONFIG_STR(x) #x
 #define CONFIG_XSTR(x) CONFIG_STR(x)

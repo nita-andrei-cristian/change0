@@ -7,3 +7,9 @@ models/
 mocks/action-data/*
 mocks/nodes/*
 sent.txt
+<<<<<<< HEAD
+=======
+received.txt
+deep-search-result.txt
+sent.txt
+>>>>>>> 1858c61 (openai for deepreasearch and file dumping)

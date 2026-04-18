@@ -81,6 +81,7 @@ struct {
 
 typedef struct {
 	char name[2048];
+	size_t name_len;
 	size_t minDepth;
 } Task;
 

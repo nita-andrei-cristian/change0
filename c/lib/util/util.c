@@ -244,15 +244,19 @@ void CatString(String* s, char* c, size_t len){
 	if (s->cap <= len + s->len + 1){
 		size_t req_cap = s->cap ? s->cap : 1; // avoid 0
 		while (req_cap <= len + s->len) req_cap *= 2;
-		char* tmp = realloc(c_str(s), req_cap);
-		cassert(tmp, "String couldn't grow\n");
-		s->cap = req_cap;
-		c_str(s) = tmp;
+		ResizeString(s, req_cap);
 	}
 
 	memcpy(c_str(s) + s->len, c, len);
 	s->len += len;
 	*(c_str(s) + s->len) = '\0';
+}
+
+void ResizeString(String* s, size_t new_cap){
+	char* tmp = realloc(c_str(s), new_cap + 1);
+	cassert(tmp, "String couldn't grow\n");
+	s->cap = new_cap;
+	c_str(s) = tmp;
 }
 
 // A becomes B

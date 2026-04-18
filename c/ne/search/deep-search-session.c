@@ -24,21 +24,6 @@ void free_ds_memory(DS_memory *d){
 	FreeString(&d->dynamic);
 }
 
-static char* process_ai_call(DS_memory *mem, size_t *respsize){
-	String prompt;
-
-	InitString(&prompt, mem->dynamic.len + mem->persistent.len + 1);
-	CatString(&prompt, mem->dynamic.p, mem->dynamic.len);
-	CatString(&prompt, mem->persistent.p, mem->persistent.len);
-
-	char* response = mock_ai_action(c_str(&prompt), respsize);
-
-	cassert(response, "Error : Coudln't read respons&e");
-	FreeString(&prompt);
-
-	return response;
-}
-
 static void write_round_header(DS_memory* mem, size_t depth){
 	char header[32];
 	CatString(&mem->dynamic, header, sprintf(header, "\n\n------------- Round [%zu]:\n\n", depth));
@@ -120,6 +105,8 @@ static _Bool think(DS_memory *mem, String *out, size_t depth){
 	size_t respsize;
 	char* response = process_ai_call(mem, &respsize);
 
+	printf("Response : %s\n\n", response);
+
 	write_round_header(mem, depth);
 	CatString(&mem->dynamic, response, respsize);
 
@@ -127,6 +114,7 @@ static _Bool think(DS_memory *mem, String *out, size_t depth){
 	json_value *doc = json_parse(response, respsize);
 	cassert(doc, "Error : Can't parse resp as json.\n");
 	cassert(doc->type == json_object, "Error : json is not an object.\n");
+
 
 	// check if finished
 
@@ -148,10 +136,16 @@ char* start_ds_session(Task *task){
 		return NULL;
 
 	String out;
-	InitString(&out, DS_OUT_MEMORY_SIZE);
+	InitString(&out, 1024);
 	
+	ResizeString(&mem.persistent, sizeof(DS_PERSISTENT_PROMPT) + task->name_len + 1);
+
 	size_t req_space = sprintf(mem.persistent.p, DS_PERSISTENT_PROMPT, task->name);
-	cassert(req_space < mem.persistent.cap - 1, "Error : Increase Persistent memory size (Macro) to solve this.\n");
+
+	if (req_space >= mem.persistent.cap){
+		fprintf(stderr, "Req size : %zu, Mem Size : %zu", req_space, mem.persistent.cap);
+		cassert(0, "Error : Increase Persistent memory size (Macro) to solve this.\n");
+	}
 	mem.persistent.len = req_space;
 
 	RefreshGraph();

@@ -2,6 +2,7 @@
 #define AI_OPENAI_H
 
 #include <stddef.h>
+#include "json.h"
 
 #ifndef OPENAI_PATH_CAP
 #define OPENAI_PATH_CAP 512
@@ -50,6 +51,10 @@ ai_openai_status ai_openai_get_response(
 void ai_openai_response_free(ai_openai_response *resp);
 
 const char *ai_openai_strerror(ai_openai_status status);
+
+// AI generated functions
+char *openai_extract_output_text_dup(json_value *root, size_t *out_len);
+json_value *openai_extract_text_json(json_value *root);
 
 #ifdef __cplusplus
 }

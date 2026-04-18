@@ -57,23 +57,26 @@ static void Run(int i){
 	printf("------------- [ %c ] -------------\n", INPUT_CHAR[i]);
 
 	if (INPUT_TYPE[i] == MESSAGE){
-		// mock something
-		char path[64];
-		sprintf(path, DEFAULT_MOCK_DIRECTORY "nodes/graph_%03u.json", rand() % DEFAULT_MOCK_NODES_COUNT);
-
 		char *input_raw = NULL;
 		size_t input_size = 0;
 
-		printf("Please write a message: \n");
-		int read = mygetline(&input_raw, &input_size, stdin);
+		while (input_size < 5){
+			printf("Please write a message: \n");
+			input_raw = NULL; input_size = 0;
 
-		if (read > 0){
-			String input; InitString(&input, input_size + 1);
-			CatString(&input, input_raw, input_size);
+			int read = mygetline(&input_raw, &input_size, stdin);
+			if (read < 0) input_size = 0;
 
-			DecomposeInputIntoGraph(&input);
-			
-			FreeString(&input);
+			if (read > 0){
+				String input; InitString(&input, input_size + 1);
+				CatString(&input, input_raw, input_size);
+
+				DecomposeInputIntoGraph(&input);
+
+				FreeString(&input);
+			}
+
+			if (input_raw) free(input_raw);
 		}
 	}
 
@@ -88,11 +91,29 @@ static void Run(int i){
 	if (INPUT_TYPE[i] == DEEPRESEARCH){
 		Task task;
 
+		char *input_raw = NULL;
+		size_t input_size = 0;
+
+		printf("Please write a message: \n");
+		input_raw = NULL; input_size = 0;
+
+		int read = mygetline(&input_raw, &input_size, stdin);
+		if (read < 0) input_size = 0;
+
+		if (input_size < 5){
+			memcpy(task.name, input_raw, input_size);
+			task.name_len = input_size;
+			task.minDepth = 10;
+		}
+
+		if (input_raw) free(input_raw);
+
 		make_mock_task(&task);
 
 		char *out = start_ds_session(&task);
 		if (out){
 			printf("Deep research result : \n\n%s\n", out);
+			dump_to_file(PROJECT_ROOT "deep-search-result.txt", out, strlen(out));
 			free(out);
 		}
 	}

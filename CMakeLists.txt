@@ -17,14 +17,22 @@ target_include_directories(jsonp PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/jsonp)
 target_link_libraries(jsonp PRIVATE m) # add math
 
 add_library(util SHARED ${CMAKE_SOURCE_DIR}/c/lib/util/util.c)
-target_include_directories(util PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/util)
+target_include_directories(util PUBLIC 
+	${CMAKE_SOURCE_DIR}/c/lib/util
+	${CMAKE_SOURCE_DIR}/c/lib/jsonp
+)
+target_link_libraries(util PUBLIC jsonp)
 
 add_library(openai SHARED ${CMAKE_SOURCE_DIR}/c/lib/openai/openai.c)
-target_include_directories(openai PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/openai)
-target_link_libraries(openai PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+target_include_directories(openai PUBLIC 
+	${CMAKE_SOURCE_DIR}/c/lib/openai
+        ${CMAKE_SOURCE_DIR}/c/lib/util
+        ${CMAKE_SOURCE_DIR}/c
+)
+target_link_libraries(openai PRIVATE OpenSSL::SSL OpenSSL::Crypto util)
 
 add_library(mockopenai SHARED ${CMAKE_SOURCE_DIR}/c/lib/openai/mockopenai.c)
-target_include_directories(mockopenai PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/openai)
+target_include_directories(mockopenai PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/openai ${CMAKE_SOURCE_DIR}/c/lib/jsonp)
 
 add_library(ui SHARED ${CMAKE_SOURCE_DIR}/c/cli/ui.c)
 target_include_directories(ui PUBLIC
@@ -99,11 +107,13 @@ add_library(deepsearchexecute SHARED ${CMAKE_SOURCE_DIR}/c/ne/search/deep-search
 target_include_directories(deepsearchexecute PUBLIC
     ${CMAKE_SOURCE_DIR}/c/ne/search
     ${CMAKE_SOURCE_DIR}/c/lib/jsonp
+    ${CMAKE_SOURCE_DIR}/c/lib/openai
     ${CMAKE_SOURCE_DIR}/c/ne
 )
 target_link_libraries(deepsearchexecute PUBLIC
     aiaction
     comparsing
+    openai
     deepsearchsession
     jsonp
 )
@@ -152,6 +162,7 @@ target_link_libraries(inputprocessor PUBLIC
     util
     jsonp
     node
+    json2graph
 )
 
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)

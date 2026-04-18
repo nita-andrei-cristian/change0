@@ -76,5 +76,6 @@ void FreeString(String* s);
 void CatString(String* s, char* c, size_t len);
 void CopyString(String* a, String* b);
 void EmptyString(String* a);
+void ResizeString(String* a, size_t new_cap);
 
 #endif

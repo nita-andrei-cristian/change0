@@ -4,9 +4,12 @@
 #include "openai.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "config.h"
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
+#include "util.h"
+#include "assert.h"
 #include <sys/socket.h>
 
 #include <openssl/ssl.h>
@@ -245,6 +248,8 @@ static ai_openai_status ai_openai_request(
 
     int code = ai_http_status_code(raw.data);
     if (code < 200 || code >= 300) {
+	dump_to_file(PROJECT_ROOT "sent.txt", request, strlen(request));
+	dump_to_file(PROJECT_ROOT "received.txt", raw.data, raw.len);
         out->raw_http = raw;
         char *body = ai_find_body(out->raw_http.data);
         if (body) {
@@ -383,3 +388,77 @@ const char *ai_openai_strerror(ai_openai_status status) {
     }
 }
 
+char *openai_extract_output_text_dup(json_value *root, size_t *out_len){
+	if (!(root && root->type == json_object)) assert( "Invalid OpenAI root JSON.\n");
+
+	json_value *output = NULL;
+
+	for (unsigned i = 0; i < root->u.object.length; i++){
+		json_object_entry *e = &root->u.object.values[i];
+		if (strcmp(e->name, "output") == 0){
+			output = e->value;
+			break;
+		}
+	}
+
+	if (!(output && output->type == json_array)) assert( "Missing output array in OpenAI response.\n");
+
+	for (unsigned i = 0; i < output->u.array.length; i++){
+		json_value *item = output->u.array.values[i];
+		if (!item || item->type != json_object) continue;
+
+		json_value *content = NULL;
+
+		for (unsigned j = 0; j < item->u.object.length; j++){
+			json_object_entry *e = &item->u.object.values[j];
+			if (strcmp(e->name, "content") == 0){
+				content = e->value;
+				break;
+			}
+		}
+
+		if (!content || content->type != json_array) continue;
+
+		for (unsigned k = 0; k < content->u.array.length; k++){
+			json_value *c = content->u.array.values[k];
+			if (!c || c->type != json_object) continue;
+
+			json_value *text = NULL;
+
+			for (unsigned t = 0; t < c->u.object.length; t++){
+				json_object_entry *e = &c->u.object.values[t];
+				if (strcmp(e->name, "text") == 0){
+					text = e->value;
+					break;
+				}
+			}
+
+			if (text && text->type == json_string){
+				size_t len = text->u.string.length;
+				char *dup = malloc(len + 1);
+				if (!dup) assert("Failed to allocate extracted OpenAI text.\n");
+
+				memcpy(dup, text->u.string.ptr, len);
+				dup[len] = '\0';
+
+				if (out_len) *out_len = len;
+				return dup;
+			}
+		}
+	}
+
+	assert("Could not extract text from OpenAI response.\n");
+	return NULL;
+}
+
+json_value *openai_extract_text_json(json_value *root){
+	size_t len = 0;
+	char *text = openai_extract_output_text_dup(root, &len);
+	if (!text) assert("Failed to extract OpenAI text.\n");
+
+	json_value *parsed = json_parse(text, len);
+	free(text);
+
+	if (!parsed) assert("Failed to parse extracted OpenAI text as JSON.\n");
+	return parsed;
+}
