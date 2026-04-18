@@ -1,8 +1,6 @@
-#ifndef NEUROENGINE_INNER
-#define NEUROENGINE_INNER
+#ifndef INPUT_PROCESSOR_C
+#define INPUT_PROCESSOR_C
 
-#include <stddef.h>
-#include "../lib/jsonp/json.h"
 #include "../lib/util/util.h"
 
 // TODO : This is a fixed prompt, if you want to customize init node activation / weight, you have to modify the prompt separate 
@@ -207,12 +205,6 @@
   "}" \
 "}"
 
-_Bool AddContextNodesFromJSON(json_object_entry* context_data);
-_Bool ExportGraphTo(char* path);
-
-_Bool ValidateContext(json_value *document, size_t *context);
-
-void RefreshGraph();
 
 void DecomposeInputIntoGraph(String *input);
 

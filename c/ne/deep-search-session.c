@@ -6,8 +6,8 @@
 #include "../lib/jsonp/json.h"
 #include "../lib/util/util.h"
 #include "mocks.h"
-#include "engine.h"
 #include "command-parsing.h"
+#include "graph-engine.h"
 
 _Bool init_ds_memory(DS_memory *d){
 	if (!d) return 0;
@@ -185,5 +185,5 @@ char* start_ds_session(Task *task){
 	FreeString(&reason);
 	free_ds_memory(&mem);
 
-	return c_str(&out);
+	return c_str(&out); // might look sus but only the pointer matters
 }

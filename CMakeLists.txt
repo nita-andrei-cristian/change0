@@ -16,31 +16,37 @@ add_library(util SHARED ${CMAKE_SOURCE_DIR}/c/lib/util/util.c)
 add_library(openai SHARED ${CMAKE_SOURCE_DIR}/c/lib/openai/openai.c)
 add_library(mockopenai SHARED ${CMAKE_SOURCE_DIR}/c/lib/openai/mockopenai.c)
 add_library(ui SHARED ${CMAKE_SOURCE_DIR}/c/cli/ui.c)
-add_library(engine SHARED ${CMAKE_SOURCE_DIR}/c/ne/engine.c)
+add_library(graphexport SHARED ${CMAKE_SOURCE_DIR}/c/ne/graph-export.c)
 add_library(search SHARED ${CMAKE_SOURCE_DIR}/c/ne/search.c)
 add_library(deepsearchsession SHARED ${CMAKE_SOURCE_DIR}/c/ne/deep-search-session.c)
 add_library(deepsearchexecute SHARED ${CMAKE_SOURCE_DIR}/c/ne/deep-search-execute.c)
 add_library(comparsing SHARED ${CMAKE_SOURCE_DIR}/c/ne/command-parsing.c)
 add_library(mocks SHARED ${CMAKE_SOURCE_DIR}/c/ne/mocks.c)
 add_library(aiaction SHARED ${CMAKE_SOURCE_DIR}/c/ne/ai-action.c)
+add_library(json2graph SHARED ${CMAKE_SOURCE_DIR}/c/ne/json-to-graph.c)
+add_library(graphengine SHARED ${CMAKE_SOURCE_DIR}/c/ne/graph-engine.c)
+add_library(inputprocessor SHARED ${CMAKE_SOURCE_DIR}/c/ne/input-processor.c)
 
 target_include_directories(hd PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/hd)
 target_include_directories(jsonp PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/jsonp)
-target_include_directories(node PUBLIC ${CMAKE_SOURCE_DIR}/c/ne/node)
+target_include_directories(node PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 target_include_directories(util PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/util)
 target_include_directories(openai PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/openai)
 target_include_directories(mockopenai PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/openai)
 target_include_directories(ui PUBLIC ${CMAKE_SOURCE_DIR}/c/cli)
-target_include_directories(engine PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
+target_include_directories(graphexport PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 target_include_directories(search PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 target_include_directories(deepsearchsession PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 target_include_directories(deepsearchexecute PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 target_include_directories(comparsing PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 target_include_directories(mocks PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 target_include_directories(aiaction PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
+target_include_directories(json2graph PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
+target_include_directories(graphengine PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
+target_include_directories(inputprocessor PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 
 target_link_libraries(jsonp PRIVATE m) # add math
-target_link_libraries(engine PRIVATE m) # add math
+target_link_libraries(graphengine PRIVATE m) # add math
 target_link_libraries(node PRIVATE m) # add math
 
 target_link_libraries(openai PRIVATE OpenSSL::SSL OpenSSL::Crypto)
@@ -49,6 +55,14 @@ add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 
 target_link_libraries(deepsearchsession comparsing)
 
-target_link_libraries(change PRIVATE hd jsonp node util ui engine search deepsearchsession deepsearchexecute openai mockopenai mocks aiaction)
+target_link_libraries(
+	change PRIVATE
+
+	hd jsonp node util ui 
+	graphexport search deepsearchsession 
+	deepsearchexecute openai 
+	mockopenai mocks aiaction json2graph 
+	graphengine inputprocessor
+)
 # target_link_libraries(change PRIVATE llama ggml)
 
