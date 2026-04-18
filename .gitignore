@@ -6,3 +6,4 @@ models/
 .env
 mocks/action-data/*
 mocks/nodes/*
+sent.txt

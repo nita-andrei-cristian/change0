@@ -1,6 +1,6 @@
 #include "graph-export.h"
 #include "node.h"
-#include "../lib/util/util.h"
+#include "util.h"
 #include <string.h>
 #include <stdio.h>
 

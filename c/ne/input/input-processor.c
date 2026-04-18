@@ -1,8 +1,7 @@
 #include "input-processor.h"
 
-#include "../lib/jsonp/json.h"
-#include "../lib/util/util.h"
-#include "../lib/openai/openai.h"
+#include "json.h"
+#include "openai.h"
 #include "json-to-graph.h"
 #include <string.h>
 #include <stdio.h>

@@ -3,9 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../lib/jsonp/json.h"
-#include "../lib/util/util.h"
-#include "mocks.h"
+#include "mocks/mocks.h"
 #include "command-parsing.h"
 #include "graph-engine.h"
 

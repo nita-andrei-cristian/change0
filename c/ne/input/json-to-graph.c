@@ -1,6 +1,6 @@
 #include "json-to-graph.h"
-#include "../lib/jsonp/json.h"
-#include "../lib/util/util.h"
+#include "json.h"
+#include "util.h"
 #include "time.h"
 #include "node.h"
 #include "string.h"

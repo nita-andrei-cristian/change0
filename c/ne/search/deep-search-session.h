@@ -2,8 +2,8 @@
 #define DEEP_SEARCH_SESSION_C
 
 #include <stddef.h>
-#include "../lib/util/util.h"
 #include "node.h"
+#include "util.h"
 
 #define DS_PERSISTENT_MEMORY_SIZE 2048
 #define DS_DYNAMIC_MEMORY_SIZE 2048

@@ -1,8 +1,8 @@
+#include "mocks.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../config.h"
-#include "../lib/util/util.h"
+#include "config.h"
 #include "node.h"
 
 char* mock_ai_action(char* prompt, size_t *size){

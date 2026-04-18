@@ -1,7 +1,7 @@
 #include "graph-engine.h"
 #include "node.h"
 #include "math.h"
-#include "../lib/util/util.h"
+#include "util.h"
 #include <string.h>
 #include <stdio.h>
 

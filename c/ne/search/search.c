@@ -1,6 +1,6 @@
 #include "search.h"
 #include "node.h"
-#include "../lib/util/util.h"
+#include "util.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
