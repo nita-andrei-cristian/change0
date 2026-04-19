@@ -1,26 +1,29 @@
-HTTP/1.1 400 Bad Request
-Date: Sat, 18 Apr 2026 14:09:26 GMT
-Content-Type: application/json
-Content-Length: 327
+HTTP/1.1 401 Unauthorized
+Date: Sat, 18 Apr 2026 14:55:11 GMT
+Content-Type: text/plain
+Content-Length: 410
 Connection: close
+x-openai-ide-error-code: invalid_api_key
+x-openai-authorization-error: 401
+x-error-json: ewogICJlcnJvciI6IHsKICAgICJtZXNzYWdlIjogIkluY29ycmVjdCBBUEkga2V5IHByb3ZpZGVkOiBzay1wcm9qLSoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqMkpzQS4gWW91IGNhbiBmaW5kIHlvdXIgQVBJIGtleSBhdCBodHRwczovL3BsYXRmb3JtLm9wZW5haS5jb20vYWNjb3VudC9hcGkta2V5cy4iLAogICAgInR5cGUiOiAiaW52YWxpZF9yZXF1ZXN0X2Vycm9yIiwKICAgICJjb2RlIjogImludmFsaWRfYXBpX2tleSIsCiAgICAicGFyYW0iOiBudWxsCiAgfSwKICAic3RhdHVzIjogNDAxCn0=
+x-request-id: req_ee0b8a37a753424d8ece7c56c1784d9d
+x-openai-internal-caller: unknown_through_ide
+x-openai-proxy-wasm: v0.1
 Server: cloudflare
-openai-version: 2020-10-01
-openai-organization: user-e52vhis9p1095rsr3wufkpva
-openai-project: proj_NHLYZPhBcYwYHNXl1IdcRIi6
-x-request-id: req_89d7783004174138aaa099380d733816
-openai-processing-ms: 15
 cf-cache-status: DYNAMIC
-set-cookie: __cf_bm=KycrBZp6tzQjlJg7Aee.v8PVIVYTZL6icDwQdqnowok-1776521366.1284044-1.0.1.1-lujO.Jz6rXesOQcRbYh8ucPZP04J2VUfFnxU0X121aXZA7nV5Kwbee.yahI4XZkM_TcgYrE627wzca2hQoeeKV2PViGx594cefUWyBr1qw4JcDMZnImJHe2oSP3Blzsz; HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Sat, 18 Apr 2026 14:39:26 GMT
+set-cookie: __cf_bm=yBwavfjGlZlr8oWYaEtp2XSOrU8JjiagpMi9uP05Ksc-1776524111.4309607-1.0.1.1-C1saUjWWSPxtUKki6OLKgjBBbs1YoS7YNeFWe7uQ4ryMlrAeaoPHQFP82hmNPNCWkOmipGqtVO4W1_XPbJSK5wxJV7hIyinzBOS9iOI3BSSu05jb5gNb4fWHfpDLOagK; HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Sat, 18 Apr 2026 15:25:11 GMT
+set-cookie: _cfuvid=dyMft7xYTc1CjETLHBaLOdDvtVKzGUsZxWxaLpImhWI-1776524111.4309607-1.0.1.1-bWIo3xmL_jqLISvNJpxTJebnVaoNEunCFyuirDfxJVY; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.openai.com
 Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 X-Content-Type-Options: nosniff
-CF-RAY: 9ee43f4a4aef06d2-AMS
+CF-RAY: 9ee482506a7f0df4-AMS
 alt-svc: h3=":443"; ma=86400
 
 {
   "error": {
-    "message": "Invalid schema for response_format 'deep_search_action': In context=(), 'required' is required to be supplied and to be an array including every key in properties. Missing 'command'.",
+    "message": "Incorrect API key provided: sk-proj-********************************************************************************************************************************************************2JsA. You can find your API key at https://platform.openai.com/account/api-keys.",
     "type": "invalid_request_error",
-    "param": "text.format.schema",
-    "code": "invalid_json_schema"
-  }
+    "code": "invalid_api_key",
+    "param": null
+  },
+  "status": 401
 }

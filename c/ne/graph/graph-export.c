@@ -25,7 +25,7 @@ static _Bool WriteGraphAndFreeData(char* directory, char *buf){
 	return 1;
 }
 
-_Bool ExportGraphTo(char* directory){
+char* SeriliazeGraph(){
 	size_t estimated =
 		Nodes.count * 64 +
 		ConnectionCount * 96 +
@@ -110,6 +110,11 @@ _Bool ExportGraphTo(char* directory){
 	*p++ = '}';
 	*p = '\0';
 
+	return buf;
+}
+
+_Bool ExportGraphTo(char* directory){
+	char* buf = SeriliazeGraph();
 	return WriteGraphAndFreeData(directory, buf);
 }
 

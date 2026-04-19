@@ -182,6 +182,9 @@ _Bool decompose_command_3_params(
 }
 
 void cat_perc_to_buffer(String *buffer, int_fast64_t percentage){
+	if (buffer->len + 2 < buffer->cap)
+		ResizeString(buffer, MAX(buffer->len * 2, 8));
+	
 	cassert(buffer->len + 2 < buffer->cap, "Error : Buffer Doesn't have enough memory for 2 more characters");
 
 	if (percentage >= 100){
@@ -209,11 +212,11 @@ void parse_exec_response(json_value* doc, _Bool *finished, json_value** original
 	}
 }
 
-void parse_judge_result(json_value* doc, String **reason, _Bool *received_pass, _Bool *pass){
+void parse_judge_result(json_value* doc, String *reason, _Bool *received_pass, _Bool *pass){
 	for (size_t i = 0; i < doc->u.object.length; i++){
 		json_object_entry e = doc->u.object.values[i];
 		if (strcmp(e.name, "reason") == 0 && e.value->type == json_string){
-			CatString(*reason, e.value->u.string.ptr, e.value->u.string.length);
+			CatString(reason, e.value->u.string.ptr, e.value->u.string.length);
 		}else if (strcmp(e.name, "pass") == 0 && e.value->type == json_boolean){
 			*pass = e.value->u.boolean;
 			*received_pass = 1;

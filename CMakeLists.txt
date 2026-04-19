@@ -55,7 +55,6 @@ target_include_directories(graphexport PUBLIC
 )
 target_link_libraries(graphexport PUBLIC
     util
-    jsonp
     node
 )
 
@@ -70,6 +69,7 @@ target_link_libraries(graphengine PRIVATE m)
 add_library(node SHARED ${CMAKE_SOURCE_DIR}/c/ne/node.c)
 target_include_directories(node PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
 target_link_libraries(node PRIVATE m) 
+target_link_libraries(node PUBLIC hd) 
 
 add_library(mocks SHARED ${CMAKE_SOURCE_DIR}/c/ne/mocks/mocks.c)
 target_include_directories(mocks PUBLIC
@@ -114,7 +114,6 @@ target_link_libraries(deepsearchexecute PUBLIC
     aiaction
     comparsing
     openai
-    deepsearchsession
     jsonp
 )
 
@@ -165,6 +164,17 @@ target_link_libraries(inputprocessor PUBLIC
     json2graph
 )
 
+add_library(http-server SHARED ${CMAKE_SOURCE_DIR}/c/srv/http-server.c)
+target_include_directories(http-server PUBLIC
+	${CMAKE_SOURCE_DIR}/c
+	${CMAKE_SOURCE_DIR}/c/ne
+)
+target_link_libraries(http-server PUBLIC 
+	deepsearchsession
+	node
+	graphexport
+)
+
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 target_include_directories(change PRIVATE
     ${CMAKE_SOURCE_DIR}/c
@@ -181,6 +191,5 @@ target_link_libraries(
 	graphexport search deepsearchsession 
 	deepsearchexecute openai 
 	mockopenai mocks aiaction json2graph 
-	graphengine inputprocessor
+	graphengine inputprocessor http-server
 )
-# target_link_libraries(change PRIVATE llama ggml)

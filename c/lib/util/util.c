@@ -254,7 +254,10 @@ void CatString(String* s, char* c, size_t len){
 
 void ResizeString(String* s, size_t new_cap){
 	char* tmp = realloc(c_str(s), new_cap + 1);
-	cassert(tmp, "String couldn't grow\n");
+	if (!tmp){
+		fprintf(stderr, "String is |%s|\n", c_str(s));
+		cassert(0, "String couldn't grow\n");
+	}
 	s->cap = new_cap;
 	c_str(s) = tmp;
 }

@@ -1,10 +1,10 @@
 #include "deep-search-session.h"
+#include "command-parsing.h"
 #include "deep-search-execute.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "mocks/mocks.h"
-#include "command-parsing.h"
+#include "lib/openai/openai.h"
 #include "graph-engine.h"
 
 _Bool init_ds_memory(DS_memory *d){
@@ -60,38 +60,43 @@ static void write_feedback(String* mem, String* reason){
 
 	size_t len = sprintf(buffer, "{ Server Intervention :  You had previously tried to execute this task, but failed the automatic validation, here is feedback: [%s]. You may repeat the round with this hint. }", c_str(reason));
 
+	EmptyString(mem);
+
 	mem->len = 0;
 	CatString(mem, buffer, len);
 
 	free(buffer);
 }
 
-static _Bool judge_result(String *out, String* reason){
+static _Bool judge_result(String *out, String* reason, Task *task){
 	size_t len = 0; 
 
 	_Bool pass = 0;
 	_Bool received_pass = 0;
 
-	char* json_raw = make_mock_judge(out, &len);
-	cassert(json_raw, "Failed to mock a judge task");
-	cassert(len > 0, "Failed to mock a judge task");
-	
+	json_value *root = call_gpt_judge(out, task);
+	cassert(root, "Judge root is NULL.\n");
+
+	char *json_raw = openai_extract_output_text_dup(root, &len);
+	cassert(json_raw, "Failed to extract judge JSON text.\n");
+	cassert(len > 0, "Judge returned empty JSON text.\n");
+
 	json_value *json_parsed = json_parse(json_raw, len);
+	cassert(json_parsed, "Judge result isn't JSON.\n");
+	cassert(json_parsed->type == json_object, "Judge JSON is not an object.\n");
 
-	cassert(json_parsed, "Judge result isn't json\n");
-	cassert(json_parsed->type == json_object, "Json is not an object");
+	parse_judge_result(json_parsed, reason, &received_pass, &pass);
+	cassert(received_pass, "Judge JSON didn't provide a pass field.\n");
 
-	parse_judge_result(json_parsed, &reason, &received_pass, &pass);
-
-	cassert(received_pass, "JSON didn't give a pass back\n");
-	
 	json_value_free(json_parsed);
+	json_value_free(root);
 	free(json_raw);
 
-	if (pass == 1) return 1;
+	if (pass) return 1;
 
-	cassert(reason->len, "No provided reason");
+	printf("Judge reason : %s", c_str(reason));
 
+	cassert(reason->len, "No provided reason.\n");
 	return 0;
 }
 
@@ -103,7 +108,7 @@ static _Bool judge_result(String *out, String* reason){
 static _Bool think(DS_memory *mem, String *out, size_t depth){
 
 	size_t respsize;
-	char* response = process_ai_call(mem, &respsize);
+	char* response = call_gpt_deepsearch(mem, &respsize);
 
 	printf("Response : %s\n\n", response);
 
@@ -164,8 +169,9 @@ char* start_ds_session(Task *task){
 			cassert(idepth < 100, "Error : Internal Depth went way too high\n");
 		}
 
-		_Bool success = judge_result(&out, &reason);
+		_Bool success = judge_result(&out, &reason, task);
 		if (success) break;
+
 
 		// failed task 
 		write_feedback(&mem.dynamic, &reason);

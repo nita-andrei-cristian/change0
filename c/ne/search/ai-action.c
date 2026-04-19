@@ -56,7 +56,7 @@ void run1(json_value* doc, String *dynamic_mem){
 	CatString(&data, s, sprintf(s, "%c nodes by [%s]:\nCommand Result: ", '%', criteria));
 
 	for (size_t i = 0; i < count; i++){
-		char buffer[NODE_LABEL_CAP * 2 + 32];
+		char buffer[NODE_LABEL_CAP * 2 + 128];
 		size_t len = sprintf(	
 				buffer, 
 				"{\"name\" : \"%s\", \"%s\" : %.2f, \"parent\" : \"%s\"}\n",

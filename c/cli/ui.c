@@ -5,7 +5,6 @@
 #include "node.h"
 #include "util.h"
 #include "mockopenai.h"
-#include "mocks/mocks.h"
 #include "graph-export.h"
 #include "input-processor.h"
 #include "search/deep-search-session.h"
@@ -100,16 +99,14 @@ static void Run(int i){
 		int read = mygetline(&input_raw, &input_size, stdin);
 		if (read < 0) input_size = 0;
 
-		if (input_size < 5){
+		if (input_size > 5){
 			memcpy(task.name, input_raw, input_size);
 			task.name_len = input_size;
-			task.minDepth = 10;
+			task.minDepth = 2;
 		}
 
 		if (input_raw) free(input_raw);
-
-		make_mock_task(&task);
-
+		
 		char *out = start_ds_session(&task);
 		if (out){
 			printf("Deep research result : \n\n%s\n", out);

@@ -1,1 +1,1 @@
-{"command":2,"percentage":60,"node":"odihna_trebuie_meritata","criteria":"weight","context":"subiectiv","intent":"inspect rigid beliefs about rest and productivity"}
+{"command":3,"node":"autoobservare","context":"generalitati","percA":65,"percW":50,"depth":4,"intent":"follow introspection links into comparison and uncertainty handling"}

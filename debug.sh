@@ -3,6 +3,13 @@ cd debug
 clear
 cmake -DCMAKE_BUILD_TYPE=Debug -DGGML_CUDA=ON -G Ninja ..
 
+if [ -f ./.env ]; then
+	echo "Setting ./.env"
+	set -a
+	source .env
+	set +a
+fi
+
 cd ..
 cmake --build debug --config Debug -j
 

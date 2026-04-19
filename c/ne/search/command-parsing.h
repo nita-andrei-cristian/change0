@@ -35,6 +35,6 @@ void cat_perc_to_buffer(String *buffer, int_fast64_t percentage);
 
 void parse_exec_response(json_value* doc, _Bool *finished, json_value** original_conclusion, int_fast64_t *command);
 
-void parse_judge_result(json_value* doc, String **reason, _Bool *received_pass, _Bool *pass);
+void parse_judge_result(json_value* doc, String *reason, _Bool *received_pass, _Bool *pass);
 
 #endif

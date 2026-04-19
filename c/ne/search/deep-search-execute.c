@@ -97,7 +97,7 @@ static json_value *call_gpt_deep_search(DS_memory *mem){
 	return root;
 }
 
-char* process_ai_call(DS_memory *mem, size_t *respsize){
+char* call_gpt_deepsearch(DS_memory *mem, size_t *respsize){
 	cassert(mem, "Error: mem is NULL.\n");
 	cassert(respsize, "Error: respsize is NULL.\n");
 
@@ -109,4 +109,75 @@ char* process_ai_call(DS_memory *mem, size_t *respsize){
 
 	json_value_free(root);
 	return response;
+}
+
+json_value *call_gpt_judge(String *out, Task *task){
+	cassert(out, "Error: NULL out passed.\n");
+	cassert(task, "Error: NULL task passed.\n");
+
+	size_t prompt_cap =
+		strlen(DS_JUDGE_PROMPT) +
+		task->name_len +
+		out->len +
+		64;
+
+	char *prompt = malloc(prompt_cap);
+	cassert(prompt, "Error: Failed to allocate judge prompt.\n");
+
+	int written = snprintf(
+		prompt, prompt_cap,
+		DS_JUDGE_PROMPT,
+		task->name,
+		c_str(out)
+	);
+	cassert(written > 0 && (size_t)written < prompt_cap, "Error: Failed to build judge prompt.\n");
+
+	char *escaped_prompt = json_escape_dup(prompt);
+	free(prompt);
+	cassert(escaped_prompt, "Error: Failed to escape judge prompt.\n");
+
+	size_t body_cap =
+		strlen(escaped_prompt) +
+		sizeof(OPENAI_DEEP_SEARCH_JUDGE_SCHEMA_JSON) +
+		1024;
+
+	char *json_body = malloc(body_cap);
+	cassert(json_body, "Error: Failed to allocate judge request body.\n");
+
+	int body_size = snprintf(
+		json_body, body_cap,
+		"{"
+			"\"model\":\"gpt-5.4-mini\","
+			"\"input\":\"%s\","
+			"\"text\":{"
+				"\"format\":{"
+					"\"type\":\"json_schema\","
+					"\"strict\":true,"
+					"\"name\":\"deep_search_judge\","
+					"\"schema\":%s"
+				"}"
+			"}"
+		"}",
+		escaped_prompt,
+		OPENAI_DEEP_SEARCH_JUDGE_SCHEMA_JSON
+	);
+
+	free(escaped_prompt);
+	cassert(body_size > 0 && (size_t)body_size < body_cap,
+		"Error: Failed to build judge OpenAI request body.\n");
+
+	printf("Waiting for OPENAI judge response...\n");
+
+	ai_openai_response created = {0};
+	ai_openai_status st = ai_openai_create_response(json_body, &created);
+	free(json_body);
+
+	cassert(st == AI_OPENAI_OK, (char*) ai_openai_strerror(st));
+	cassert(created.body.data, "Error: OpenAI judge returned empty body.\n");
+
+	json_value *root = json_parse(created.body.data, created.body.len);
+	cassert(root, "Error: Failed to parse OpenAI judge response body.\n");
+
+	ai_openai_response_free(&created);
+	return root;
 }
