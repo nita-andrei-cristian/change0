@@ -53,9 +53,9 @@ void UIStart(){
 
 static void Run(int i){
 	clear();
-	printf("------------- [ %c ] -------------\n", INPUT_CHAR[i]);
+	printf("------------- [ %c ] -------------\n", options[i].key);
 
-	if (INPUT_TYPE[i] == MESSAGE){
+	if (options[i].type == MESSAGE){
 		char *input_raw = NULL;
 		size_t input_size = 0;
 
@@ -79,15 +79,15 @@ static void Run(int i){
 		}
 	}
 
-	if (INPUT_TYPE[i] == MESSAGEX10){
+	if (options[i].type == MESSAGEX10){
 		printf("Work in progress");
 	}
 
-	if (INPUT_TYPE[i] == EXPORT){
+	if (options[i].type == EXPORT){
 		ExportGraphTo(DEFAULT_GRAPH_EXPORT);
 	}
 
-	if (INPUT_TYPE[i] == DEEPRESEARCH){
+	if (options[i].type == DEEPRESEARCH){
 		Task task;
 
 		char *input_raw = NULL;
@@ -115,7 +115,7 @@ static void Run(int i){
 		}
 	}
 
-	if (INPUT_TYPE[i] == REGEN_OPENAI)
+	if (options[i].type == REGEN_OPENAI)
 		RegenMocksOpenAI();
 
 	WaitForInput();
@@ -128,18 +128,18 @@ void UILoop(){
 		printf("CHANGE APP CLI\n\n");
 
 		if (selection >= 0 && selection < OPTIONS_COUNT){
-			printf("Ran %c\n\n", INPUT_CHAR[selection]);
+			printf("Ran %c\n\n", options[selection].key);
 		}
 
 		for (int i = 0; i < OPTIONS_COUNT; ++i){
-			printf("[%c] - %s\n", INPUT_CHAR[i], INPUT_MSG[i]);
+			printf("[%c] - %s\n", options[i].key, options[i].msg);
 		}
 		printf("\n\nSelect any option above: ");
 
 		char option = (char)getch_nowait_enterless();
 		for (selection = 0; selection < OPTIONS_COUNT; ++selection){
 			if (option == QUIT_BUTTON) return;
-			if (option == INPUT_CHAR[selection]) Run(INPUT_TYPE[selection]);
+			if (option == options[selection].key) Run(selection);
 		}
 		if (selection == OPTIONS_COUNT) continue;
 
