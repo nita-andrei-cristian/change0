@@ -1,6 +1,8 @@
 #ifndef CONFIG_H_MAIN_FILE
 #define CONFIG_H_MAIN_FILE
 
+#define HTTP_SERVER_PORT 8085
+
 #define PROJECT_ROOT "/home/nita/dev/c/change2/"
 
 #define DEFAULT_MOCK_DIRECTORY PROJECT_ROOT "mocks/"

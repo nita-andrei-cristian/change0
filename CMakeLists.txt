@@ -46,6 +46,8 @@ target_link_libraries(ui PUBLIC
     graphexport
     inputprocessor
     deepsearchsession
+    http-server
+    globals
 )
 
 add_library(graphexport SHARED ${CMAKE_SOURCE_DIR}/c/ne/graph/graph-export.c)
@@ -101,6 +103,8 @@ target_link_libraries(deepsearchsession PUBLIC
     comparsing
     graphengine
     mocks
+    http-server
+    globals
 )
 
 add_library(deepsearchexecute SHARED ${CMAKE_SOURCE_DIR}/c/ne/search/deep-search-execute.c)
@@ -121,14 +125,17 @@ add_library(comparsing SHARED ${CMAKE_SOURCE_DIR}/c/ne/search/command-parsing.c)
 target_include_directories(comparsing PUBLIC
     ${CMAKE_SOURCE_DIR}/c/ne/search
     ${CMAKE_SOURCE_DIR}/c/ne
+    ${CMAKE_SOURCE_DIR}/c
 )
 target_link_libraries(comparsing PUBLIC
     util
     jsonp
+    globals
 )
 
 add_library(aiaction SHARED ${CMAKE_SOURCE_DIR}/c/ne/search/ai-action.c)
 target_include_directories(aiaction PUBLIC
+    ${CMAKE_SOURCE_DIR}/c
     ${CMAKE_SOURCE_DIR}/c/ne/search
     ${CMAKE_SOURCE_DIR}/c/ne
 )
@@ -137,6 +144,7 @@ target_link_libraries(aiaction PUBLIC
     util
     search
     comparsing
+    globals
 )
 
 add_library(json2graph SHARED ${CMAKE_SOURCE_DIR}/c/ne/input/json-to-graph.c)
@@ -168,12 +176,21 @@ add_library(http-server SHARED ${CMAKE_SOURCE_DIR}/c/srv/http-server.c)
 target_include_directories(http-server PUBLIC
 	${CMAKE_SOURCE_DIR}/c
 	${CMAKE_SOURCE_DIR}/c/ne
+	${CMAKE_SOURCE_DIR}/c/lib/util
 )
 target_link_libraries(http-server PUBLIC 
-	deepsearchsession
 	node
 	graphexport
+	util
+	pthread
 )
+
+add_library(globals SHARED ${CMAKE_SOURCE_DIR}/c/globals.c)
+target_include_directories(globals PUBLIC
+	${CMAKE_SOURCE_DIR}/c
+	${CMAKE_SOURCE_DIR}/c/lib/hd
+)
+target_link_libraries(globals SHARED hashdict)
 
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 target_include_directories(change PRIVATE

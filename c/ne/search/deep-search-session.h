@@ -122,7 +122,7 @@
   "}" \
 "}"
 
-char* start_ds_session(Task* task);
+void start_ds_session(Task *task, char* id, String* out);
 
 #endif
 
@@ -137,5 +137,6 @@ typedef struct {
 
 _Bool init_ds_memory(DS_memory *d);
 void free_ds_memory(DS_memory *d);
+
 
 #endif

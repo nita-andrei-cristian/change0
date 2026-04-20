@@ -4,9 +4,18 @@
 #include <string.h>
 #include "search.h"
 #include "command-parsing.h"
+#include "globals.h"
 
-void run1(json_value* doc, String *dynamic_mem){
+static ds_emit_like_func ds_emit = NULL;
+
+static void lazy_load(){
+    if (ds_emit == NULL)
+        ds_emit = (ds_emit_like_func)ReadGlobalPointer("ds_emit", FSIZE("ds_emit"));
+}
+
+void run1(json_value* doc, String *dynamic_mem, char *ds_id){
 	if (!dynamic_mem || !doc) return;
+	lazy_load();
 
 	int_fast64_t percentage = -1;
 	char criteria[16];
@@ -73,12 +82,15 @@ void run1(json_value* doc, String *dynamic_mem){
 
 	CatString(dynamic_mem, c_str(&data), data.len);
 
+	ds_emit(ds_id, "cmd-1", c_str(&data), data.len);
+
 	FreeString(&data);
 	free(result);
 }
 
-void run2(json_value* doc, String *dynamic_mem){
+void run2(json_value* doc, String *dynamic_mem, char* ds_id){
 	if (!doc || !dynamic_mem) return;
+	lazy_load();
 
 	int_fast64_t percentage;
 	int_fast64_t context;
@@ -166,13 +178,16 @@ void run2(json_value* doc, String *dynamic_mem){
 	}
 	CatFixed(&data, "\n");
 
+	ds_emit(ds_id, "cmd-2", c_str(&data), data.len);
+
 	free(result);
 	CatString(dynamic_mem, data.p, data.len);
 	FreeString(&data);
 }
 
-void run3(json_value* doc, String *dynamic_mem){
+void run3(json_value* doc, String *dynamic_mem, char* ds_id){
 	if (!doc || !dynamic_mem) return;
+	lazy_load();
 
 	char target[NODE_LABEL_CAP];
 	size_t target_length = 0;
@@ -193,8 +208,8 @@ void run3(json_value* doc, String *dynamic_mem){
 	size_t count = 0;
 
 	
-	size_t res_length = 0;
-	char* result = ComputeNodeFamily(node, percA, percW, depth, &res_length);
+	size_t data_len = 0;
+	char* data = ComputeNodeFamily(node, percA, percW, depth, &data_len);
 
 	if (*intent.p != '\0'){
 		CatFixed(dynamic_mem, "Model Intention : \"");
@@ -204,8 +219,10 @@ void run3(json_value* doc, String *dynamic_mem){
 		CatFixed(dynamic_mem, "Command Result: ");
 	}
 
-	CatString(dynamic_mem, result, res_length);
+	CatString(dynamic_mem, data, data_len);
 
-	free(result);
+	ds_emit(ds_id, "cmd-3", data, data_len);
+
+	free(data);
 }
 

@@ -1,8 +1,6 @@
 #ifndef UI_CLIENT_FUNCTIONALITY
 #define UI_CLIENT_FUNCTIONALITY
 
-#include "../config.h"
-
 #define OPTIONS_COUNT 8
 #define QUIT_BUTTON 'q'
 

@@ -39,7 +39,7 @@
   "}" \
 "}"
 
-void exec_response(json_value* doc, String *dynamic_mem, size_t depth, String* conclusion);
+void exec_response(json_value* doc, String *dynamic_mem, size_t depth, String* conclusion, char *ds_id);
 
 char *call_gpt_deepsearch(DS_memory *mem, size_t *respsize);
 

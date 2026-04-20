@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <termios.h>
 #include <string.h>
+#include "srv/http-server.h"
+#include "globals.h"
 
 // AI generated function
 static int getch_nowait_enterless(void) {
@@ -49,6 +51,10 @@ static void SetUpContexts(){
 void UIStart(){
 	InitNodes();
 	SetUpContexts();
+	InitGlobalPointerMap();
+
+	// Setup Global Pointers
+	SetGlobalPointerF("ds_emit", &ds_emit_event);
 }
 
 static void Run(int i){
@@ -107,16 +113,26 @@ static void Run(int i){
 
 		if (input_raw) free(input_raw);
 		
-		char *out = start_ds_session(&task);
-		if (out){
-			printf("Deep research result : \n\n%s\n", out);
-			dump_to_file(PROJECT_ROOT "deep-search-result.txt", out, strlen(out));
-			free(out);
-		}
+		String out; InitString(&out, 2048);
+		start_ds_session(&task, "default", &out);
+
+		printf("Deep research result : \n\n%s\n", out.p);
+		dump_to_file(PROJECT_ROOT "deep-search-result.txt", out.p, out.len);
+
+		FreeString(&out);
 	}
 
 	if (options[i].type == REGEN_OPENAI)
 		RegenMocksOpenAI();
+
+	if (options[i].type == STARTSERVER){
+		start_server(HTTP_SERVER_PORT);
+		printf("Server is up and running...\n\n");
+		WaitForInput();
+		stop_server();
+		printf("You stopped the server, press enter to continue\n");
+		WaitForInput();
+	}
 
 	WaitForInput();
 }
@@ -148,4 +164,5 @@ void UILoop(){
 
 void UIKill(){
 	FreeNodes();
+	FreeGlobalPointerMap();
 }

@@ -6,6 +6,9 @@
 #include <string.h>
 #include "lib/openai/openai.h"
 #include "graph-engine.h"
+#include "globals.h"
+
+static ds_emit_like_func ds_emit = NULL;
 
 _Bool init_ds_memory(DS_memory *d){
 	if (!d) return 0;
@@ -24,9 +27,12 @@ void free_ds_memory(DS_memory *d){
 	FreeString(&d->dynamic);
 }
 
-static void write_round_header(DS_memory* mem, size_t depth){
+static void write_round_header(DS_memory* mem, size_t depth, char* ds_id){
 	char header[32];
-	CatString(&mem->dynamic, header, sprintf(header, "\n\n------------- Round [%zu]:\n\n", depth));
+	size_t size = sprintf(header, "\n\n------------- Round [%zu]:\n\n", depth);
+	CatString(&mem->dynamic, header, size);
+
+	ds_emit(ds_id, "round-start", header, size);
 }
 
 static void fail_finish(DS_memory *mem, String *conclusion, size_t depth){
@@ -68,7 +74,9 @@ static void write_feedback(String* mem, String* reason){
 	free(buffer);
 }
 
-static _Bool judge_result(String *out, String* reason, Task *task){
+static _Bool judge_result(String *out, String* reason, Task *task, char *ds_id){
+	ds_emit(ds_id, "judge-start", "{\"judge\":true}", FSIZE("{\"judge\":true}"));
+	
 	size_t len = 0; 
 
 	_Bool pass = 0;
@@ -92,11 +100,18 @@ static _Bool judge_result(String *out, String* reason, Task *task){
 	json_value_free(root);
 	free(json_raw);
 
-	if (pass) return 1;
+	if (pass) {
+		ds_emit(ds_id, "judge-pass", "yes", 3);
+		return 1;
+	}
 
 	printf("Judge reason : %s", c_str(reason));
 
 	cassert(reason->len, "No provided reason.\n");
+
+	// EMIT JUDGE RESULT
+	ds_emit(ds_id, "judge-fail", c_str(reason), reason->len);
+
 	return 0;
 }
 
@@ -105,14 +120,16 @@ static _Bool judge_result(String *out, String* reason, Task *task){
 // Or even make it in more "human" formats like variants of a * weight + b * activation
 // where a and b depend on the context
 
-static _Bool think(DS_memory *mem, String *out, size_t depth){
+static _Bool think(DS_memory *mem, String *out, size_t depth, char *ds_id){
 
 	size_t respsize;
 	char* response = call_gpt_deepsearch(mem, &respsize);
 
+	ds_emit(ds_id, "ds-model-response", response, respsize);
+
 	printf("Response : %s\n\n", response);
 
-	write_round_header(mem, depth);
+	write_round_header(mem, depth, ds_id);
 	CatString(&mem->dynamic, response, respsize);
 
 	// Parse JSON
@@ -124,7 +141,7 @@ static _Bool think(DS_memory *mem, String *out, size_t depth){
 	// check if finished
 
 	String conclusion; InitString(&conclusion, 1024);
-	exec_response(doc, &mem->dynamic, depth, &conclusion);
+	exec_response(doc, &mem->dynamic, depth, &conclusion, ds_id);
 
 	_Bool terminated = try_terminate(mem, out, depth, &conclusion);
 	
@@ -135,17 +152,26 @@ static _Bool think(DS_memory *mem, String *out, size_t depth){
 	return terminated;
 }
 
-char* start_ds_session(Task *task){
+static void lazy_load(){
+    if (ds_emit == NULL){
+        ds_emit = (ds_emit_like_func)ReadGlobalPointer("ds_emit", FSIZE("ds_emit"));
+	cassert(ds_emit, "Can't load ds_emit");
+    }
+}
+
+void start_ds_session(Task *task, char* id, String* out){
+	lazy_load();
+
 	DS_memory mem;
 	if (massert(init_ds_memory(&mem), "Couldn't allocate memory for ds session"))
-		return NULL;
+		return;
 
-	String out;
-	InitString(&out, 1024);
+	InitString(out, 1024);
 	
 	ResizeString(&mem.persistent, sizeof(DS_PERSISTENT_PROMPT) + task->name_len + 1);
 
 	size_t req_space = sprintf(mem.persistent.p, DS_PERSISTENT_PROMPT, task->name);
+
 
 	if (req_space >= mem.persistent.cap){
 		fprintf(stderr, "Req size : %zu, Mem Size : %zu", req_space, mem.persistent.cap);
@@ -153,7 +179,11 @@ char* start_ds_session(Task *task){
 	}
 	mem.persistent.len = req_space;
 
+	ds_emit(id, "p-mem", mem.persistent.p, mem.persistent.len);
+
 	RefreshGraph();
+
+	ds_emit(id, "ds-start", "{\"start\" : true}", FSIZE("{\"start\" : true}"));
 	
 	// internal external depth
 	size_t idepth = 1, edepth = 1;
@@ -164,12 +194,14 @@ char* start_ds_session(Task *task){
 
 		idepth = 1;
 		while(idepth++) {
-			_Bool status = think(&mem, &out, idepth);
+			_Bool status = think(&mem, out, idepth, id);
 			if (status == 1) break;
 			cassert(idepth < 100, "Error : Internal Depth went way too high\n");
+
+			ds_emit(id, "d-mem", mem.dynamic.p, mem.dynamic.len);
 		}
 
-		_Bool success = judge_result(&out, &reason, task);
+		_Bool success = judge_result(out, &reason, task, id);
 		if (success) break;
 
 
@@ -177,11 +209,12 @@ char* start_ds_session(Task *task){
 		write_feedback(&mem.dynamic, &reason);
 	}
 
+	ds_emit(id, "d-mem", mem.dynamic.p, mem.dynamic.len);
+	ds_emit(id, "ds-end", out->p, out->len);
+
 	printf("[debug] Persistent Memory : %s", mem.persistent.p);
 	printf("[debug] Dynamic Memory : %s", mem.dynamic.p);
 
 	FreeString(&reason);
 	free_ds_memory(&mem);
-
-	return c_str(&out); // might look sus but only the pointer matters
 }

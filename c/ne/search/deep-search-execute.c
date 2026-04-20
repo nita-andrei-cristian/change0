@@ -7,7 +7,7 @@
 #include "util.h"
 #include "command-parsing.h"
 
-void exec_response(json_value* doc, String *dynamic_mem, size_t depth, String *conclusion){
+void exec_response(json_value* doc, String *dynamic_mem, size_t depth, String *conclusion, char* ds_id){
 
 	_Bool finished = 0;
 	json_value* original_conclusion = NULL;
@@ -23,11 +23,11 @@ void exec_response(json_value* doc, String *dynamic_mem, size_t depth, String *c
 	}
 
 	if (command == 1)
-		run1(doc, dynamic_mem);
+		run1(doc, dynamic_mem, ds_id);
 	if (command == 2)
-		run2(doc, dynamic_mem);
+		run2(doc, dynamic_mem, ds_id);
 	if (command == 3)
-		run3(doc, dynamic_mem);
+		run3(doc, dynamic_mem, ds_id);
 }
 
 // Half is AI generated
