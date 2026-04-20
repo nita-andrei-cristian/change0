@@ -756,7 +756,7 @@ static void handle_post_research_start(int client_fd, const HttpRequest* req) {
 
 	strncpy(task.name, task_name, sizeof(task.name) - 1);
 	task.name[sizeof(task.name) - 1] = '\0';
-	task.name_len = sizeof(task.name);
+	task.name_len = strlen(task.name);
 	task.minDepth = min_rounds;
 
 	InitString(&out, 1024);

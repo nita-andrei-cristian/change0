@@ -103,7 +103,6 @@ target_link_libraries(deepsearchsession PUBLIC
     comparsing
     graphengine
     mocks
-    http-server
     globals
 )
 
@@ -190,7 +189,6 @@ target_include_directories(globals PUBLIC
 	${CMAKE_SOURCE_DIR}/c
 	${CMAKE_SOURCE_DIR}/c/lib/hd
 )
-target_link_libraries(globals SHARED hashdict)
 
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 target_include_directories(change PRIVATE

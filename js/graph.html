@@ -2679,8 +2679,23 @@
         renderResearchLog();
         updateResearchPanel();
 
+        const sseConnectPromise = connectResearchStream(
+          id,
+          researchState.connectedResearchId !== id || researchState.connectionState !== "connected"
+        ).catch((error) => {
+          console.error(error);
+          researchState.connectionState = researchState.eventSource ? researchState.connectionState : "error";
+          researchState.statusDetail = buildResearchTransportMessage(error);
+          updateResearchPanel();
+          return null;
+        });
+
         try {
-          await connectResearchStream(id, researchState.connectedResearchId !== id || researchState.connectionState !== "connected");
+          // Give SSE a brief head start, but do not block the research request on it.
+          await Promise.race([
+            sseConnectPromise,
+            new Promise((resolve) => window.setTimeout(resolve, 250))
+          ]);
 
           researchState.statusDetail = `POST ${RESEARCH_START_ENDPOINT}`;
           updateResearchPanel();
@@ -2712,6 +2727,7 @@
             : "Deep search completed.";
           researchState.preparedResearchId = "";
           updateResearchPanel();
+          await sseConnectPromise;
           loadGraph();
         } catch (error) {
           console.error(error);
