@@ -754,14 +754,9 @@ static void handle_post_research_start(int client_fd, const HttpRequest* req) {
 
 	memset(&task, 0, sizeof(task));
 
-	/*
-	 * ADAPTEAZĂ AICI la structura reală Task.
-	 * Exemplu, dacă Task are:
-	 *   char name[256];
-	 *   int minRounds;
-	 */
 	strncpy(task.name, task_name, sizeof(task.name) - 1);
 	task.name[sizeof(task.name) - 1] = '\0';
+	task.name_len = sizeof(task.name);
 	task.minDepth = min_rounds;
 
 	InitString(&out, 1024);
