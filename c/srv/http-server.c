@@ -2,6 +2,8 @@
 #include "graph-export.h"
 #include "util.h"
 
+#include "search/deep-search-session.h"
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -592,17 +594,192 @@ static void handle_get_graph(int client_fd) {
 	free(graph_json);
 }
 
-static void handle_post_research_start(int client_fd, const HttpRequest* req) {
-	printf("research/start body (%zu bytes):\n%s\n",
-	       req->body_len,
-	       req->body ? req->body : "");
+static const char* json_skip_ws(const char* p) {
+	while (*p && isspace((unsigned char)*p)) p++;
+	return p;
+}
 
-	send_json_response(
+static int json_get_string_field(const char* json, const char* key, char* out, size_t out_cap) {
+	char pattern[128];
+	const char* p;
+	const char* start;
+	size_t w = 0;
+
+	if (!json || !key || !out || out_cap == 0) return 0;
+
+	snprintf(pattern, sizeof(pattern), "\"%s\"", key);
+	p = strstr(json, pattern);
+	if (!p) return 0;
+
+	p += strlen(pattern);
+	p = json_skip_ws(p);
+	if (*p != ':') return 0;
+
+	p++;
+	p = json_skip_ws(p);
+	if (*p != '"') return 0;
+
+	p++;
+	start = p;
+
+	while (*p) {
+		if (*p == '\\') {
+			p++;
+			if (*p) p++;
+			continue;
+		}
+		if (*p == '"') break;
+		p++;
+	}
+
+	if (*p != '"') return 0;
+
+	while (start < p && w + 1 < out_cap) {
+		if (*start == '\\') {
+			start++;
+			if (!*start) break;
+
+			switch (*start) {
+				case '"':  out[w++] = '"'; break;
+				case '\\': out[w++] = '\\'; break;
+				case '/':  out[w++] = '/'; break;
+				case 'b':  out[w++] = '\b'; break;
+				case 'f':  out[w++] = '\f'; break;
+				case 'n':  out[w++] = '\n'; break;
+				case 'r':  out[w++] = '\r'; break;
+				case 't':  out[w++] = '\t'; break;
+				default:   out[w++] = *start; break;
+			}
+			start++;
+		} else {
+			out[w++] = *start++;
+		}
+	}
+
+	out[w] = '\0';
+	return 1;
+}
+
+static int json_get_int_field(const char* json, const char* key, int* out_value) {
+	char pattern[128];
+	const char* p;
+	char* endptr = NULL;
+	long value;
+
+	if (!json || !key || !out_value) return 0;
+
+	snprintf(pattern, sizeof(pattern), "\"%s\"", key);
+	p = strstr(json, pattern);
+	if (!p) return 0;
+
+	p += strlen(pattern);
+	p = json_skip_ws(p);
+	if (*p != ':') return 0;
+
+	p++;
+	p = json_skip_ws(p);
+
+	errno = 0;
+	value = strtol(p, &endptr, 10);
+	if (endptr == p || errno != 0) return 0;
+
+	*out_value = (int)value;
+	return 1;
+}
+
+static void handle_post_research_start(int client_fd, const HttpRequest* req) {
+	char research_id[MAX_RESEARCH_ID_LEN + 1];
+	char task_name[256];
+	int min_rounds = 0;
+	String out;
+	Task task;
+
+	research_id[0] = '\0';
+	task_name[0] = '\0';
+
+	if (!req->body) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_body\"}"
+		);
+		return;
+	}
+
+	if (!json_get_string_field(req->body, "id", research_id, sizeof(research_id))) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_id\"}"
+		);
+		return;
+	}
+
+	if (!json_get_string_field(req->body, "taskName", task_name, sizeof(task_name))) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_task_name\"}"
+		);
+		return;
+	}
+
+	if (!json_get_int_field(req->body, "minRounds", &min_rounds)) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_min_rounds\"}"
+		);
+		return;
+	}
+
+	if (min_rounds < 1) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"invalid_min_rounds\"}"
+		);
+		return;
+	}
+
+	printf("research/start id=%s taskName=%s minRounds=%d\n",
+	       research_id,
+	       task_name,
+	       min_rounds);
+
+	memset(&task, 0, sizeof(task));
+
+	/*
+	 * ADAPTEAZĂ AICI la structura reală Task.
+	 * Exemplu, dacă Task are:
+	 *   char name[256];
+	 *   int minRounds;
+	 */
+	strncpy(task.name, task_name, sizeof(task.name) - 1);
+	task.name[sizeof(task.name) - 1] = '\0';
+	task.minDepth = min_rounds;
+
+	InitString(&out, 1024);
+
+	ds_emit_event(research_id, "research_started", "deep search started", strlen("deep search started"));
+
+	start_ds_session(&task, research_id, &out);
+
+	send_response(
 		client_fd,
 		200,
 		"OK",
-		"{\"ok\":true,\"status\":\"research_started\"}"
+		"application/json",
+		c_str(&out),
+		out.len
 	);
+
+	FreeString(&out);
 }
 
 static void handle_get_research_events(int client_fd, const char* full_path) {
