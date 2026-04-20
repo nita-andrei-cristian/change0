@@ -32,9 +32,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0;
-      width: min(300px, calc(100vw - 32px));
-      padding: 0;
+      gap: 8px;
+      width: min(420px, calc(100vw - 32px));
+      padding: 6px;
       border: 1px solid rgba(255, 255, 255, 0.16);
       border-radius: 999px;
       background: rgba(0, 0, 0, 0.72);
@@ -52,7 +52,8 @@
       align-items: center;
       justify-content: center;
       box-sizing: border-box;
-      width: 88%;
+      flex: 1 1 0;
+      min-width: 0;
       min-height: 42px;
       font: 600 12px/1 system-ui, sans-serif;
       letter-spacing: 0.04em;
@@ -61,7 +62,7 @@
       border-radius: 999px;
       cursor: pointer;
       transition:
-        width 220ms cubic-bezier(0.2, 0.9, 0.24, 1),
+        transform 220ms cubic-bezier(0.2, 0.9, 0.24, 1),
         background 160ms ease,
         border-color 160ms ease,
         opacity 160ms ease,
@@ -77,7 +78,7 @@
     .ui button.is-active {
       background: rgba(255, 255, 255, 0.14);
       border-color: rgba(255, 255, 255, 0.34);
-      width: 100%;
+      transform: translateY(-1px);
       box-shadow: inset 0 0 0 999px rgba(255, 255, 255, 0.04);
     }
 
@@ -138,6 +139,7 @@
     <span id="focus-node-label" class="focus-node__label"></span>
   </div>
   <div class="ui">
+    <button id="refresh-graph" type="button">Refresh Graph</button>
     <button id="explode-toggle" type="button">Explode Layers</button>
   </div>
   <canvas id="graph" aria-label="Interactive graph viewer"></canvas>
@@ -147,10 +149,15 @@
 
       const canvas = document.getElementById("graph");
       const ctx = canvas.getContext("2d");
+      const refreshButton = document.getElementById("refresh-graph");
       const explodeToggle = document.getElementById("explode-toggle");
       const focusNodeBadge = document.getElementById("focus-node");
       const focusNodeRing = document.getElementById("focus-node-ring");
       const focusNodeLabel = document.getElementById("focus-node-label");
+      const GRAPH_SERVER_HOST = "127.0.0.1";
+      const GRAPH_SERVER_PORT = 8085;
+      const GRAPH_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/graph`;
+      const SERVER_OFFLINE_HINT = "Open CHANGE terminal client and select Start Server (run ./debug.sh)";
 
       const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
       const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -178,6 +185,7 @@
         selectedEdge: null,
         loading: true,
         error: null,
+        requestSerial: 0,
         width: 0,
         height: 0,
         dpr: 1,
@@ -220,6 +228,98 @@
           parentId: node.parentId,
           color: node.color
         };
+      }
+
+      function normalizeMessageLines(detail) {
+        if (Array.isArray(detail)) {
+          return detail.filter((line) => typeof line === "string" && line.trim().length > 0);
+        }
+
+        if (typeof detail === "string" && detail.trim().length > 0) {
+          return [detail];
+        }
+
+        return [];
+      }
+
+      function wrapTextLine(text, font, maxWidth) {
+        const value = typeof text === "string" ? text.trim() : "";
+        if (value.length === 0) {
+          return [];
+        }
+
+        const words = value.split(/\s+/);
+        const lines = [];
+        let currentLine = "";
+
+        ctx.save();
+        ctx.font = font;
+
+        for (const word of words) {
+          const candidate = currentLine ? `${currentLine} ${word}` : word;
+          if (currentLine && ctx.measureText(candidate).width > maxWidth) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = candidate;
+          }
+        }
+
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+
+        ctx.restore();
+        return lines;
+      }
+
+      function remapNode(node, nodeById) {
+        if (!node || !Number.isFinite(node.id)) {
+          return null;
+        }
+
+        return nodeById.get(node.id) || null;
+      }
+
+      function remapFocusPath(path, nodeById) {
+        const remappedPath = [];
+
+        for (const item of path) {
+          const node = remapNode(item, nodeById);
+          if (!node) {
+            break;
+          }
+
+          if (remappedPath.length > 0) {
+            const parent = remappedPath[remappedPath.length - 1];
+            if (node.parentId !== parent.id) {
+              break;
+            }
+          }
+
+          remappedPath.push(node);
+        }
+
+        return remappedPath;
+      }
+
+      function createErrorState(title, details) {
+        return {
+          title,
+          details: normalizeMessageLines(details)
+        };
+      }
+
+      function buildGraphLoadError(error) {
+        if (error instanceof TypeError) {
+          return createErrorState("Graph server unavailable", [
+            `Could not reach ${GRAPH_ENDPOINT}`,
+            SERVER_OFFLINE_HINT
+          ]);
+        }
+
+        const message = error instanceof Error ? error.message : String(error);
+        return createErrorState("Failed to load graph", message);
       }
 
       function resizeCanvas() {
@@ -658,6 +758,7 @@
       }
 
       function updateExplodeButton() {
+        const hasGraph = state.allNodes.length > 0;
         const hasDeeperLayer = getCurrentLayerParents().some((parent) => {
           const children = state.childrenByParent.get(parent.id);
           return Array.isArray(children) && children.length > 0;
@@ -666,7 +767,14 @@
         explodeToggle.textContent = state.explodeMode ? "Collapse Layers" : "Explode Layers";
         explodeToggle.classList.toggle("is-active", state.explodeMode);
         explodeToggle.setAttribute("aria-pressed", String(state.explodeMode));
-        explodeToggle.disabled = state.explodeMode === false && hasDeeperLayer === false;
+        explodeToggle.disabled = state.loading || state.error !== null || hasGraph === false || (
+          state.explodeMode === false && hasDeeperLayer === false
+        );
+      }
+
+      function updateRefreshButton() {
+        refreshButton.disabled = state.loading;
+        refreshButton.textContent = state.loading ? "Refreshing..." : "Refresh Graph";
       }
 
       function recomputeVisibleGraph(options = {}) {
@@ -1201,17 +1309,27 @@
       }
 
       function renderMessage(title, detail) {
+        const detailFont = "12px system-ui, sans-serif";
+        const detailLines = normalizeMessageLines(detail).flatMap((line) => (
+          wrapTextLine(line, detailFont, Math.max(220, state.width - 64))
+        ));
+        const titleY = detailLines.length > 0
+          ? state.height * 0.5 - 16 - ((detailLines.length - 1) * 8)
+          : state.height * 0.5;
+
         ctx.save();
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, state.width, state.height);
         ctx.textAlign = "center";
         ctx.fillStyle = "#fff";
         ctx.font = "600 18px system-ui, sans-serif";
-        ctx.fillText(title, state.width * 0.5, state.height * 0.5 - 10);
-        if (detail) {
-          ctx.font = "12px system-ui, sans-serif";
+        ctx.fillText(title, state.width * 0.5, titleY);
+        if (detailLines.length > 0) {
+          ctx.font = detailFont;
           ctx.fillStyle = "rgba(255, 255, 255, 0.82)";
-          ctx.fillText(detail, state.width * 0.5, state.height * 0.5 + 18);
+          detailLines.forEach((line, index) => {
+            ctx.fillText(line, state.width * 0.5, titleY + 28 + index * 18);
+          });
         }
         ctx.restore();
       }
@@ -1222,12 +1340,12 @@
         ctx.fillRect(0, 0, state.width, state.height);
 
         if (state.loading) {
-          renderMessage("Loading graph", "Fetching ./export.json");
+          renderMessage("Loading graph", `Fetching ${GRAPH_ENDPOINT}`);
           return;
         }
 
         if (state.error) {
-          renderMessage("Failed to load graph", state.error);
+          renderMessage(state.error.title, state.error.details);
           return;
         }
 
@@ -1484,25 +1602,46 @@
       }
 
       async function loadGraph() {
+        const requestSerial = state.requestSerial + 1;
+        state.requestSerial = requestSerial;
+        state.loading = true;
+        state.error = null;
+        updateRefreshButton();
+        updateExplodeButton();
+
         try {
-          const response = await fetch("./export.json", { cache: "no-store" });
+          const response = await fetch(GRAPH_ENDPOINT, { cache: "no-store" });
           if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(`Server responded with HTTP ${response.status}`);
           }
 
           const raw = await response.json();
           if (!raw || !Array.isArray(raw.nodes) || !Array.isArray(raw.connections)) {
-            throw new Error("Invalid JSON shape");
+            throw new Error("Invalid graph payload from server");
+          }
+
+          if (requestSerial !== state.requestSerial) {
+            return;
           }
 
           const parsed = parseNodes(raw.nodes);
+          const nextNodeById = parsed.nodeById;
+          const previousFocusPath = state.focusPath.slice();
+          const previousSelectedNode = state.selectedNode;
+
           state.allNodes = parsed.nodes;
-          state.nodeById = parsed.nodeById;
+          state.nodeById = nextNodeById;
           state.roots = state.allNodes.filter((node) => node.hasParent === false);
           state.childrenByParent = buildChildrenByParent(state.allNodes);
           annotateHierarchy(state.allNodes);
           assignColors(state.allNodes, state.nodeById);
           state.allEdges = buildEdges(raw.connections, state.nodeById);
+          state.focusPath = remapFocusPath(previousFocusPath, nextNodeById);
+          state.selectedNode = remapNode(previousSelectedNode, nextNodeById);
+          state.selectedEdge = null;
+          state.hoveredNode = null;
+          state.hoveredEdge = null;
+          state.hoveredGroup = null;
 
           console.log("ALL NODES", state.allNodes.map(summarizeNode));
           console.log("ROOT NODES", state.roots.map(summarizeNode));
@@ -1516,11 +1655,20 @@
 
           state.loading = false;
           state.error = null;
+          updateRefreshButton();
           recomputeVisibleGraph();
+          updateCursor();
         } catch (error) {
+          if (requestSerial !== state.requestSerial) {
+            return;
+          }
+
           console.error(error);
           state.loading = false;
-          state.error = error instanceof Error ? error.message : String(error);
+          state.error = buildGraphLoadError(error);
+          updateRefreshButton();
+          updateExplodeButton();
+          updateCursor();
         }
       }
 
@@ -1531,6 +1679,10 @@
         render();
         requestAnimationFrame(frame);
       }
+
+      refreshButton.addEventListener("click", () => {
+        loadGraph();
+      });
 
       explodeToggle.addEventListener("click", () => {
         state.explodeMode = !state.explodeMode;
@@ -1572,6 +1724,8 @@
       });
 
       resizeCanvas();
+      updateRefreshButton();
+      updateExplodeButton();
       loadGraph();
       requestAnimationFrame(frame);
     })();
