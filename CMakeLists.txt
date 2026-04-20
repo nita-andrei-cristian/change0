@@ -181,6 +181,7 @@ target_link_libraries(http-server PUBLIC
 	node
 	graphexport
 	util
+	inputprocessor
 	pthread
 )
 

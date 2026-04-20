@@ -197,8 +197,6 @@ void start_ds_session(Task *task, char* id, String* out){
 			_Bool status = think(&mem, out, idepth, task, id);
 			if (status == 1) break;
 			cassert(idepth < 100, "Error : Internal Depth went way too high\n");
-
-			ds_emit(id, "d-mem", mem.dynamic.p, mem.dynamic.len);
 		}
 
 		_Bool success = judge_result(out, &reason, task, id);

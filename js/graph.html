@@ -489,6 +489,134 @@
       font: 500 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
     }
 
+    .message-panel {
+      position: absolute;
+      left: 50%;
+      bottom: 84px;
+      transform: translateX(-50%) translateY(12px);
+      z-index: 6;
+      width: min(560px, calc(100vw - 32px));
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 22px;
+      background: rgba(5, 9, 15, 0.94);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 22px 60px rgba(0,0,0,0.42);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+    }
+
+    .message-panel.is-visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .message-panel__header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .message-panel__title {
+      margin: 0;
+      color: #fff;
+      font: 700 16px/1.25 system-ui, sans-serif;
+    }
+
+    .message-panel__subtitle {
+      margin: 6px 0 0;
+      color: rgba(255,255,255,0.68);
+      font: 500 12px/1.45 system-ui, sans-serif;
+    }
+
+    .message-panel__close {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 999px;
+      min-width: 40px;
+      min-height: 40px;
+      padding: 0 14px;
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      cursor: pointer;
+      font: 700 12px/1 system-ui, sans-serif;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .message-panel__close:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.22);
+    }
+
+    .message-panel__form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .message-panel__textarea {
+      width: 100%;
+      min-height: 140px;
+      max-height: 320px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      font: 500 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .message-panel__textarea:focus {
+      outline: none;
+      border-color: rgba(125, 211, 252, 0.56);
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+    }
+
+    .message-panel__actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .message-panel__status {
+      color: rgba(255,255,255,0.7);
+      font: 500 12px/1.45 system-ui, sans-serif;
+    }
+
+    .message-panel__submit {
+      appearance: none;
+      border: 1px solid rgba(125, 211, 252, 0.36);
+      border-radius: 999px;
+      min-height: 42px;
+      padding: 0 16px;
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      cursor: pointer;
+      font: 700 12px/1 system-ui, sans-serif;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .message-panel__submit:hover:not(:disabled) {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(125, 211, 252, 0.62);
+    }
+
+    .message-panel__submit:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
     .view-switcher {
       position: absolute;
       right: 18px;
@@ -680,7 +808,26 @@
       <div class="graph-controls">
         <button id="refresh-graph" type="button">Refresh Graph</button>
         <button id="explode-toggle" type="button">Explode Layers</button>
+        <button id="open-message-panel" type="button">Input Message</button>
       </div>
+
+      <aside id="message-panel" class="message-panel" aria-hidden="true">
+        <div class="message-panel__header">
+          <div>
+            <h2 class="message-panel__title">Input Message</h2>
+            <p class="message-panel__subtitle">Send text to <code>/message</code> as JSON. The server will decompose it into graph nodes in the background.</p>
+          </div>
+          <button id="close-message-panel" class="message-panel__close" type="button">Close</button>
+        </div>
+
+        <form id="message-form" class="message-panel__form">
+          <textarea id="message-input" class="message-panel__textarea" placeholder="Write the input text that should be sent to the graph server..."></textarea>
+          <div class="message-panel__actions">
+            <div id="message-panel-status" class="message-panel__status">Ready.</div>
+            <button id="submit-message" class="message-panel__submit" type="submit">Send to /message</button>
+          </div>
+        </form>
+      </aside>
 
       <canvas id="graph" aria-label="Interactive graph viewer"></canvas>
     </section>
@@ -795,6 +942,13 @@
 
       const refreshButton = document.getElementById("refresh-graph");
       const explodeToggle = document.getElementById("explode-toggle");
+      const openMessagePanelButton = document.getElementById("open-message-panel");
+      const messagePanel = document.getElementById("message-panel");
+      const closeMessagePanelButton = document.getElementById("close-message-panel");
+      const messageForm = document.getElementById("message-form");
+      const messageInput = document.getElementById("message-input");
+      const messagePanelStatus = document.getElementById("message-panel-status");
+      const submitMessageButton = document.getElementById("submit-message");
       const researchForm = document.getElementById("research-form");
       const researchTaskInput = document.getElementById("research-task");
       const researchMinRoundsInput = document.getElementById("research-min-rounds");
@@ -830,6 +984,7 @@
       const GRAPH_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/graph`;
       const RESEARCH_START_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/research/start`;
       const RESEARCH_EVENTS_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/research/events`;
+      const MESSAGE_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/message`;
       const SERVER_OFFLINE_HINT = "Open CHANGE terminal client and select Start Server (run ./build.sh)";
       const EVENT_TYPE_META = {
         sse_connected: {
@@ -972,7 +1127,10 @@
       };
 
       const uiState = {
-        activeView: "graph"
+        activeView: "graph",
+        messagePanelOpen: false,
+        messageSubmitInFlight: false,
+        messageStatus: "Ready."
       };
 
       const timelineState = {
@@ -1931,6 +2089,77 @@
       function updateRefreshButton() {
         refreshButton.disabled = state.loading;
         refreshButton.textContent = state.loading ? "Refreshing..." : "Refresh Graph";
+      }
+
+      function updateMessagePanel() {
+        messagePanel.classList.toggle("is-visible", uiState.messagePanelOpen);
+        messagePanel.setAttribute("aria-hidden", String(!uiState.messagePanelOpen));
+        messagePanelStatus.textContent = uiState.messageStatus;
+        submitMessageButton.disabled = uiState.messageSubmitInFlight || messageInput.value.trim().length === 0;
+        submitMessageButton.textContent = uiState.messageSubmitInFlight ? "Sending..." : "Send to /message";
+        openMessagePanelButton.classList.toggle("is-active", uiState.messagePanelOpen);
+        openMessagePanelButton.setAttribute("aria-pressed", String(uiState.messagePanelOpen));
+      }
+
+      function openMessagePanel() {
+        uiState.messagePanelOpen = true;
+        updateMessagePanel();
+        window.setTimeout(() => {
+          if (uiState.messagePanelOpen) {
+            messageInput.focus();
+          }
+        }, 0);
+      }
+
+      function closeMessagePanel() {
+        uiState.messagePanelOpen = false;
+        if (!uiState.messageSubmitInFlight) {
+          uiState.messageStatus = "Ready.";
+        }
+        updateMessagePanel();
+      }
+
+      async function submitMessageInput(event) {
+        event.preventDefault();
+
+        const input = messageInput.value.trim();
+        if (!input || uiState.messageSubmitInFlight) {
+          updateMessagePanel();
+          return;
+        }
+
+        uiState.messageSubmitInFlight = true;
+        uiState.messageStatus = `POST ${MESSAGE_ENDPOINT}`;
+        updateMessagePanel();
+
+        try {
+          const response = await fetch(MESSAGE_ENDPOINT, {
+            method: "POST",
+            cache: "no-store",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ input })
+          });
+
+          const responseText = await response.text();
+          if (!response.ok) {
+            throw new Error(responseText || `HTTP ${response.status}`);
+          }
+
+          uiState.messageStatus = responseText.trim().length > 0
+            ? "Message accepted by server. Refreshing graph."
+            : "Message accepted by server. Refreshing graph.";
+
+          await loadGraph();
+          closeMessagePanel();
+        } catch (error) {
+          console.error(error);
+          uiState.messageStatus = buildResearchTransportMessage(error);
+        } finally {
+          uiState.messageSubmitInFlight = false;
+          updateMessagePanel();
+        }
       }
 
       function recomputeVisibleGraph(options = {}) {
@@ -3247,6 +3476,8 @@
       });
 
       researchForm.addEventListener("submit", startDeepSearch);
+      messageForm.addEventListener("submit", submitMessageInput);
+      messageInput.addEventListener("input", updateMessagePanel);
       researchTaskInput.addEventListener("input", updateResearchPanel);
       researchMinRoundsInput.addEventListener("input", updateResearchPanel);
 
@@ -3266,6 +3497,16 @@
         });
         updateCursor();
       });
+
+      openMessagePanelButton.addEventListener("click", () => {
+        if (uiState.messagePanelOpen) {
+          closeMessagePanel();
+        } else {
+          openMessagePanel();
+        }
+      });
+
+      closeMessagePanelButton.addEventListener("click", closeMessagePanel);
 
       graphViewToggle.addEventListener("click", () => setActiveView("graph"));
       deepSearchViewToggle.addEventListener("click", () => setActiveView("deep-search"));
@@ -3292,6 +3533,11 @@
 
       window.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
+          if (uiState.messagePanelOpen) {
+            closeMessagePanel();
+            return;
+          }
+
           if (!stepBackOneLevel()) {
             state.selectedNode = null;
             state.selectedEdge = null;
@@ -3311,6 +3557,7 @@
       updateResearchPanel();
       updateRefreshButton();
       updateExplodeButton();
+      updateMessagePanel();
       renderTimeline();
       timelineCanvas.style.cursor = "grab";
       loadGraph();

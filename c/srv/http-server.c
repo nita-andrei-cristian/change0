@@ -1,5 +1,8 @@
+// mostly AI GENERATED CODE
+
 #include "http-server.h"
 #include "graph-export.h"
+#include "input/input-processor.h"
 #include "util.h"
 
 #include "search/deep-search-session.h"
@@ -777,6 +780,50 @@ static void handle_post_research_start(int client_fd, const HttpRequest* req) {
 	FreeString(&out);
 }
 
+static void handle_post_message(int client_fd, const HttpRequest* req) {
+	char input[1024];
+
+	input[0] = '\0';
+
+	if (!req->body) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_body\"}"
+		);
+		return;
+	}
+
+	if (!json_get_string_field(req->body, "input", input, sizeof(input))) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_input\"}"
+		);
+		return;
+	}
+
+	printf("message input=%s\n", input);
+
+	size_t input_size = strlen(input);
+
+	String inputS; InitString(&inputS, input_size + 1);
+	CatString(&inputS, input, input_size);
+
+	DecomposeInputIntoGraph(&inputS);
+
+	FreeString(&inputS);
+
+	send_json_response(
+		client_fd,
+		200,
+		"OK",
+		"{\"ok\":true}"
+	);
+}
+
 static void handle_get_research_events(int client_fd, const char* full_path) {
 	char path_only[256];
 	const char* query = NULL;
@@ -852,6 +899,11 @@ static int handle_request(int client_fd, const HttpRequest* req) {
 
 	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/research/start") == 0) {
 		handle_post_research_start(client_fd, req);
+		return 0;
+	}
+
+	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/message") == 0) {
+		handle_post_message(client_fd, req);
 		return 0;
 	}
 

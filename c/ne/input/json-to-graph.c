@@ -49,7 +49,7 @@ static void AddNodeFromEntry(json_value *val, size_t context, time_t now){
 	if (existing)
 		touch_node(existing, activation, now);
 	else
-		AddNodeEx(name, len, activation, NODE_INIT_WGHT + weight / 10 , 1, context, 0, now);
+		AddNodeEx(name, len, activation, NODE_INIT_WGHT + ( weight - NODE_INIT_WGHT ) * 0.2 , 1, context, 0, now);
 
 }
 
@@ -92,7 +92,7 @@ static _Bool ProcessArrayLinkage(json_value *entry, double weight, double activa
 		Connection* ba = B->neighbours + B->ncount - 1;
 		
 		ab->_activation += activation * 0.1;
-		ab->_weight += weight * 0.1;
+		ab->_weight += ( weight - NODE_INIT_WGHT ) * 0.2;
 	}
 
 	return 1;
