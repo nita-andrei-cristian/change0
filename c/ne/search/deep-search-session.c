@@ -35,21 +35,21 @@ static void write_round_header(DS_memory* mem, size_t depth, char* ds_id){
 	ds_emit(ds_id, "round-start", header, size);
 }
 
-static void fail_finish(DS_memory *mem, String *conclusion, size_t depth){
+static void fail_finish(DS_memory *mem, String *conclusion, size_t depth, Task* task){
 	char *buff = malloc(conclusion->len + 256);
 	cassert(buff, "Can't allocate quick memory to fill a buffer");
 
-	size_t size = sprintf(buff, "Agent tried to finish early, but minimum round is 10, reason : [%s]\n", c_str(conclusion));
+	size_t size = sprintf(buff, "Agent tried to finish early, but minimum round is %zu, reason : [%s]\n", task->minDepth, c_str(conclusion));
 
 	CatString(&mem->dynamic, buff, size);
 	free(buff);
 }
 
-_Bool try_terminate(DS_memory *mem, String *out, size_t depth, String *conclusion){
+_Bool try_terminate(DS_memory *mem, String *out, size_t depth, Task* task, String *conclusion){
 
 	if (conclusion->len > 0){
-		if (depth < 10){
-			fail_finish(mem, conclusion, depth);
+		if (depth < task->minDepth){
+			fail_finish(mem, conclusion, depth, task);
 			return 0; // did not finish
 		}else{
 			CopyString(out, conclusion);
@@ -120,7 +120,7 @@ static _Bool judge_result(String *out, String* reason, Task *task, char *ds_id){
 // Or even make it in more "human" formats like variants of a * weight + b * activation
 // where a and b depend on the context
 
-static _Bool think(DS_memory *mem, String *out, size_t depth, char *ds_id){
+static _Bool think(DS_memory *mem, String *out, size_t depth, Task* task, char *ds_id){
 
 	size_t respsize;
 	char* response = call_gpt_deepsearch(mem, &respsize);
@@ -143,7 +143,7 @@ static _Bool think(DS_memory *mem, String *out, size_t depth, char *ds_id){
 	String conclusion; InitString(&conclusion, 1024);
 	exec_response(doc, &mem->dynamic, depth, &conclusion, ds_id);
 
-	_Bool terminated = try_terminate(mem, out, depth, &conclusion);
+	_Bool terminated = try_terminate(mem, out, depth, task, &conclusion);
 	
 	free(response);
 	json_value_free(doc);
@@ -194,7 +194,7 @@ void start_ds_session(Task *task, char* id, String* out){
 
 		idepth = 1;
 		while(idepth++) {
-			_Bool status = think(&mem, out, idepth, id);
+			_Bool status = think(&mem, out, idepth, task, id);
 			if (status == 1) break;
 			cassert(idepth < 100, "Error : Internal Depth went way too high\n");
 

@@ -7,6 +7,18 @@
   <style>
     :root {
       color-scheme: dark;
+      --bg: #05070a;
+      --panel-bg: #0a0d13;
+      --panel-border: rgba(255, 255, 255, 0.1);
+      --panel-muted: rgba(255, 255, 255, 0.64);
+      --panel-soft: rgba(255, 255, 255, 0.04);
+      --panel-soft-strong: rgba(255, 255, 255, 0.08);
+      --panel-text: #f5f7fb;
+      --accent: #7dd3fc;
+      --accent-strong: #38bdf8;
+      --danger: #fb7185;
+      --success: #34d399;
+      --warning: #fbbf24;
     }
 
     html,
@@ -22,8 +34,429 @@
       font-family: system-ui, sans-serif;
     }
 
+    .app {
+      display: grid;
+      grid-template-columns: minmax(320px, 25vw) minmax(0, 1fr);
+      width: 100vw;
+      height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 24%),
+        var(--bg);
+    }
+
+    .sidebar {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background:
+        linear-gradient(180deg, rgba(125, 211, 252, 0.08), rgba(125, 211, 252, 0)),
+        var(--panel-bg);
+      border-right: 1px solid var(--panel-border);
+      box-shadow: 18px 0 40px rgba(0, 0, 0, 0.24);
+    }
+
+    .sidebar__top {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--panel-border);
+      overflow: auto;
+    }
+
+    .sidebar__eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font: 700 11px/1.2 system-ui, sans-serif;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .sidebar__title {
+      margin: 0;
+      color: var(--panel-text);
+      font: 700 24px/1.1 system-ui, sans-serif;
+      letter-spacing: -0.03em;
+    }
+
+    .sidebar__subtitle,
+    .sidebar__hint {
+      margin: 10px 0 0;
+      color: var(--panel-muted);
+      font: 500 13px/1.45 system-ui, sans-serif;
+    }
+
+    .research-form {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field__label {
+      color: rgba(255, 255, 255, 0.86);
+      font: 600 12px/1.2 system-ui, sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field textarea {
+      appearance: none;
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: var(--panel-text);
+      background: rgba(255, 255, 255, 0.04);
+      font: 500 14px/1.4 system-ui, sans-serif;
+      transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      outline: none;
+      border-color: rgba(125, 211, 252, 0.56);
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+    }
+
+    .field textarea {
+      min-height: 92px;
+      max-height: 220px;
+    }
+
+    .research-form__actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .sidebar-button {
+      appearance: none;
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid rgba(125, 211, 252, 0.4);
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.22), rgba(56, 189, 248, 0.08));
+      color: #f8fbff;
+      cursor: pointer;
+      font: 700 12px/1 system-ui, sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition:
+        transform 180ms ease,
+        border-color 140ms ease,
+        background 140ms ease,
+        opacity 140ms ease;
+    }
+
+    .sidebar-button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: rgba(125, 211, 252, 0.64);
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.28), rgba(56, 189, 248, 0.1));
+    }
+
+    .sidebar-button:disabled {
+      opacity: 0.46;
+      cursor: default;
+      transform: none;
+    }
+
+    .sidebar-button--ghost {
+      border-color: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .sidebar-button--ghost:hover:not(:disabled) {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .event-reference-toggle {
+      margin-top: 16px;
+    }
+
+    .research-status {
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+      display: grid;
+      gap: 10px;
+    }
+
+    .research-status__top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font: 700 11px/1 system-ui, sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .status-chip::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.36);
+      box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.04);
+    }
+
+    .status-chip[data-state="connected"]::before {
+      background: var(--success);
+    }
+
+    .status-chip[data-state="connecting"]::before,
+    .status-chip[data-state="reconnecting"]::before {
+      background: var(--warning);
+    }
+
+    .status-chip[data-state="disconnected"]::before,
+    .status-chip[data-state="error"]::before {
+      background: var(--danger);
+    }
+
+    .status-chip[data-state="running"]::before {
+      background: var(--accent-strong);
+    }
+
+    .status-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .status-meta {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .status-meta__label {
+      color: rgba(255, 255, 255, 0.5);
+      font: 600 10px/1.2 system-ui, sans-serif;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .status-meta__value {
+      color: rgba(255, 255, 255, 0.9);
+      font: 600 13px/1.35 system-ui, sans-serif;
+      word-break: break-word;
+    }
+
+    .event-reference {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+      overflow: hidden;
+    }
+
+    .event-reference[hidden] {
+      display: none;
+    }
+
+    .event-reference__list {
+      display: grid;
+      gap: 10px;
+      max-height: 180px;
+      overflow: auto;
+      padding: 0 14px 14px;
+    }
+
+    .event-reference__item {
+      display: grid;
+      gap: 4px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .event-reference__code {
+      color: var(--panel-text);
+      font: 700 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .event-reference__role {
+      color: var(--panel-muted);
+      font: 500 12px/1.45 system-ui, sans-serif;
+    }
+
+    .event-log {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .event-log__header {
+      padding: 16px 20px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .event-log__title {
+      margin: 0;
+      color: var(--panel-text);
+      font: 700 15px/1.2 system-ui, sans-serif;
+      letter-spacing: 0.02em;
+    }
+
+    .event-log__subtitle {
+      margin: 6px 0 0;
+      color: var(--panel-muted);
+      font: 500 12px/1.45 system-ui, sans-serif;
+    }
+
+    .event-log__list {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      padding: 14px 14px 24px;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .event-log__empty {
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--panel-muted);
+      font: 500 13px/1.45 system-ui, sans-serif;
+    }
+
+    .event-log__entry {
+      border-left: 3px solid var(--event-accent, rgba(255, 255, 255, 0.18));
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      display: grid;
+      gap: 10px;
+    }
+
+    .event-log__meta {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .event-log__meta-main {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .event-log__type-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .event-log__badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font: 700 10px/1 system-ui, sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .event-log__type {
+      color: var(--panel-text);
+      font: 700 13px/1.2 system-ui, sans-serif;
+      letter-spacing: 0.01em;
+      word-break: break-word;
+    }
+
+    .event-log__role {
+      color: var(--panel-muted);
+      font: 500 12px/1.5 system-ui, sans-serif;
+    }
+
+    .event-log__meta-side {
+      flex: 0 0 auto;
+      text-align: right;
+      color: rgba(255, 255, 255, 0.72);
+      font: 600 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: nowrap;
+    }
+
+    .event-log__id {
+      color: rgba(255, 255, 255, 0.48);
+      font: 600 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      word-break: break-word;
+    }
+
+    .event-log__payload {
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.22);
+      overflow: hidden;
+    }
+
+    .event-log__payload summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      color: rgba(255, 255, 255, 0.84);
+      font: 700 11px/1 system-ui, sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      list-style: none;
+    }
+
+    .event-log__payload summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .event-log__payload pre {
+      margin: 0;
+      padding: 0 12px 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: rgba(255, 255, 255, 0.88);
+      font: 500 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .graph-shell {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
     .ui {
-      position: fixed;
+      position: absolute;
       left: 50%;
       bottom: 18px;
       transform: translateX(-50%);
@@ -88,7 +521,7 @@
     }
 
     .focus-node {
-      position: fixed;
+      position: absolute;
       top: 18px;
       left: 50%;
       transform: translateX(-50%) translateY(-6px);
@@ -125,24 +558,121 @@
 
     canvas {
       display: block;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       background: #000;
       touch-action: none;
       cursor: grab;
     }
+
+    @media (max-width: 1180px) {
+      .app {
+        grid-template-columns: minmax(290px, 36vw) minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 840px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(320px, 44vh) minmax(0, 1fr);
+      }
+
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--panel-border);
+      }
+
+      .focus-node {
+        top: 14px;
+      }
+
+      .ui {
+        width: min(420px, calc(100% - 24px));
+        bottom: 12px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div id="focus-node" class="focus-node" aria-live="polite">
-    <span id="focus-node-ring" class="focus-node__ring"></span>
-    <span id="focus-node-label" class="focus-node__label"></span>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar__top">
+        <h1 class="sidebar__title">Deep Search Hub</h1>
+
+        <form id="research-form" class="research-form">
+          <label class="field" for="research-task">
+            <span class="field__label">Task Name</span>
+            <textarea id="research-task" name="research-task" placeholder="Example: Analyze which nodes and connections support the hypothesis that the user avoids conflict through overcompensation."></textarea>
+          </label>
+
+          <label class="field" for="research-min-rounds">
+            <span class="field__label">Min Rounds</span>
+            <input id="research-min-rounds" name="research-min-rounds" type="number" min="1" step="1" value="2" inputmode="numeric">
+          </label>
+
+          <div class="research-form__actions">
+            <button id="connect-research" class="sidebar-button sidebar-button--ghost" type="button">Connect SSE</button>
+            <button id="start-research" class="sidebar-button" type="submit">Start Deep Search</button>
+          </div>
+        </form>
+
+        <div class="research-status">
+          <div class="research-status__top">
+            <span id="research-connection-state" class="status-chip" data-state="disconnected">Disconnected</span>
+            <span class="status-meta__value" id="research-run-state">Idle</span>
+          </div>
+
+          <div class="status-meta-grid">
+            <div class="status-meta">
+              <span class="status-meta__label">Last Event</span>
+              <strong id="research-last-event" class="status-meta__value">No events yet</strong>
+            </div>
+            <div class="status-meta">
+              <span class="status-meta__label">Log Entries</span>
+              <strong id="research-log-count" class="status-meta__value">0</strong>
+            </div>
+            <div class="status-meta">
+              <span class="status-meta__label">Session Routing</span>
+              <strong id="research-active-id" class="status-meta__value">Auto-generated</strong>
+            </div>
+            <div class="status-meta">
+              <span class="status-meta__label">Server</span>
+              <strong id="research-server" class="status-meta__value">127.0.0.1:8085</strong>
+            </div>
+          </div>
+
+          <p id="research-status-detail" class="sidebar__hint">Ready.</p>
+        </div>
+
+        <button id="toggle-event-reference" class="sidebar-button sidebar-button--ghost event-reference-toggle" type="button" aria-expanded="false">Show Event Reference</button>
+
+        <div id="event-reference-panel" class="event-reference" hidden>
+          <div id="event-reference-list" class="event-reference__list"></div>
+        </div>
+      </div>
+
+      <section class="event-log">
+        <div class="event-log__header">
+          <h2 class="event-log__title">Events</h2>
+        </div>
+        <div id="research-log-list" class="event-log__list" aria-live="polite">
+          <div class="event-log__empty">No events yet. Connect SSE and start a deep search.</div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="graph-shell">
+      <div id="focus-node" class="focus-node" aria-live="polite">
+        <span id="focus-node-ring" class="focus-node__ring"></span>
+        <span id="focus-node-label" class="focus-node__label"></span>
+      </div>
+      <div class="ui">
+        <button id="refresh-graph" type="button">Refresh Graph</button>
+        <button id="explode-toggle" type="button">Explode Layers</button>
+      </div>
+      <canvas id="graph" aria-label="Interactive graph viewer"></canvas>
+    </section>
   </div>
-  <div class="ui">
-    <button id="refresh-graph" type="button">Refresh Graph</button>
-    <button id="explode-toggle" type="button">Explode Layers</button>
-  </div>
-  <canvas id="graph" aria-label="Interactive graph viewer"></canvas>
   <script>
     (() => {
       "use strict";
@@ -151,13 +681,103 @@
       const ctx = canvas.getContext("2d");
       const refreshButton = document.getElementById("refresh-graph");
       const explodeToggle = document.getElementById("explode-toggle");
+      const researchForm = document.getElementById("research-form");
+      const researchTaskInput = document.getElementById("research-task");
+      const researchMinRoundsInput = document.getElementById("research-min-rounds");
+      const connectResearchButton = document.getElementById("connect-research");
+      const startResearchButton = document.getElementById("start-research");
+      const toggleEventReferenceButton = document.getElementById("toggle-event-reference");
+      const eventReferencePanel = document.getElementById("event-reference-panel");
+      const researchConnectionState = document.getElementById("research-connection-state");
+      const researchRunState = document.getElementById("research-run-state");
+      const researchLastEvent = document.getElementById("research-last-event");
+      const researchLogCount = document.getElementById("research-log-count");
+      const researchActiveId = document.getElementById("research-active-id");
+      const researchServer = document.getElementById("research-server");
+      const researchStatusDetail = document.getElementById("research-status-detail");
+      const eventReferenceList = document.getElementById("event-reference-list");
+      const researchLogList = document.getElementById("research-log-list");
       const focusNodeBadge = document.getElementById("focus-node");
       const focusNodeRing = document.getElementById("focus-node-ring");
       const focusNodeLabel = document.getElementById("focus-node-label");
       const GRAPH_SERVER_HOST = "127.0.0.1";
       const GRAPH_SERVER_PORT = 8085;
       const GRAPH_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/graph`;
-      const SERVER_OFFLINE_HINT = "Open CHANGE terminal client and select Start Server (run ./debug.sh)";
+      const RESEARCH_START_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/research/start`;
+      const RESEARCH_EVENTS_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/research/events`;
+      const SERVER_OFFLINE_HINT = "Open CHANGE terminal client and select Start Server (run ./build.sh)";
+      const EVENT_TYPE_META = {
+        sse_connected: {
+          label: "SSE Connected",
+          role: "The server confirms that the /research/events stream is attached and can receive messages for this research session.",
+          accent: "#34d399"
+        },
+        research_started: {
+          label: "Research Started",
+          role: "The HTTP handler accepted /research/start and launched the real deep-search session.",
+          accent: "#38bdf8"
+        },
+        "p-mem": {
+          label: "Persistent Memory",
+          role: "The persistent deep-search prompt emitted once at the beginning of the session.",
+          accent: "#a78bfa"
+        },
+        "ds-start": {
+          label: "Deep Search Start",
+          role: "Start marker emitted after RefreshGraph() and immediately before the investigation loop begins.",
+          accent: "#60a5fa"
+        },
+        "round-start": {
+          label: "Round Start",
+          role: "A new round header appended to the session's dynamic memory.",
+          accent: "#f59e0b"
+        },
+        "ds-model-response": {
+          label: "Model Response",
+          role: "The raw structured response returned by the deep-search model before command execution.",
+          accent: "#22d3ee"
+        },
+        "cmd-1": {
+          label: "Command 1",
+          role: "Result of the global top-node search ranked by activation or weight.",
+          accent: "#f472b6"
+        },
+        "cmd-2": {
+          label: "Command 2",
+          role: "Result of the target-node neighbor search filtered by activation or weight.",
+          accent: "#fb7185"
+        },
+        "cmd-3": {
+          label: "Command 3",
+          role: "Subgraph or node-family exploration built around a target node at a chosen depth.",
+          accent: "#f97316"
+        },
+        "d-mem": {
+          label: "Dynamic Memory",
+          role: "Snapshot of accumulated dynamic memory emitted after rounds and again at the end.",
+          accent: "#eab308"
+        },
+        "judge-start": {
+          label: "Judge Start",
+          role: "The automatic validator starts evaluating the current session conclusion.",
+          accent: "#c084fc"
+        },
+        "judge-pass": {
+          label: "Judge Pass",
+          role: "The validator accepted the conclusion, so the session can close successfully.",
+          accent: "#34d399"
+        },
+        "judge-fail": {
+          label: "Judge Fail",
+          role: "The validator rejected the conclusion and sent feedback for another iteration.",
+          accent: "#f87171"
+        },
+        "ds-end": {
+          label: "Deep Search End",
+          role: "Final conclusion produced by the deep-search session and emitted to the client at the end.",
+          accent: "#38bdf8"
+        }
+      };
 
       const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
       const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -209,6 +829,421 @@
           lastY: 0
         }
       };
+
+      const researchState = {
+        eventSource: null,
+        connectionState: "disconnected",
+        startInFlight: false,
+        connectedResearchId: "",
+        activeResearchId: "",
+        preparedResearchId: "",
+        statusDetail: "Ready.",
+        runStateLabel: "Idle",
+        lastEventLabel: "No events yet",
+        events: [],
+        firstServerEventPerf: null,
+        connectPromise: null,
+        connectSerial: 0
+      };
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll("\"", "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function sanitizeResearchId(value) {
+        const cleaned = String(value || "")
+          .trim()
+          .replace(/[^a-zA-Z0-9_-]/g, "-")
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "");
+
+        return cleaned.slice(0, 63) || "default";
+      }
+
+      function generateResearchId() {
+        const timePart = Date.now().toString(36);
+
+        if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+          const bytes = new Uint8Array(18);
+          window.crypto.getRandomValues(bytes);
+          const randomPart = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+          return sanitizeResearchId(`rs-${timePart}-${randomPart}`);
+        }
+
+        const randomPart = Array.from({ length: 5 }, () => (
+          Math.floor(Math.random() * 0xffffffff).toString(16).padStart(8, "0")
+        )).join("");
+        return sanitizeResearchId(`rs-${timePart}-${randomPart}`);
+      }
+
+      function ensurePreparedResearchId(forceNew = false) {
+        if (forceNew || !researchState.preparedResearchId) {
+          researchState.preparedResearchId = generateResearchId();
+        }
+
+        return researchState.preparedResearchId;
+      }
+
+      function normalizeMinRounds(value) {
+        const parsed = Math.trunc(Number(value));
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 2;
+      }
+
+      function readResearchForm() {
+        const id = ensurePreparedResearchId();
+        const taskName = researchTaskInput.value.trim();
+        const minRounds = normalizeMinRounds(researchMinRoundsInput.value);
+
+        researchMinRoundsInput.value = String(minRounds);
+
+        return { id, taskName, minRounds };
+      }
+
+      function buildResearchEventsUrl(id) {
+        return `${RESEARCH_EVENTS_ENDPOINT}?id=${encodeURIComponent(id)}`;
+      }
+
+      function formatClock(date) {
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        const seconds = String(date.getSeconds()).padStart(2, "0");
+        const millis = String(date.getMilliseconds()).padStart(3, "0");
+        return `${hours}:${minutes}:${seconds}.${millis}`;
+      }
+
+      function formatElapsedMs(value) {
+        return `+${(value / 1000).toFixed(3)}s`;
+      }
+
+      function formatResearchPayload(value) {
+        const text = typeof value === "string" ? value.trim() : String(value ?? "");
+
+        if (!text) {
+          return "";
+        }
+
+        if ((text.startsWith("{") && text.endsWith("}")) || (text.startsWith("[") && text.endsWith("]"))) {
+          try {
+            return JSON.stringify(JSON.parse(text), null, 2);
+          } catch (error) {
+            return text;
+          }
+        }
+
+        return text;
+      }
+
+      function getResearchEventMeta(type) {
+        return EVENT_TYPE_META[type] || {
+          label: type || "Unknown Event",
+          role: "SSE event without an explicit client-side classification.",
+          accent: "#94a3b8"
+        };
+      }
+
+      function resetResearchLog(activeResearchId = researchState.activeResearchId) {
+        researchState.activeResearchId = activeResearchId;
+        researchState.events = [];
+        researchState.firstServerEventPerf = null;
+        researchState.lastEventLabel = "Waiting for SSE events";
+      }
+
+      function updateResearchPanel() {
+        const { taskName } = readResearchForm();
+
+        researchConnectionState.dataset.state = researchState.connectionState;
+        researchConnectionState.textContent = (
+          researchState.connectionState.charAt(0).toUpperCase() + researchState.connectionState.slice(1)
+        );
+        researchRunState.textContent = researchState.runStateLabel;
+        researchLastEvent.textContent = researchState.lastEventLabel;
+        researchLogCount.textContent = String(researchState.events.length);
+        researchActiveId.textContent = "Auto-generated";
+        researchServer.textContent = `${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}`;
+        researchStatusDetail.textContent = researchState.statusDetail;
+
+        connectResearchButton.disabled = researchState.startInFlight || (
+          researchState.connectionState === "connecting" || researchState.connectionState === "reconnecting"
+        );
+        connectResearchButton.textContent = researchState.connectionState === "connected"
+          ? "Reconnect SSE"
+          : researchState.connectionState === "connecting" || researchState.connectionState === "reconnecting"
+            ? "Connecting..."
+            : "Connect SSE";
+
+        startResearchButton.disabled = researchState.startInFlight || taskName.length === 0;
+        startResearchButton.textContent = researchState.startInFlight
+          ? "Running..."
+          : "Start Deep Search";
+      }
+
+      function updateEventReferenceToggle() {
+        const expanded = eventReferencePanel.hidden === false;
+        toggleEventReferenceButton.textContent = expanded ? "Hide Event Reference" : "Show Event Reference";
+        toggleEventReferenceButton.setAttribute("aria-expanded", String(expanded));
+      }
+
+      function renderEventReference() {
+        eventReferenceList.innerHTML = Object.entries(EVENT_TYPE_META).map(([type, meta]) => (
+          `<div class="event-reference__item">` +
+            `<div class="event-reference__code">${escapeHtml(type)}</div>` +
+            `<div class="event-reference__role">${escapeHtml(meta.role)}</div>` +
+          `</div>`
+        )).join("");
+      }
+
+      function renderResearchLog() {
+        const shouldStickToBottom = (
+          researchLogList.scrollHeight - researchLogList.scrollTop - researchLogList.clientHeight
+        ) < 120;
+
+        if (researchState.events.length === 0) {
+          researchLogList.innerHTML = `<div class="event-log__empty">No events yet. Connect SSE and start a deep search.</div>`;
+          return;
+        }
+
+        researchLogList.innerHTML = researchState.events.map((entry) => {
+          const payload = formatResearchPayload(entry.data);
+          const meta = getResearchEventMeta(entry.type);
+          const payloadChars = payload.length;
+          const payloadOpen = payloadChars <= 420 ? " open" : "";
+
+          return (
+            `<article class="event-log__entry" style="--event-accent: ${escapeHtml(meta.accent)};">` +
+              `<div class="event-log__meta">` +
+                `<div class="event-log__meta-main">` +
+                  `<div class="event-log__type-line">` +
+                    `<span class="event-log__badge">#${entry.sequence}</span>` +
+                    `<span class="event-log__type">${escapeHtml(meta.label)}</span>` +
+                  `</div>` +
+                  `<div class="event-log__role">${escapeHtml(meta.role)}</div>` +
+                `</div>` +
+                `<div class="event-log__meta-side">` +
+                  `<div>${escapeHtml(entry.receivedClock)}</div>` +
+                  `<div>${escapeHtml(entry.elapsedLabel)}</div>` +
+                `</div>` +
+              `</div>` +
+              `<div class="event-log__id">type=${escapeHtml(entry.type)}</div>` +
+              `<details class="event-log__payload"${payloadOpen}>` +
+                `<summary>Payload · ${payloadChars} chars</summary>` +
+                `<pre>${escapeHtml(payload || "(empty)")}</pre>` +
+              `</details>` +
+            `</article>`
+          );
+        }).join("");
+
+        if (shouldStickToBottom) {
+          researchLogList.scrollTop = researchLogList.scrollHeight;
+        }
+      }
+
+      function buildResearchTransportMessage(error) {
+        const message = error instanceof Error ? error.message : String(error);
+
+        if (error instanceof TypeError || /Failed to fetch|timed out|Could not connect/i.test(message)) {
+          return `Research transport unavailable. ${SERVER_OFFLINE_HINT}`;
+        }
+
+        return message;
+      }
+
+      function updateResearchRunState(type) {
+        if (type === "research_started" || type === "ds-start") {
+          researchState.runStateLabel = "Running";
+          return;
+        }
+
+        if (type === "judge-fail") {
+          researchState.runStateLabel = "Retrying";
+          return;
+        }
+
+        if (type === "judge-pass") {
+          researchState.runStateLabel = "Validated";
+          return;
+        }
+
+        if (type === "ds-end") {
+          researchState.runStateLabel = "Completed";
+          return;
+        }
+      }
+
+      function recordResearchEvent(payload) {
+        const receivedDate = new Date();
+        const receivedPerf = performance.now();
+
+        if (researchState.firstServerEventPerf === null) {
+          researchState.firstServerEventPerf = receivedPerf;
+        }
+
+        const type = typeof payload.type === "string" ? payload.type : "unknown";
+        const researchId = typeof payload.id === "string" && payload.id.length > 0
+          ? payload.id
+          : researchState.connectedResearchId || "default";
+        const data = typeof payload.data === "string"
+          ? payload.data
+          : JSON.stringify(payload.data ?? "");
+        const meta = getResearchEventMeta(type);
+        const elapsedMs = receivedPerf - researchState.firstServerEventPerf;
+
+        researchState.activeResearchId = researchId;
+        researchState.events.push({
+          sequence: researchState.events.length + 1,
+          type,
+          researchId,
+          data,
+          receivedClock: formatClock(receivedDate),
+          elapsedLabel: formatElapsedMs(elapsedMs)
+        });
+        researchState.lastEventLabel = `${meta.label} @ ${formatClock(receivedDate)}`;
+        researchState.statusDetail = meta.role;
+
+        if (type === "sse_connected") {
+          researchState.connectionState = "connected";
+          researchState.statusDetail = "SSE connected.";
+        }
+
+        updateResearchRunState(type);
+        renderResearchLog();
+        updateResearchPanel();
+      }
+
+      function handleResearchMessage(messageEvent) {
+        try {
+          const payload = JSON.parse(messageEvent.data);
+          recordResearchEvent(payload);
+        } catch (error) {
+          console.error("Failed to parse SSE payload", error, messageEvent.data);
+          researchState.connectionState = "error";
+          researchState.statusDetail = "Received malformed SSE payload from server.";
+          updateResearchPanel();
+        }
+      }
+
+      function closeResearchStream() {
+        if (researchState.eventSource) {
+          researchState.eventSource.close();
+        }
+
+        researchState.eventSource = null;
+        researchState.connectPromise = null;
+      }
+
+      function connectResearchStream(researchId, forceReconnect = false) {
+        const targetId = sanitizeResearchId(researchId);
+
+        if (!forceReconnect &&
+            researchState.eventSource &&
+            researchState.connectedResearchId === targetId &&
+            researchState.connectionState === "connected") {
+          return Promise.resolve();
+        }
+
+        if (!forceReconnect &&
+            researchState.connectPromise &&
+            researchState.connectedResearchId === targetId) {
+          return researchState.connectPromise;
+        }
+
+        closeResearchStream();
+
+        researchState.connectSerial += 1;
+        const currentConnectSerial = researchState.connectSerial;
+        const streamUrl = buildResearchEventsUrl(targetId);
+
+        researchState.connectedResearchId = targetId;
+        researchState.activeResearchId = targetId;
+        researchState.connectionState = "connecting";
+        researchState.statusDetail = "Connecting SSE stream.";
+        updateResearchPanel();
+
+        const source = new EventSource(streamUrl);
+        researchState.eventSource = source;
+
+        researchState.connectPromise = new Promise((resolve, reject) => {
+          let settled = false;
+          const timeoutId = window.setTimeout(() => {
+            if (settled || researchState.connectSerial !== currentConnectSerial) {
+              return;
+            }
+
+            settled = true;
+            closeResearchStream();
+            researchState.connectionState = "error";
+            researchState.statusDetail = `SSE connection timed out. ${SERVER_OFFLINE_HINT}`;
+            updateResearchPanel();
+            reject(new Error("Timed out while connecting SSE."));
+          }, 5000);
+
+          function settleSuccess() {
+            if (settled || researchState.connectSerial !== currentConnectSerial) {
+              return;
+            }
+
+            settled = true;
+            window.clearTimeout(timeoutId);
+            researchState.connectPromise = null;
+            resolve();
+          }
+
+          function settleFailure(message) {
+            if (settled || researchState.connectSerial !== currentConnectSerial) {
+              return;
+            }
+
+            settled = true;
+            window.clearTimeout(timeoutId);
+            researchState.connectPromise = null;
+            reject(new Error(message));
+          }
+
+          source.onopen = () => {
+            if (researchState.eventSource !== source) {
+              return;
+            }
+
+            researchState.connectionState = "connected";
+            researchState.statusDetail = "SSE connected.";
+            updateResearchPanel();
+            settleSuccess();
+          };
+
+          source.onmessage = (messageEvent) => {
+            if (researchState.eventSource !== source) {
+              return;
+            }
+
+            handleResearchMessage(messageEvent);
+          };
+
+          source.onerror = () => {
+            if (researchState.eventSource !== source) {
+              return;
+            }
+
+            if (source.readyState === EventSource.CONNECTING) {
+              researchState.connectionState = "reconnecting";
+              researchState.statusDetail = "Reconnecting SSE stream.";
+              updateResearchPanel();
+              return;
+            }
+
+            researchState.connectionState = "error";
+            researchState.statusDetail = `SSE connection closed. ${SERVER_OFFLINE_HINT}`;
+            closeResearchStream();
+            updateResearchPanel();
+            settleFailure("Could not connect SSE.");
+          };
+        });
+
+        return researchState.connectPromise;
+      }
 
       function generatedColorFromId(id) {
         const hue = ((id * 137.508) % 360 + 360) % 360;
@@ -1601,6 +2636,95 @@
         }
       }
 
+      async function manualConnectResearch(forceReconnect = true) {
+        const id = researchState.activeResearchId || researchState.connectedResearchId || ensurePreparedResearchId();
+
+        if (researchState.activeResearchId !== id) {
+          researchState.runStateLabel = "Idle";
+          resetResearchLog(id);
+          renderResearchLog();
+        }
+
+        try {
+          await connectResearchStream(id, forceReconnect);
+        } catch (error) {
+          console.error(error);
+          researchState.connectionState = "error";
+          researchState.runStateLabel = "Idle";
+          researchState.statusDetail = buildResearchTransportMessage(error);
+          updateResearchPanel();
+        }
+      }
+
+      async function startDeepSearch(event) {
+        event.preventDefault();
+
+        const { taskName, minRounds } = readResearchForm();
+        const id = ensurePreparedResearchId();
+
+        if (taskName.length === 0) {
+          researchState.connectionState = researchState.eventSource ? researchState.connectionState : "disconnected";
+          researchState.runStateLabel = "Idle";
+          researchState.statusDetail = "Task Name is required for /research/start.";
+          updateResearchPanel();
+          researchTaskInput.focus();
+          return;
+        }
+
+        researchState.startInFlight = true;
+        researchState.runStateLabel = "Starting";
+        researchState.activeResearchId = id;
+        researchState.statusDetail = "Preparing deep search.";
+        resetResearchLog(id);
+        renderResearchLog();
+        updateResearchPanel();
+
+        try {
+          await connectResearchStream(id, researchState.connectedResearchId !== id || researchState.connectionState !== "connected");
+
+          researchState.statusDetail = `POST ${RESEARCH_START_ENDPOINT}`;
+          updateResearchPanel();
+
+          const response = await fetch(RESEARCH_START_ENDPOINT, {
+            method: "POST",
+            cache: "no-store",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              id,
+              taskName,
+              minRounds
+            })
+          });
+
+          const responseText = await response.text();
+          if (!response.ok) {
+            throw new Error(responseText || `HTTP ${response.status}`);
+          }
+
+          if (researchState.runStateLabel === "Starting" || researchState.runStateLabel === "Running") {
+            researchState.runStateLabel = "Completed";
+          }
+
+          researchState.statusDetail = responseText.trim().length > 0
+            ? "Deep search completed and HTTP response returned."
+            : "Deep search completed.";
+          researchState.preparedResearchId = "";
+          updateResearchPanel();
+          loadGraph();
+        } catch (error) {
+          console.error(error);
+          researchState.connectionState = researchState.eventSource ? researchState.connectionState : "error";
+          researchState.runStateLabel = "Error";
+          researchState.statusDetail = buildResearchTransportMessage(error);
+          updateResearchPanel();
+        } finally {
+          researchState.startInFlight = false;
+          updateResearchPanel();
+        }
+      }
+
       async function loadGraph() {
         const requestSerial = state.requestSerial + 1;
         state.requestSerial = requestSerial;
@@ -1684,6 +2808,19 @@
         loadGraph();
       });
 
+      connectResearchButton.addEventListener("click", () => {
+        manualConnectResearch(true);
+      });
+
+      toggleEventReferenceButton.addEventListener("click", () => {
+        eventReferencePanel.hidden = !eventReferencePanel.hidden;
+        updateEventReferenceToggle();
+      });
+
+      researchForm.addEventListener("submit", startDeepSearch);
+      researchTaskInput.addEventListener("input", updateResearchPanel);
+      researchMinRoundsInput.addEventListener("input", updateResearchPanel);
+
       explodeToggle.addEventListener("click", () => {
         state.explodeMode = !state.explodeMode;
         state.selectedNode = null;
@@ -1724,6 +2861,11 @@
       });
 
       resizeCanvas();
+      ensurePreparedResearchId();
+      renderEventReference();
+      renderResearchLog();
+      updateEventReferenceToggle();
+      updateResearchPanel();
       updateRefreshButton();
       updateExplodeButton();
       loadGraph();
