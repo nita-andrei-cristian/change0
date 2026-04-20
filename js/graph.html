@@ -9,10 +9,10 @@
       color-scheme: dark;
       --bg: #050505;
       --panel-bg: #090909;
-      --panel-border: rgba(255, 255, 255, 0.1);
+      --panel-border: rgba(255, 255, 255, 0.06);
       --panel-muted: rgba(255, 255, 255, 0.64);
-      --panel-soft: rgba(255, 255, 255, 0.04);
-      --panel-soft-strong: rgba(255, 255, 255, 0.08);
+      --panel-soft: rgba(255, 255, 255, 0.03);
+      --panel-soft-strong: rgba(255, 255, 255, 0.06);
       --panel-text: #f5f7fb;
       --accent: #7dd3fc;
       --accent-strong: #38bdf8;
@@ -44,8 +44,7 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background:
-        var(--bg);
+      background: var(--bg);
     }
 
     .view {
@@ -77,8 +76,7 @@
       grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
       width: 100%;
       height: 100%;
-      background:
-        var(--bg);
+      background: var(--bg);
     }
 
     .sidebar {
@@ -86,25 +84,16 @@
       min-height: 0;
       display: flex;
       flex-direction: column;
-      background:
-        var(--panel-bg);
-      border-right: 1px solid var(--panel-border);
-      box-shadow: 18px 0 40px rgba(0, 0, 0, 0.24);
+      background: var(--panel-bg);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: none;
       overflow: hidden;
     }
 
     .sidebar__top {
       padding: 22px 20px 18px;
-      border-bottom: 1px solid var(--panel-border);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       overflow: auto;
-    }
-
-    .sidebar__eyebrow {
-      margin: 0 0 8px;
-      color: var(--accent);
-      font: 700 11px/1.2 system-ui, sans-serif;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
     }
 
     .sidebar__title {
@@ -143,11 +132,11 @@
     .field textarea {
       appearance: none;
       width: 100%;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.07);
       border-radius: 14px;
       padding: 12px 14px;
       color: var(--panel-text);
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.025);
       font: 500 14px/1.4 system-ui, sans-serif;
       transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
       resize: vertical;
@@ -156,9 +145,9 @@
     .field input:focus,
     .field textarea:focus {
       outline: none;
-      border-color: rgba(125, 211, 252, 0.56);
-      background: rgba(255, 255, 255, 0.06);
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+      border-color: rgba(125, 211, 252, 0.22);
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.08);
     }
 
     .field textarea {
@@ -167,16 +156,14 @@
     }
 
     .research-form__actions {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 10px;
+      display: block;
     }
 
     .sidebar-button {
       appearance: none;
       width: 100%;
       min-height: 44px;
-      border: 1px solid rgba(125, 211, 252, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 999px;
       color: #f8fbff;
       cursor: pointer;
@@ -188,12 +175,13 @@
         border-color 140ms ease,
         background 140ms ease,
         opacity 140ms ease;
+      background: rgba(255, 255, 255, 0.035);
     }
 
     .sidebar-button:hover:not(:disabled) {
       transform: translateY(-1px);
-      border-color: rgba(125, 211, 252, 0.64);
-      background: linear-gradient(180deg, rgba(56, 189, 248, 0.28), rgba(56, 189, 248, 0.1));
+      border-color: rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.06);
     }
 
     .sidebar-button:disabled {
@@ -202,88 +190,73 @@
       transform: none;
     }
 
-    .sidebar-button--ghost {
-      border-color: rgba(255, 255, 255, 0.18);
-      background: rgba(255, 255, 255, 0.05);
-      color: rgba(255, 255, 255, 0.92);
-    }
-
-    .sidebar-button--ghost:hover:not(:disabled) {
-      border-color: rgba(255, 255, 255, 0.28);
-      background: rgba(255, 255, 255, 0.08);
-    }
-
     .research-status {
-      margin-top: 16px;
-      padding: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.03);
+      margin-top: 14px;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
       display: grid;
-      gap: 10px;
+      gap: 8px;
     }
 
-    .research-status__top {
+    .research-status__line {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 10px;
+      min-width: 0;
       flex-wrap: wrap;
+    }
+
+    .research-status__detail {
+      margin: 2px 0 0;
+      color: rgba(255, 255, 255, 0.46);
+      font: 500 12px/1.4 system-ui, sans-serif;
+    }
+
+    .status-inline {
+      color: rgba(255, 255, 255, 0.82);
+      font: 600 12px/1 system-ui, sans-serif;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
     .status-chip {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 7px 11px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.05);
+      padding: 0;
+      border: none;
+      background: transparent;
       color: #fff;
-      font: 700 11px/1 system-ui, sans-serif;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      font: 700 12px/1 system-ui, sans-serif;
+      letter-spacing: 0.04em;
     }
 
-    .status-chip::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.36);
-      box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.04);
+    .status-chip__icon {
+      width: 16px;
+      height: 16px;
+      display: block;
+      flex: 0 0 auto;
     }
 
-    .status-chip[data-state="connected"]::before { background: var(--success); }
-    .status-chip[data-state="connecting"]::before,
-    .status-chip[data-state="reconnecting"]::before { background: var(--warning); }
-    .status-chip[data-state="disconnected"]::before,
-    .status-chip[data-state="error"]::before { background: var(--danger); }
-    .status-chip[data-state="running"]::before { background: var(--accent-strong); }
-
-    .status-meta-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+    .status-chip__icon * {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
-    .status-meta {
-      display: grid;
-      gap: 4px;
-      min-width: 0;
+    .status-chip.is-connected {
+      color: var(--success);
     }
 
-    .status-meta__label {
-      color: rgba(255, 255, 255, 0.5);
-      font: 600 10px/1.2 system-ui, sans-serif;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .status-meta__value {
-      color: rgba(255, 255, 255, 0.9);
-      font: 600 13px/1.35 system-ui, sans-serif;
-      word-break: break-word;
+    .status-chip.is-disconnected,
+    .status-chip.is-connecting,
+    .status-chip.is-reconnecting,
+    .status-chip.is-error {
+      color: var(--warning);
     }
 
     .timeline-stage {
@@ -292,7 +265,7 @@
       min-height: 0;
       overflow: hidden;
       background:
-        radial-gradient(circle at top right, rgba(56, 189, 248, 0.08), transparent 24%),
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.06), transparent 24%),
         #030508;
     }
 
@@ -307,7 +280,7 @@
       justify-content: space-between;
       gap: 16px;
       padding: 22px 24px 18px;
-      background: linear-gradient(180deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0));
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0));
       pointer-events: none;
     }
 
@@ -332,10 +305,10 @@
     }
 
     .timeline-chip {
-      padding: 9px 12px;
+      padding: 8px 11px;
       border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
       color: #fff;
       font: 700 11px/1 system-ui, sans-serif;
       letter-spacing: 0.08em;
@@ -360,10 +333,10 @@
       max-width: min(360px, calc(100vw - 32px));
       padding: 12px 13px 10px;
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.08);
       background: rgba(4, 8, 14, 0.92);
       backdrop-filter: blur(12px);
-      box-shadow: 0 18px 50px rgba(0,0,0,0.34);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.28);
       pointer-events: none;
       opacity: 0;
       transform: translateY(6px);
@@ -419,11 +392,11 @@
       max-height: calc(100% - 48px);
       overflow: hidden;
       display: none;
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 22px;
       background: rgba(5, 9, 15, 0.94);
       backdrop-filter: blur(16px);
-      box-shadow: 0 22px 60px rgba(0,0,0,0.42);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
     }
 
     .timeline-inspector.is-visible {
@@ -437,7 +410,7 @@
       justify-content: space-between;
       gap: 14px;
       padding: 18px 18px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
 
     .timeline-inspector__title {
@@ -454,12 +427,12 @@
 
     .timeline-inspector__close {
       appearance: none;
-      border: 1px solid rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 999px;
       min-width: 40px;
       min-height: 40px;
       padding: 0 14px;
-      background: rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.04);
       color: #fff;
       cursor: pointer;
       font: 700 12px/1 system-ui, sans-serif;
@@ -468,8 +441,8 @@
     }
 
     .timeline-inspector__close:hover {
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.14);
     }
 
     .timeline-inspector__role {
@@ -497,11 +470,11 @@
       z-index: 6;
       width: min(560px, calc(100vw - 32px));
       padding: 16px;
-      border: 1px solid rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 22px;
       background: rgba(5, 9, 15, 0.94);
       backdrop-filter: blur(16px);
-      box-shadow: 0 22px 60px rgba(0,0,0,0.42);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
@@ -537,12 +510,12 @@
 
     .message-panel__close {
       appearance: none;
-      border: 1px solid rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 999px;
       min-width: 40px;
       min-height: 40px;
       padding: 0 14px;
-      background: rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.04);
       color: #fff;
       cursor: pointer;
       font: 700 12px/1 system-ui, sans-serif;
@@ -551,8 +524,8 @@
     }
 
     .message-panel__close:hover {
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.14);
     }
 
     .message-panel__form {
@@ -565,7 +538,7 @@
       min-height: 140px;
       max-height: 320px;
       resize: vertical;
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 16px;
       padding: 14px;
       background: rgba(255,255,255,0.04);
@@ -575,9 +548,9 @@
 
     .message-panel__textarea:focus {
       outline: none;
-      border-color: rgba(125, 211, 252, 0.56);
+      border-color: rgba(125, 211, 252, 0.22);
       background: rgba(255,255,255,0.06);
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.08);
     }
 
     .message-panel__actions {
@@ -595,11 +568,11 @@
 
     .message-panel__submit {
       appearance: none;
-      border: 1px solid rgba(125, 211, 252, 0.36);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 999px;
       min-height: 42px;
       padding: 0 16px;
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.04);
       color: #fff;
       cursor: pointer;
       font: 700 12px/1 system-ui, sans-serif;
@@ -608,8 +581,8 @@
     }
 
     .message-panel__submit:hover:not(:disabled) {
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(125, 211, 252, 0.62);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.14);
     }
 
     .message-panel__submit:disabled {
@@ -626,32 +599,27 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      width: min(360px, calc(100vw - 32px));
+      width: auto;
       padding: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 999px;
       background: rgba(0, 0, 0, 0.72);
       backdrop-filter: blur(12px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
       overflow: hidden;
     }
 
     .view-switcher button,
     .graph-controls button {
       appearance: none;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      background: rgba(255, 255, 255, 0.04);
+      border: none;
+      background: transparent;
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
       box-sizing: border-box;
-      min-width: 0;
       min-height: 42px;
-      font: 600 12px/1 system-ui, sans-serif;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      padding: 12px 16px;
       border-radius: 999px;
       cursor: pointer;
       transition:
@@ -665,27 +633,44 @@
 
     .view-switcher button,
     .graph-controls button {
-      flex: 1 1 0;
+      width: 42px;
+      min-width: 42px;
+      flex: 0 0 42px;
+      padding: 0;
     }
 
     .view-switcher button:hover:not(:disabled),
     .graph-controls button:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.08);
     }
 
     .view-switcher button.is-active,
     .graph-controls button.is-active {
-      background: rgba(255, 255, 255, 0.14);
-      border-color: rgba(255, 255, 255, 0.34);
+      background: rgba(255, 255, 255, 0.08);
       transform: translateY(-1px);
-      box-shadow: inset 0 0 0 999px rgba(255, 255, 255, 0.04);
+      box-shadow: none;
     }
 
     .view-switcher button:disabled,
     .graph-controls button:disabled {
       opacity: 0.45;
       cursor: default;
+    }
+
+    .view-switcher button svg,
+    .graph-controls button svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    .view-switcher button svg *,
+    .graph-controls button svg * {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .graph-controls {
@@ -699,13 +684,13 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      width: min(420px, calc(100vw - 420px));
+      width: auto;
       padding: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 999px;
       background: rgba(0, 0, 0, 0.72);
       backdrop-filter: blur(12px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
       overflow: hidden;
     }
 
@@ -762,7 +747,7 @@
 
       .sidebar {
         border-right: none;
-        border-bottom: 1px solid var(--panel-border);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       }
     }
 
@@ -771,14 +756,14 @@
         left: 12px;
         right: 12px;
         transform: none;
-        width: auto;
+        width: fit-content;
         bottom: 72px;
       }
 
       .view-switcher {
         left: 12px;
         right: 12px;
-        width: auto;
+        width: fit-content;
         bottom: 12px;
       }
 
@@ -806,9 +791,27 @@
       </div>
 
       <div class="graph-controls">
-        <button id="refresh-graph" type="button">Refresh Graph</button>
-        <button id="explode-toggle" type="button">Explode Layers</button>
-        <button id="open-message-panel" type="button">Input Message</button>
+        <button id="refresh-graph" type="button" aria-label="Refresh Graph" title="Refresh Graph">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 12a8 8 0 1 1-2.34-5.66"></path>
+            <path d="M20 4v6h-6"></path>
+          </svg>
+        </button>
+
+        <button id="explode-toggle" type="button" aria-label="Explode Layers" title="Explode Layers">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3v18"></path>
+            <path d="M3 12h18"></path>
+            <path d="M5 5l14 14"></path>
+            <path d="M19 5L5 19"></path>
+          </svg>
+        </button>
+
+        <button id="open-message-panel" type="button" aria-label="Input Message" title="Input Message">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 5h16v10H8l-4 4z"></path>
+          </svg>
+        </button>
       </div>
 
       <aside id="message-panel" class="message-panel" aria-hidden="true">
@@ -849,37 +852,25 @@
             </label>
 
             <div class="research-form__actions">
-              <button id="connect-research" class="sidebar-button sidebar-button--ghost" type="button">Connect SSE</button>
               <button id="start-research" class="sidebar-button" type="submit">Start Deep Search</button>
             </div>
           </form>
 
           <div class="research-status">
-            <div class="research-status__top">
-              <span id="research-connection-state" class="status-chip" data-state="disconnected">Disconnected</span>
-              <span class="status-meta__value" id="research-run-state">Idle</span>
+            <div class="research-status__line">
+              <span id="research-connection-state" class="status-chip is-disconnected" data-state="disconnected">
+                <svg id="research-connection-icon" class="status-chip__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 9v4"></path>
+                  <path d="M12 17h.01"></path>
+                  <path d="M10.29 3.86l-7.5 13A1 1 0 0 0 3.71 18h16.58a1 1 0 0 0 .92-1.5l-7.5-13a1 1 0 0 0-1.84 0z"></path>
+                </svg>
+                <span id="research-connection-text">Disconnected</span>
+              </span>
+
+              <span id="research-run-state" class="status-inline">Idle</span>
             </div>
 
-            <div class="status-meta-grid">
-              <div class="status-meta">
-                <span class="status-meta__label">Last Event</span>
-                <strong id="research-last-event" class="status-meta__value">No events yet</strong>
-              </div>
-              <div class="status-meta">
-                <span class="status-meta__label">Timeline Nodes</span>
-                <strong id="research-log-count" class="status-meta__value">0</strong>
-              </div>
-              <div class="status-meta">
-                <span class="status-meta__label">Session Routing</span>
-                <strong id="research-active-id" class="status-meta__value">Auto-generated</strong>
-              </div>
-              <div class="status-meta">
-                <span class="status-meta__label">Server</span>
-                <strong id="research-server" class="status-meta__value">127.0.0.1:8085</strong>
-              </div>
-            </div>
-
-            <p id="research-status-detail" class="sidebar__hint">Ready.</p>
+            <p id="research-status-detail" class="research-status__detail">Ready.</p>
           </div>
         </div>
       </aside>
@@ -921,8 +912,30 @@
     </section>
 
     <div class="view-switcher" aria-label="View switcher">
-      <button id="graph-view-toggle" type="button" class="is-active">Graph View</button>
-      <button id="deep-search-view-toggle" type="button">Deep Search View</button>
+      <button id="graph-view-toggle" type="button" class="is-active" aria-label="Graph View" title="Graph View">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="6" cy="12" r="2.2"></circle>
+          <circle cx="12" cy="6" r="2.2"></circle>
+          <circle cx="18" cy="12" r="2.2"></circle>
+          <circle cx="12" cy="18" r="2.2"></circle>
+          <path d="M7.8 10.8l2.4-3.6"></path>
+          <path d="M13.8 7.2l2.4 3.6"></path>
+          <path d="M16.2 13.2l-2.4 3.6"></path>
+          <path d="M10.2 16.8l-2.4-3.6"></path>
+        </svg>
+      </button>
+
+      <button id="deep-search-view-toggle" type="button" aria-label="Deep Search View" title="Deep Search View">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 19h16"></path>
+          <path d="M6 16V9"></path>
+          <path d="M12 16V5"></path>
+          <path d="M18 16v-4"></path>
+          <circle cx="6" cy="9" r="1.5"></circle>
+          <circle cx="12" cy="5" r="1.5"></circle>
+          <circle cx="18" cy="12" r="1.5"></circle>
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -952,14 +965,11 @@
       const researchForm = document.getElementById("research-form");
       const researchTaskInput = document.getElementById("research-task");
       const researchMinRoundsInput = document.getElementById("research-min-rounds");
-      const connectResearchButton = document.getElementById("connect-research");
       const startResearchButton = document.getElementById("start-research");
       const researchConnectionState = document.getElementById("research-connection-state");
+      const researchConnectionText = document.getElementById("research-connection-text");
+      const researchConnectionIcon = document.getElementById("research-connection-icon");
       const researchRunState = document.getElementById("research-run-state");
-      const researchLastEvent = document.getElementById("research-last-event");
-      const researchLogCount = document.getElementById("research-log-count");
-      const researchActiveId = document.getElementById("research-active-id");
-      const researchServer = document.getElementById("research-server");
       const researchStatusDetail = document.getElementById("research-status-detail");
       const focusNodeBadge = document.getElementById("focus-node");
       const focusNodeRing = document.getElementById("focus-node-ring");
@@ -986,6 +996,15 @@
       const RESEARCH_EVENTS_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/research/events`;
       const MESSAGE_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/message`;
       const SERVER_OFFLINE_HINT = "Open CHANGE terminal client and select Start Server (run ./build.sh)";
+      const WARNING_SVG = `
+        <path d="M12 9v4"></path>
+        <path d="M12 17h.01"></path>
+        <path d="M10.29 3.86l-7.5 13A1 1 0 0 0 3.71 18h16.58a1 1 0 0 0 .92-1.5l-7.5-13a1 1 0 0 0-1.84 0z"></path>
+      `;
+      const CONNECTED_SVG = `
+        <path d="M20 6L9 17l-5-5"></path>
+      `;
+
       const EVENT_TYPE_META = {
         sse_connected: {
           label: "SSE Connected",
@@ -1152,15 +1171,6 @@
         movedDuringPointer: false
       };
 
-      function escapeHtml(value) {
-        return String(value)
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#39;");
-      }
-
       function sanitizeResearchId(value) {
         const cleaned = String(value || "")
           .trim()
@@ -1252,11 +1262,47 @@
         };
       }
 
+      function isRoundStartEvent(type) {
+        return type === "round-start";
+      }
+
       function resetResearchLog(activeResearchId = researchState.activeResearchId) {
         researchState.activeResearchId = activeResearchId;
         researchState.events = [];
         researchState.firstServerEventPerf = null;
-        researchState.lastEventLabel = "Waiting for SSE events";
+        researchState.lastEventLabel = "No events yet";
+      }
+
+      function updateConnectionIndicator() {
+        const stateName = researchState.connectionState;
+        researchConnectionState.dataset.state = stateName;
+        researchConnectionState.classList.remove("is-connected", "is-disconnected", "is-connecting", "is-reconnecting", "is-error");
+
+        let text = "Disconnected";
+        let icon = WARNING_SVG;
+        let cls = "is-disconnected";
+
+        if (stateName === "connected") {
+          text = "Connected";
+          icon = CONNECTED_SVG;
+          cls = "is-connected";
+        } else if (stateName === "connecting") {
+          text = "Connecting";
+          icon = WARNING_SVG;
+          cls = "is-connecting";
+        } else if (stateName === "reconnecting") {
+          text = "Reconnecting";
+          icon = WARNING_SVG;
+          cls = "is-reconnecting";
+        } else if (stateName === "error") {
+          text = "Disconnected";
+          icon = WARNING_SVG;
+          cls = "is-error";
+        }
+
+        researchConnectionState.classList.add(cls);
+        researchConnectionText.textContent = text;
+        researchConnectionIcon.innerHTML = icon;
       }
 
       function updateViewSwitcher() {
@@ -1279,38 +1325,19 @@
       }
 
       function updateResearchPanel() {
-        const { taskName } = readResearchForm();
+        updateConnectionIndicator();
 
-        researchConnectionState.dataset.state = researchState.connectionState;
-        researchConnectionState.textContent = (
-          researchState.connectionState.charAt(0).toUpperCase() + researchState.connectionState.slice(1)
-        );
         researchRunState.textContent = researchState.runStateLabel;
-        researchLastEvent.textContent = researchState.lastEventLabel;
-        researchLogCount.textContent = String(researchState.events.length);
-        researchActiveId.textContent = researchState.activeResearchId || "Auto-generated";
-        researchServer.textContent = `${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}`;
         researchStatusDetail.textContent = researchState.statusDetail;
 
-        connectResearchButton.disabled = researchState.startInFlight || (
-          researchState.connectionState === "connecting" || researchState.connectionState === "reconnecting"
-        );
-        connectResearchButton.textContent = researchState.connectionState === "connected"
-          ? "Reconnect SSE"
-          : researchState.connectionState === "connecting" || researchState.connectionState === "reconnecting"
-            ? "Connecting..."
-            : "Connect SSE";
-
-        startResearchButton.disabled = researchState.startInFlight || taskName.length === 0;
-        startResearchButton.textContent = researchState.startInFlight
-          ? "Running..."
-          : "Start Deep Search";
+        startResearchButton.disabled = researchState.startInFlight || readResearchForm().taskName.length === 0;
+        startResearchButton.textContent = researchState.startInFlight ? "Running..." : "Start Deep Search";
 
         timelineTotalChip.textContent = `${researchState.events.length} ${researchState.events.length === 1 ? "Event" : "Events"}`;
         timelineSessionChip.textContent = researchState.activeResearchId ? `Session ${researchState.activeResearchId}` : "No Session";
         timelineHeaderSubtitle.textContent = researchState.events.length > 0
           ? "Chronological nodes are connected in order of arrival. Hover any node to inspect the raw emitted value and metadata."
-          : "No deep-search events yet. Connect SSE and start a run to populate the timeline.";
+          : "No deep-search events yet. Start a run to populate the timeline.";
       }
 
       function buildResearchTransportMessage(error) {
@@ -1373,6 +1400,7 @@
           meta,
           timestamp: receivedDate.getTime()
         });
+
         researchState.lastEventLabel = `${meta.label} @ ${formatClock(receivedDate)}`;
         researchState.statusDetail = meta.role;
 
@@ -1526,16 +1554,6 @@
       function computeNodeRadius(node) {
         const emphasis = clamp((Math.abs(node.activation) + Math.abs(node.weight)) * 0.5, 0.6, 2.2);
         return clamp(14 + emphasis * 6, 18, 30);
-      }
-
-      function summarizeNode(node) {
-        return {
-          id: node.id,
-          name: node.name,
-          hasParent: node.hasParent,
-          parentId: node.parentId,
-          color: node.color
-        };
       }
 
       function normalizeMessageLines(detail) {
@@ -2078,7 +2096,9 @@
           return Array.isArray(children) && children.length > 0;
         });
 
-        explodeToggle.textContent = state.explodeMode ? "Collapse Layers" : "Explode Layers";
+        const label = state.explodeMode ? "Collapse Layers" : "Explode Layers";
+        explodeToggle.setAttribute("title", label);
+        explodeToggle.setAttribute("aria-label", label);
         explodeToggle.classList.toggle("is-active", state.explodeMode);
         explodeToggle.setAttribute("aria-pressed", String(state.explodeMode));
         explodeToggle.disabled = state.loading || state.error !== null || hasGraph === false || (
@@ -2088,7 +2108,8 @@
 
       function updateRefreshButton() {
         refreshButton.disabled = state.loading;
-        refreshButton.textContent = state.loading ? "Refreshing..." : "Refresh Graph";
+        refreshButton.setAttribute("title", state.loading ? "Refreshing..." : "Refresh Graph");
+        refreshButton.setAttribute("aria-label", state.loading ? "Refreshing..." : "Refresh Graph");
       }
 
       function updateMessagePanel() {
@@ -2099,6 +2120,8 @@
         submitMessageButton.textContent = uiState.messageSubmitInFlight ? "Sending..." : "Send to /message";
         openMessagePanelButton.classList.toggle("is-active", uiState.messagePanelOpen);
         openMessagePanelButton.setAttribute("aria-pressed", String(uiState.messagePanelOpen));
+        openMessagePanelButton.setAttribute("title", uiState.messagePanelOpen ? "Close Input Message" : "Input Message");
+        openMessagePanelButton.setAttribute("aria-label", uiState.messagePanelOpen ? "Close Input Message" : "Input Message");
       }
 
       function openMessagePanel() {
@@ -2147,10 +2170,7 @@
             throw new Error(responseText || `HTTP ${response.status}`);
           }
 
-          uiState.messageStatus = responseText.trim().length > 0
-            ? "Message accepted by server. Refreshing graph."
-            : "Message accepted by server. Refreshing graph.";
-
+          uiState.messageStatus = "Message accepted by server. Refreshing graph.";
           await loadGraph();
           closeMessagePanel();
         } catch (error) {
@@ -2500,7 +2520,7 @@
 
         ctx.save();
         ctx.fillStyle = "rgba(0, 0, 0, 0.82)";
-        ctx.strokeStyle = accent || "rgba(255, 255, 255, 0.18)";
+        ctx.strokeStyle = accent || "rgba(255, 255, 255, 0.12)";
         ctx.lineWidth = 1;
         ctx.fillRect(x, y, size.width, size.height);
         ctx.strokeRect(x + 0.5, y + 0.5, size.width - 1, size.height - 1);
@@ -2545,7 +2565,7 @@
           const hovered = state.hoveredGroup && state.hoveredGroup.id === group.id;
 
           ctx.save();
-          ctx.globalAlpha = hovered ? 0.16 : 0.1;
+          ctx.globalAlpha = hovered ? 0.14 : 0.09;
           ctx.fillStyle = group.color;
           ctx.beginPath();
           ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
@@ -2554,7 +2574,7 @@
 
           ctx.save();
           ctx.strokeStyle = group.color;
-          ctx.lineWidth = hovered ? 2.2 : 1.6;
+          ctx.lineWidth = hovered ? 2 : 1.4;
           ctx.setLineDash([8, 8]);
           ctx.beginPath();
           ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
@@ -2618,7 +2638,7 @@
           if (hovered || selected) {
             ctx.beginPath();
             ctx.arc(position.x, position.y, radius + 7, 0, Math.PI * 2);
-            ctx.strokeStyle = hovered && !selected ? "rgba(255, 255, 255, 0.18)" : node.color;
+            ctx.strokeStyle = hovered && !selected ? "rgba(255, 255, 255, 0.16)" : node.color;
             ctx.lineWidth = hovered && !selected ? 2 : 1.5;
             ctx.stroke();
           }
@@ -2987,27 +3007,6 @@
         }
       }
 
-      async function manualConnectResearch(forceReconnect = true) {
-        const id = researchState.activeResearchId || researchState.connectedResearchId || ensurePreparedResearchId();
-
-        if (researchState.activeResearchId !== id) {
-          researchState.runStateLabel = "Idle";
-          resetResearchLog(id);
-          renderTimeline();
-        }
-
-        try {
-          await connectResearchStream(id, forceReconnect);
-        } catch (error) {
-          console.error(error);
-          researchState.connectionState = "error";
-          researchState.runStateLabel = "Idle";
-          researchState.statusDetail = buildResearchTransportMessage(error);
-          updateResearchPanel();
-          renderTimeline();
-        }
-      }
-
       async function startDeepSearch(event) {
         event.preventDefault();
 
@@ -3032,22 +3031,8 @@
         renderTimeline();
         setActiveView("deep-search");
 
-        const sseConnectPromise = connectResearchStream(
-          id,
-          researchState.connectedResearchId !== id || researchState.connectionState !== "connected"
-        ).catch((error) => {
-          console.error(error);
-          researchState.connectionState = researchState.eventSource ? researchState.connectionState : "error";
-          researchState.statusDetail = buildResearchTransportMessage(error);
-          updateResearchPanel();
-          return null;
-        });
-
         try {
-          await Promise.race([
-            sseConnectPromise,
-            new Promise((resolve) => window.setTimeout(resolve, 250))
-          ]);
+          await connectResearchStream(id, true);
 
           researchState.statusDetail = `POST ${RESEARCH_START_ENDPOINT}`;
           updateResearchPanel();
@@ -3079,7 +3064,6 @@
             : "Deep search completed.";
           researchState.preparedResearchId = "";
           updateResearchPanel();
-          await sseConnectPromise;
           loadGraph();
         } catch (error) {
           console.error(error);
@@ -3177,8 +3161,9 @@
             entry: event,
             x: leftPadding + usableWidth * 0.5 + timelineState.cameraX,
             y: baselineY,
-            radius: 16,
-            meta
+            radius: isRoundStartEvent(event.type) ? 4 : 16,
+            meta,
+            isRoundMarker: isRoundStartEvent(event.type)
           }];
         }
 
@@ -3192,12 +3177,17 @@
           const offsetY = (index % 2 === 0 ? -1 : 1) * amplitude * (0.34 + Math.abs(wave) * 0.66);
           const y = clamp(baselineY + offsetY, topPadding, height - bottomPadding);
           const meta = getResearchEventMeta(entry.type);
+          const roundMarker = isRoundStartEvent(entry.type);
+
           return {
             entry,
             x,
             y,
-            radius: clamp(12 + Math.min(18, Math.sqrt(Math.max(0, entry.data.length)) * 0.6), 12, 22),
-            meta
+            radius: roundMarker
+              ? 4
+              : clamp(12 + Math.min(18, Math.sqrt(Math.max(0, entry.data.length)) * 0.6), 12, 22),
+            meta,
+            isRoundMarker: roundMarker
           };
         });
       }
@@ -3205,9 +3195,10 @@
       function pickTimelineNode(x, y) {
         for (let index = timelineState.positions.length - 1; index >= 0; index -= 1) {
           const item = timelineState.positions[index];
+          const hitPadding = item.isRoundMarker ? 8 : 6;
           const dx = x - item.x;
           const dy = y - item.y;
-          const radius = item.radius + 6;
+          const radius = item.radius + hitPadding;
           if (dx * dx + dy * dy <= radius * radius) {
             return item;
           }
@@ -3272,7 +3263,7 @@
         timelineCtx.fillText("No deep-search events", timelineState.width * 0.5, timelineState.height * 0.48);
         timelineCtx.fillStyle = "rgba(255,255,255,0.64)";
         timelineCtx.font = "500 13px system-ui, sans-serif";
-        timelineCtx.fillText("Connect SSE and start a run to populate the timeline view.", timelineState.width * 0.5, timelineState.height * 0.48 + 30);
+        timelineCtx.fillText("Start a run to populate the timeline view.", timelineState.width * 0.5, timelineState.height * 0.48 + 30);
         timelineCtx.restore();
       }
 
@@ -3306,8 +3297,9 @@
 
         if (timelineState.positions.length > 1) {
           timelineCtx.save();
-          timelineCtx.strokeStyle = "rgba(125, 211, 252, 0.38)";
-          timelineCtx.lineWidth = 2;
+          timelineCtx.strokeStyle = "rgba(125, 211, 252, 0.32)";
+          timelineCtx.lineWidth = 1.5;
+          timelineCtx.setLineDash([3, 8]);
           timelineCtx.beginPath();
           timelineCtx.moveTo(timelineState.positions[0].x, timelineState.positions[0].y);
           for (let index = 1; index < timelineState.positions.length; index += 1) {
@@ -3327,38 +3319,46 @@
         for (const item of timelineState.positions) {
           const hovered = timelineState.hoveredNode && timelineState.hoveredNode.entry.sequence === item.entry.sequence;
           const selected = timelineState.selectedNode && timelineState.selectedNode.entry.sequence === item.entry.sequence;
-          const radius = hovered ? item.radius + 3 : selected ? item.radius + 2 : item.radius;
+          const radius = item.isRoundMarker
+            ? (hovered ? item.radius + 2 : selected ? item.radius + 1 : item.radius)
+            : (hovered ? item.radius + 3 : selected ? item.radius + 2 : item.radius);
 
-          timelineCtx.save();
-          timelineCtx.beginPath();
-          timelineCtx.arc(item.x, item.y, radius + 10, 0, Math.PI * 2);
-          timelineCtx.fillStyle = selected ? "rgba(255,255,255,0.1)" : hovered ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)";
-          timelineCtx.fill();
-          timelineCtx.restore();
+          if (!item.isRoundMarker) {
+            timelineCtx.save();
+            timelineCtx.beginPath();
+            timelineCtx.arc(item.x, item.y, radius + 10, 0, Math.PI * 2);
+            timelineCtx.fillStyle = selected ? "rgba(255,255,255,0.1)" : hovered ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)";
+            timelineCtx.fill();
+            timelineCtx.restore();
+          }
 
           timelineCtx.beginPath();
           timelineCtx.arc(item.x, item.y, radius, 0, Math.PI * 2);
           timelineCtx.fillStyle = "#05070a";
           timelineCtx.fill();
           timelineCtx.strokeStyle = item.meta.accent;
-          timelineCtx.lineWidth = selected ? 4.5 : hovered ? 4 : 2.5;
+          timelineCtx.lineWidth = item.isRoundMarker
+            ? (selected ? 2.5 : hovered ? 2.2 : 1.8)
+            : (selected ? 4.5 : hovered ? 4 : 2.5);
           timelineCtx.stroke();
 
-          timelineCtx.fillStyle = "#fff";
-          timelineCtx.font = "700 10px system-ui, sans-serif";
-          timelineCtx.textBaseline = "middle";
-          timelineCtx.fillText(String(item.entry.sequence), item.x, item.y + 0.5);
+          if (!item.isRoundMarker) {
+            timelineCtx.fillStyle = "#fff";
+            timelineCtx.font = "700 10px system-ui, sans-serif";
+            timelineCtx.textBaseline = "middle";
+            timelineCtx.fillText(String(item.entry.sequence), item.x, item.y + 0.5);
 
-          timelineCtx.textBaseline = "bottom";
-          timelineCtx.font = hovered || selected ? "700 12px system-ui, sans-serif" : "600 11px system-ui, sans-serif";
-          timelineCtx.fillStyle = hovered || selected ? "#fff" : "rgba(255,255,255,0.72)";
-          const labelY = item.y - radius - 12;
-          timelineCtx.fillText(item.meta.label, item.x, labelY);
+            timelineCtx.textBaseline = "bottom";
+            timelineCtx.font = hovered || selected ? "700 12px system-ui, sans-serif" : "600 11px system-ui, sans-serif";
+            timelineCtx.fillStyle = hovered || selected ? "#fff" : "rgba(255,255,255,0.72)";
+            const labelY = item.y - radius - 12;
+            timelineCtx.fillText(item.meta.label, item.x, labelY);
 
-          timelineCtx.textBaseline = "top";
-          timelineCtx.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
-          timelineCtx.fillStyle = "rgba(255,255,255,0.5)";
-          timelineCtx.fillText(item.entry.elapsedLabel, item.x, item.y + radius + 10);
+            timelineCtx.textBaseline = "top";
+            timelineCtx.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
+            timelineCtx.fillStyle = "rgba(255,255,255,0.5)";
+            timelineCtx.fillText(item.entry.elapsedLabel, item.x, item.y + radius + 10);
+          }
         }
 
         timelineCtx.restore();
@@ -3471,10 +3471,6 @@
         loadGraph();
       });
 
-      connectResearchButton.addEventListener("click", () => {
-        manualConnectResearch(true);
-      });
-
       researchForm.addEventListener("submit", startDeepSearch);
       messageForm.addEventListener("submit", submitMessageInput);
       messageInput.addEventListener("input", updateMessagePanel);
@@ -3566,4 +3562,3 @@
   </script>
 </body>
 </html>
-
