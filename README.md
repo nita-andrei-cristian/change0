@@ -1,6 +1,6 @@
 # CHANGE
 
-Welcome to the change project, so far the application decomposes user inputs as nodes, forming a cluster of nodes called User Identity.
+Welcome to the change project, so far the application decomposes user inputs into nodes, forming a cluster of nodes called User Identity.
 See below a brief overview:
 
 ## Concepts overview
@@ -64,4 +64,4 @@ From another terminal:
 - open the received http url in a browser
 
 ### Step 6
-- Use the app, but be patient because OpenAI requests may take a while...
+- Use the app, but be patient because OpenAI requests are slow...
