@@ -7,6 +7,7 @@
 #include "lib/openai/openai.h"
 #include "graph-engine.h"
 #include "globals.h"
+#include "config.h"
 
 static ds_emit_like_func ds_emit = NULL;
 
@@ -14,8 +15,8 @@ _Bool init_ds_memory(DS_memory *d){
 	if (!d) return 0;
 
 	// they auto assert
-	InitString(&d->dynamic, DS_DYNAMIC_MEMORY_SIZE);
-	InitString(&d->persistent, DS_PERSISTENT_MEMORY_SIZE);
+	InitString(&d->dynamic, 1);
+	InitString(&d->persistent, 1);
 
 	return 1;
 }

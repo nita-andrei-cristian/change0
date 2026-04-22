@@ -38,18 +38,24 @@ git clone https://github.com/nita-andrei-cristian/change0.git
 ```
 
 ### Step 2
+Open config.h file and modify this line to your project root directory
+```c
+#define PROJECT_ROOT "/home/nita/dev/c/change0/"
+```
+
+### Step 3
 Setup an OpenAi key (Or any other key if you use a custom host)
 ```bash
 export OPENAI_API_KEY=my_secret_key
 ```
 
-### Step 3
+### Step 4
 Run build.sh
 ```bash
 ./build.sh
 ```
 
-### Step 4
+### Step 5
 Now you will see terminal Cli interface.
 You will most likely only care about the server:
 - press `s` to start one. (Port 8085)
@@ -57,11 +63,24 @@ You will most likely only care about the server:
 
 PS : If you want to change the port, modify config.h file and graph.html. Swap 8085 with another port
 
-### Step 5
+### Step 6
 From another terminal:
 - enter `change0/js` directory 
 - run `http-server` (or any other command to run a server)
 - open the received http url in a browser
 
-### Step 6
+### Step 7
 - Use the app, but be patient because OpenAI requests are slow...
+
+# Customizing the flow
+You may alter the agents thinking and node formula constants by modfying the macros in config.h.
+In other words you will find constants define as such:
+```c 
+// some examples, see detailed explinations in config.h
+#define ACTIVATION_IMPORTANCE_TO_NODE_WEIGHT 0.2 
+#define NCOUNT_PENALTY_TO_NODE_WEIGHT 0.2
+#define SUPPORT_MERIT_TO_NODE_WEIGHT 0.6
+#define NODE_OLD_WEIGHT_RELEVANCE 0.95 
+#define ACT_HALFTIME 100.0 
+```
+You can change the values and **rebuild** the C project and **restart** the server to see the changes.

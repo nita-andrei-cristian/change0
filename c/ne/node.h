@@ -22,8 +22,6 @@
 #define CONN_ACT_INCR 0.5
 #define CONN_WGHT_INCR 0.01
 
-#define ACT_HALFTIME 100.0
-
 #define NODE_INIT_ACT 1
 #define NODE_INIT_WGHT 1
 

@@ -11,3 +11,4 @@ received.txt
 deep-search-result.txt
 sent.txt
 js/.codex
+*.json

@@ -5,6 +5,7 @@
 #include "json-to-graph.h"
 #include <string.h>
 #include <stdio.h>
+#include "config.h"
 #include <stdlib.h>
 
 static json_value *call_gpt_decomposition(String *input){

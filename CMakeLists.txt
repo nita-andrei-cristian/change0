@@ -64,6 +64,7 @@ add_library(graphengine SHARED ${CMAKE_SOURCE_DIR}/c/ne/graph/graph-engine.c)
 target_include_directories(graphengine PUBLIC
     ${CMAKE_SOURCE_DIR}/c/ne/graph
     ${CMAKE_SOURCE_DIR}/c/ne
+    ${CMAKE_SOURCE_DIR}/c
 )
 target_link_libraries(graphengine PUBLIC node util)
 target_link_libraries(graphengine PRIVATE m) 
@@ -149,6 +150,7 @@ target_link_libraries(aiaction PUBLIC
 add_library(json2graph SHARED ${CMAKE_SOURCE_DIR}/c/ne/input/json-to-graph.c)
 target_include_directories(json2graph PUBLIC
     ${CMAKE_SOURCE_DIR}/c/ne/input
+    ${CMAKE_SOURCE_DIR}/c
     ${CMAKE_SOURCE_DIR}/c/ne
 )
 target_link_libraries(json2graph PUBLIC

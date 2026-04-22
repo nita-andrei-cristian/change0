@@ -13,6 +13,6 @@ fi
 cd ..
 cmake --build build -j
 
-cd debug
+cd build
 
 ./change

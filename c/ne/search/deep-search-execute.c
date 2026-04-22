@@ -6,6 +6,7 @@
 #include "openai.h"
 #include "util.h"
 #include "command-parsing.h"
+#include "config.h"
 
 void exec_response(json_value* doc, String *dynamic_mem, size_t depth, String *conclusion, char* ds_id){
 

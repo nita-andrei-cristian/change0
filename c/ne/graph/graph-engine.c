@@ -3,6 +3,7 @@
 #include "math.h"
 #include "util.h"
 #include <string.h>
+#include "config.h"
 #include <stdio.h>
 
 
@@ -47,7 +48,7 @@ static void set_activation(Node *n, time_t now, double boost_per_touch)
     n->pendingTouches = 0;
     n->lastTouched = now;
 }
-
+				 
 void RefreshGraph(){
 	//if (!Nodes.needsRefresh) return;
 	if (!Nodes.init || Nodes.count == 0) return;
@@ -55,8 +56,8 @@ void RefreshGraph(){
 	// decrease connection and activation on every instance
 	time_t currTime = time(NULL);
 
-	double k = 0.2; // TODO make this a constant
-	double c = 0.2; // also this, the penalty of ncount
+	double k = ACTIVATION_IMPORTANCE_TO_NODE_WEIGHT;
+	double c = SUPPORT_MERIT_TO_NODE_WEIGHT; 
 		
 	double mx_seen = -1, mx_used = -1, mx_support = -1;
 
@@ -78,7 +79,7 @@ void RefreshGraph(){
 			support += read_connection_weight(&n->neighbours[j]) + k * read_connection_activation(&n->neighbours[j]);
 		}
 
-		support /= 1 + 0.2 * n->ncount;
+		support /= 1 + c * n->ncount;
 		support_buffer[i] = support;
 
 		if (support > mx_support) mx_support = support;
@@ -100,14 +101,14 @@ void RefreshGraph(){
 			support_norm = log1p(support_buffer[i]) / log1p(mx_support);
 
 		// TODO turn scalars into constants
-		double merit = 0.6 * support_norm + 0.4 * used_norm;
+		double merit = SUPPORT_MERIT_TO_NODE_WEIGHT * support_norm + (1.0 - SUPPORT_MERIT_TO_NODE_WEIGHT) * used_norm;
 		double confidence = seen_norm;
 		double base = NODE_INIT_WGHT;
 		double old_weight = n->_weight;
 		double target_weight = confidence * merit + (1.0 - seen_norm) * base;
 
 		// set weight
-		n->_weight = 0.95 * old_weight + 0.05 * target_weight;
+		n->_weight = NODE_OLD_WEIGHT_RELEVANCE * old_weight + (1.0 - NODE_OLD_WEIGHT_RELEVANCE) * target_weight;
 		
 
 		set_activation(n, currTime, NODE_ACT_INCR);
