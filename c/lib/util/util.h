@@ -6,6 +6,7 @@
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define CLAMP(mi,mx,v) ((v) < (mi) ? (mi) : ((v) > (mx) ? (mx) : (v)))
 #define FSIZE(fixed) (sizeof((fixed)) - 1)
+#define FSTRING_SIZE_PARAMS(fixed) (fixed),FSIZE((fixed))
 
 // ai generated strnlen
 size_t mystrnlen(const char* s, size_t maxlen);
@@ -77,5 +78,6 @@ void CatString(String* s, char* c, size_t len);
 void CopyString(String* a, String* b);
 void EmptyString(String* a);
 void ResizeString(String* a, size_t new_cap);
+String* CreateStringFrom(char* p, size_t len);
 
 #endif

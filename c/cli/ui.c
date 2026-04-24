@@ -15,6 +15,7 @@
 #include <string.h>
 #include "srv/http-server.h"
 #include "globals.h"
+#include "goal/goal.h"
 
 // AI generated function
 static int getch_nowait_enterless(void) {
@@ -85,10 +86,6 @@ static void Run(int i){
 		}
 	}
 
-	if (options[i].type == MESSAGEX10){
-		printf("Work in progress");
-	}
-
 	if (options[i].type == EXPORT){
 		ExportGraphTo(DEFAULT_GRAPH_EXPORT);
 	}
@@ -134,6 +131,31 @@ static void Run(int i){
 		WaitForInput();
 	}
 
+	if (options[i].type == CREATEGOAL){
+		char *input_raw0 = NULL;
+		size_t input_size0 = 0;
+
+		char *input_raw1 = NULL;
+		size_t input_size1 = 0;
+
+		printf("Please write a goal: \n");
+		int read0 = mygetline(&input_raw0, &input_size0, stdin);
+
+		printf("Please reason the goal: \n");
+		int read1 = mygetline(&input_raw1, &input_size1, stdin);
+
+		String input0; InitString(&input0, input_size0 + 1);
+		String input1; InitString(&input1, input_size1 + 1);
+
+		Goal *g = create_goal(&input0, &input1, 60 * 60 );
+
+		printf("Goal Created...\nUpdaing goal...\n\n");
+		update_goal(g);
+
+		FreeString(&input0);
+		FreeString(&input1);
+	}
+
 	WaitForInput();
 }
 
@@ -165,4 +187,5 @@ void UILoop(){
 void UIKill(){
 	FreeNodes();
 	FreeGlobalPointerMap();
+	free_goals();
 }
