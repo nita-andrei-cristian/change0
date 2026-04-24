@@ -198,8 +198,10 @@ add_library(goal SHARED ${CMAKE_SOURCE_DIR}/c/ne/goal/goal.c)
 target_include_directories(goal PUBLIC
 	${CMAKE_SOURCE_DIR}/c/lib/util
 	${CMAKE_SOURCE_DIR}/c/ne/goal
+	${CMAKE_SOURCE_DIR}/c/ne/search
+	${CMAKE_SOURCE_DIR}/c/ne
 )
-target_link_libraries(goal PUBLIC util)
+target_link_libraries(goal PUBLIC util node deepsearchsessiion )
 
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 target_include_directories(change PRIVATE
