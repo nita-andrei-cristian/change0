@@ -15,6 +15,10 @@ typedef struct GoalType {
 
 	struct GoalType **subgoals;
 	size_t subgoals_len;
+	
+	size_t globalIndex;
+
+	struct GoalType* parent;
 
 	size_t priority;
 } Goal;
@@ -28,7 +32,7 @@ enum GOAL_STATUS {
 #define TIME_MARIGN 0.5
 
 
-Goal* create_goal(String *input_goal, String *input_reasoning, size_t estimated_time);
+Goal *create_goal(String *input_goal, String *input_reasoning, size_t estimated_time, Goal *parent);
 void mock_develop_subgoals(Goal *g);
 enum GOAL_STATUS validate_goal(Goal *g);
 void repair_goal(Goal* g);

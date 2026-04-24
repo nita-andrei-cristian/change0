@@ -6,6 +6,8 @@
 #include "time.h"
 #include "../lib/hd/hashdict.h"
 
+#define TASK_NAME_MAX_SIZE 2048
+
 #define CONTEXT_COUNT 5
 
 #define INIT_NODE_CAP 16
@@ -78,7 +80,7 @@ struct {
 } Nodes;
 
 typedef struct {
-	char name[2048];
+	char name[TASK_NAME_MAX_SIZE];
 	size_t name_len;
 	size_t minDepth;
 } Task;
