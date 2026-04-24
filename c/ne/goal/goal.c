@@ -135,12 +135,12 @@ void pre_process_goal(String *input, String *reasoning)
 	InitString(&out, 2048);
 	
 	Task task;
-	task.name_len sprintf(task.name, "Customize the goal for the [%s]. With reasoning [%c], be pragmatic", input.p, reasoning.p);
+	task.name_len = sprintf(task.name, "Customize the goal for the [%s]. With reasoning [%s], be pragmatic and gen JSON.", input->p, reasoning->p);
 	task.minDepth = 10;
 
 	if (task.name_len >= TASK_NAME_MAX_SIZE) return;
 
 	// extract process goals
 
-	start_ds_session()
+	//start_ds_session()
 }
