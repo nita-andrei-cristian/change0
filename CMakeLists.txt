@@ -46,6 +46,7 @@ target_link_libraries(ui PUBLIC
     graphexport
     inputprocessor
     deepsearchsession
+    goal
     http-server
     globals
 )
@@ -193,6 +194,13 @@ target_include_directories(globals PUBLIC
 	${CMAKE_SOURCE_DIR}/c/lib/hd
 )
 
+add_library(goal SHARED ${CMAKE_SOURCE_DIR}/c/ne/goal/goal.c)
+target_include_directories(goal PUBLIC
+	${CMAKE_SOURCE_DIR}/c/lib/util
+	${CMAKE_SOURCE_DIR}/c/ne/goal
+)
+target_link_libraries(goal PUBLIC util)
+
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 target_include_directories(change PRIVATE
     ${CMAKE_SOURCE_DIR}/c
@@ -210,4 +218,5 @@ target_link_libraries(
 	deepsearchexecute openai 
 	mockopenai mocks aiaction json2graph 
 	graphengine inputprocessor http-server
+	goal
 )

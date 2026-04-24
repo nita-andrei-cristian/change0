@@ -273,6 +273,16 @@ void EmptyString(String* a){
 	*c_str(a) = '\0';
 }
 
+String* CreateStringFrom(char* p, size_t len){
+	String *out = malloc(sizeof(String));
+	cassert(out, "Coudln't mem allocate a string");
+
+	InitString(out, len+2);
+	CatString(out, p, len);
+
+	return out;
+};
+
 // AI generated function
 void WaitForInput(void) {
     int c;
