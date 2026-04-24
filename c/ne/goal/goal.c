@@ -129,18 +129,29 @@ void free_goals()
 	}
 }
 
-void pre_process_goal(String *input, String *reasoning)
+// those are mapped to input1 -> title input2 -> reason
+void pre_process_goal(String *input1, String *input2)
 {
 	String out;
 	InitString(&out, 2048);
 	
 	Task task;
-	task.name_len = sprintf(task.name, "Customize the goal for the [%s]. With reasoning [%s], be pragmatic and gen JSON.", input->p, reasoning->p);
+	task.name_len = sprintf(task.name, "Customize the goal for the [%s]. With reasoning [%s], Come with an estimated_time in settings be pragmatic and gen JSON.", input1->p, input2->p);
 	task.minDepth = 10;
 
-	if (task.name_len >= TASK_NAME_MAX_SIZE) return;
+	cassert(task.name_len < TASK_NAME_MAX_SIZE, "Task name is too big");
+	
+	// customize goal
+	//start_ds_session()
 
 	// extract process goals
+	String title, reason;
+	time_t estimated_time = 0;
+	InitString(&title, 256); InitString(&reason, 1024);
 
-	//start_ds_session()
+	// obtain title and reason
+
+	cassert(0, "TODO : Extract title, reason and estimated time");
+	
+	create_goal(&title, &reason, estimated_time, NULL);
 }
