@@ -15,6 +15,10 @@ typedef struct GoalType {
 
 	struct GoalType **subgoals;
 	size_t subgoals_len;
+	
+	size_t globalIndex = 0;
+
+	struct GoalType* parent;
 
 	size_t priority;
 } Goal;

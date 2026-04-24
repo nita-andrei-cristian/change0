@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-static Goal* GOAL_CONTAINER[32];
+static Goal* GOAL_CONTAINER[1024];
 static size_t GOAL_CONTAINER_COUNT = 0;
 
-Goal* create_goal(String *input_goal, String *input_reasoning, size_t estimated_time){
+Goal* create_goal(String *input_goal, String *input_reasoning, size_t estimated_time, Goal* parent){
 	Goal *g = malloc(sizeof(Goal));
 
 	InitString(&g->title, 256);
@@ -21,6 +21,9 @@ Goal* create_goal(String *input_goal, String *input_reasoning, size_t estimated_
 	g->subgoals = NULL;
 	g->subgoals_len = 0;
 	g->priority = 0;
+	g->globalIndex = GOAL_CONTAINER_COUNT;
+
+	g->parent = parent;
 
 	GOAL_CONTAINER[GOAL_CONTAINER_COUNT++] = g;
 
@@ -41,8 +44,8 @@ void mock_develop_subgoals(Goal *g){
 
 	size_t hours60 = 60 * 60 * 60;
 
-	subgoals[0] = create_goal(input0, reasoning0, hours60);
-	subgoals[1] = create_goal(input1, reasoning1, hours60);
+	subgoals[0] = create_goal(input0, reasoning0, hours60, g);
+	subgoals[1] = create_goal(input1, reasoning1, hours60, g);
 
 	g->subgoals = subgoals;
 	g->subgoals_len += 2;
@@ -109,4 +112,8 @@ void free_goals(){
 	for (size_t i = 0; i < GOAL_CONTAINER_COUNT; i++){
 		free_goal(GOAL_CONTAINER[i]);
 	}
+}
+
+void pre_process_goal(String *input, String *reasoning){
+	
 }
