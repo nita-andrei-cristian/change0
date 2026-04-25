@@ -232,11 +232,13 @@ void InitString(String* s, size_t init_cap){
 	cassert(s->p, "Coudln't initialize string");
 	*s->p = '\0';
 	s->used = 0;
+	s->init = 1;
 }
 
 void FreeString(String* s){
 	if (!s || !s->p) return;
 	s->used = 0;
+	s->init = 0;
 	free(c_str(s));
 }
 
@@ -258,6 +260,12 @@ void CatString(String* s, char* c, size_t len){
 }
 
 void ResizeString(String* s, size_t new_cap){
+
+	if (!s->init){
+		InitString(s, new_cap);
+		return;
+	}
+
 	char* tmp = realloc(c_str(s), new_cap + 1);
 	if (!tmp){
 		fprintf(stderr, "String is |%s|\n", c_str(s));

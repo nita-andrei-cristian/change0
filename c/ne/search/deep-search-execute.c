@@ -118,7 +118,7 @@ json_value *call_gpt_judge(String *out, Task *task){
 
 	size_t prompt_cap =
 		strlen(DS_JUDGE_PROMPT) +
-		task->name_len +
+		task->name.len +
 		out->len +
 		64;
 
@@ -128,7 +128,7 @@ json_value *call_gpt_judge(String *out, Task *task){
 	int written = snprintf(
 		prompt, prompt_cap,
 		DS_JUDGE_PROMPT,
-		task->name,
+		c_str(&task->name),
 		c_str(out)
 	);
 	cassert(written > 0 && (size_t)written < prompt_cap, "Error: Failed to build judge prompt.\n");

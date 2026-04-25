@@ -169,9 +169,9 @@ void start_ds_session(Task *task, char* id, String* out){
 
 	InitString(out, 1024);
 	
-	ResizeString(&mem.persistent, sizeof(DS_PERSISTENT_PROMPT) + task->name_len + 1);
+	ResizeString(&mem.persistent, sizeof(DS_PERSISTENT_PROMPT) + task->name.len + 1);
 
-	size_t req_space = sprintf(mem.persistent.p, DS_PERSISTENT_PROMPT, task->name);
+	size_t req_space = sprintf(mem.persistent.p, DS_PERSISTENT_PROMPT, c_str(&task->name));
 
 
 	if (req_space >= mem.persistent.cap){

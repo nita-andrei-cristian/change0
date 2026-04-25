@@ -76,9 +76,13 @@ target_link_libraries(graphengine PUBLIC node util)
 target_link_libraries(graphengine PRIVATE m) 
 
 add_library(node SHARED ${CMAKE_SOURCE_DIR}/c/ne/node.c)
-target_include_directories(node PUBLIC ${CMAKE_SOURCE_DIR}/c/ne)
+target_include_directories(node PUBLIC 
+	${CMAKE_SOURCE_DIR}/c/ne
+	${CMAKE_SOURCE_DIR}/c/lib/util
+	${CMAKE_SOURCE_DIR}/c/lib/hd
+)
 target_link_libraries(node PRIVATE m) 
-target_link_libraries(node PUBLIC hd) 
+target_link_libraries(node PUBLIC hd util) 
 
 add_library(mocks SHARED ${CMAKE_SOURCE_DIR}/c/ne/mocks/mocks.c)
 target_include_directories(mocks PUBLIC
@@ -203,11 +207,12 @@ add_library(goal SHARED ${CMAKE_SOURCE_DIR}/c/ne/goal/goal.c)
 target_include_directories(goal PUBLIC
 	${CMAKE_SOURCE_DIR}/c/lib/util
 	${CMAKE_SOURCE_DIR}/c/lib/jsonp
+	${CMAKE_SOURCE_DIR}/c/lib/openai
 	${CMAKE_SOURCE_DIR}/c/ne
 	${CMAKE_SOURCE_DIR}/c/ne/goal
 	${CMAKE_SOURCE_DIR}/c/ne/search
 )
-target_link_libraries(goal PUBLIC util jsonp node deepsearchsession )
+target_link_libraries(goal PUBLIC util openai jsonp node deepsearchsession )
 
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 target_include_directories(change PRIVATE

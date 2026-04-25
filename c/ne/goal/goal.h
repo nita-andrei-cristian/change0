@@ -40,4 +40,16 @@ void free_goal(Goal *g);
 void free_goals();
 Goal* CreateUserGoal(String *input1, String *input2);
 
+#define OPENAI_GOAL_EXTRACT_SCHEMA_JSON \
+"{" \
+  "\"type\":\"object\"," \
+  "\"additionalProperties\":false," \
+  "\"required\":[\"title\",\"reason\",\"estimated_time\"]," \
+  "\"properties\":{" \
+    "\"title\":{\"type\":\"string\"}," \
+    "\"reason\":{\"type\":\"string\"}," \
+    "\"estimated_time\":{\"type\":\"integer\",\"minimum\":0}" \
+  "}" \
+"}"
+
 #endif

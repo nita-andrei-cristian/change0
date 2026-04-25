@@ -14,8 +14,7 @@ char* mock_ai_action(char* prompt, size_t *size){
 void make_mock_task(Task* task){
 	char str[] = "Help Mark become rich.";
 
-	memcpy(task->name, str, FSIZE(str));
-	task->name_len = FSIZE(str);
+	CatString(&task->name, FSTRING_SIZE_PARAMS(str));
 	task->minDepth = 10;
 }
 

@@ -5,6 +5,8 @@
 #include <string.h>
 #include "node.h"
 #include "json.h"
+#include "config.h"
+#include "openai.h"
 #include "deep-search-session.h"
 
 static Goal *GOAL_CONTAINER[1024];
@@ -139,24 +141,47 @@ static void create_goal_deep_search_id(char* name, char* deep_search_id){
 }
 
 static void create_goal_task(String* input1, String* input2, Task *task){
-	task->name_len = sprintf(task->name, "Adapth the goal [%s] for the user. With reasoning [%s], Come with an estimated_time in settings be pragmatic and reason why. Esimated time is total time, not work time. Sturcture clearly your arguments as 1. title and 2. reasoning and 3. estumated_time (in seconds)", input1->p, input2->p);
-	task->minDepth = 10;
+	ResizeString(&task->name, sizeof(GOAL_ADAPTATION_PROMPT) + input1->len + input2->len + 10);
+	size_t new_len = sprintf(c_str(&task->name), GOAL_ADAPTATION_PROMPT, c_str(input1), c_str(input2));
+	cassert(new_len < task->name.cap, "This should be impossible...\n");
 
-	cassert(task->name_len < TASK_NAME_MAX_SIZE, "Task name is too big");
+	task->name.len = new_len;
+		
+	task->minDepth = 6;
 
 } 
 
-static void mock_call_title_reason(String *input, String* out){
-	String prompt;
-	InitString(&prompt, input->cap + 2048);
+static void call_title_reason(String *input, String *out)
+{
+    String prompt;
+    InitString(&prompt, input->len + 2048);
 
-	size_t len = sprintf(c_str(&prompt), "You are an agent supposed to extract a json file, nothing more, nothign less, you will extract a title, reason and estimated_time (in seconds, integer) json from the following message. It should be deomposed, if not, extract apropiatelly without inventing amnything. Message : [%s]", c_str(input));
-	cassert(len < input->cap, "Length is too big, or cap is too small.\n");
-	prompt.len = len;
+    size_t len = sprintf(
+        c_str(&prompt),
+        GOAL_JSON_EXTRACT_PROMPT,
+        c_str(input)
+    );
 
-	// here goes work ...
+    cassert(len < prompt.cap, "Goal extraction prompt is too big.\n");
+    prompt.len = len;
 
-	CatString(out, FSTRING_SIZE_PARAMS("{\"reason\" : \"become rich and cool\", \"title\" : \"get one million dollars\", \"estimated_time\" : 999999}"));
+    ai_gpt_request req = {0};
+    req.prompt = prompt;
+    InitString(&req.schema, sizeof(OPENAI_GOAL_EXTRACT_SCHEMA_JSON) + 1);
+    CatString(&req.schema, FSTRING_SIZE_PARAMS(OPENAI_GOAL_EXTRACT_SCHEMA_JSON));
+
+    req.model = AI_OPENAI_MODEL_GPT_5_4_NANO;
+    req.schema_name = "goal_extraction";
+    req.use_temperature = 0;
+
+    String *result = ai_openai_call_gpt_request(&req);
+    cassert(result, "OpenAI goal extraction call failed.\n");
+
+    CatString(out, result->p, result->len);
+
+    FreeString(&prompt);
+    FreeString(&req.schema);
+    FreeString(result);
 }
 
 // those are mapped to input1 -> title input2 -> reason
@@ -170,20 +195,18 @@ Goal* CreateUserGoal(String *input1, String *input2)
 	char search_id[256];
 	create_goal_deep_search_id(c_str(input1), search_id);
 
-	Task task;
+	Task task = {0};
 	create_goal_task(input1, input2, &task);
 	
 	// customize goal
-	//start_ds_session(&task, search_id, &deep_search_result);
-
-	//printf("Goal advice to user: [%s]\n\n", deep_search_result.p);
+	start_ds_session(&task, search_id, &deep_search_result);
 
 	// extract process goals
 	String title, reason;
 	time_t estimated_time = 0;
 	InitString(&title, 256); InitString(&reason, 1024);
 
-	mock_call_title_reason(&deep_search_result, &json_extract_result);
+	call_title_reason(&deep_search_result, &json_extract_result);
 
 	json_value* doc = json_parse(c_str(&json_extract_result), json_extract_result.cap);
 	cassert(doc, "AI produced an invalid JSON. (for goals)\n");

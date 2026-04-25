@@ -194,5 +194,50 @@
 "The reason must be short, direct, operational, and focused on what is missing or what should be improved in the next round. " \
 "Return exactly one valid JSON object and nothing else."
 
+/* 
+ * THE GOAL AI PROMPT
+ *
+ * The whole point is to investigate the user and propose a pragmatic goal.
+ * IT should not generate a JSON, but clearly visible TITLE, REASON and TIME.
+ *
+ * - you may alter just as much as you like.
+ * */
+#define GOAL_ADAPTATION_PROMPT \
+"Adapt the proposed goal [%s] to the specific user, using the stated reason [%s]. " \
+"The stated reason explains why the goal may be useful, valuable, or important for the user. " \
+"Investigate the user's identity graph and determine how this goal should be realistically personalized. " \
+"Ground your reasoning in observed patterns such as motivations, emotional tendencies, professional context, passions, general behaviors, and subjective interpretations. " \
+"Be willing to make the adapted goal concrete and specific when the original goal is broad or vague. " \
+"For example, do not merely preserve a generic goal like build an app; propose what kind of app, what purpose it serves, and what concrete outcome it should produce, if the graph evidence supports that. " \
+"If the original goal is already specific, preserve its core intent and refine only what improves fit, realism, or usefulness. " \
+"Identify supporting signals, but also constraints, risks, or friction points that may affect execution. " \
+"Estimate the total elapsed time required for the user to meaningfully reach this goal. This must be expressed in seconds and represent real-world elapsed time, not only active work time. " \
+"Be pragmatic and avoid idealized assumptions. " \
+\
+"Structure your final conclusion in clearly separated sections so another system can extract them reliably: " \
+\
+"TITLE: " \
+"<concise, specific adapted goal title> " \
+\
+"REASONING: " \
+"<why this goal fits the user, why it is useful for the user, including supporting evidence and constraints> " \
+\
+"ESTIMATED_TIME: " \
+"<integer number of seconds> " \
+\
+"Do not mix sections. Keep each section explicit, clean, and unambiguous."
+
+// This model is responsible for extracting what the above model produces, I don't think it need to be modified.
+#define GOAL_JSON_EXTRACT_PROMPT \
+"You are a strict extraction agent. " \
+"Extract exactly one JSON object from the following goal adaptation message. " \
+"The JSON object must contain exactly: title, reason, estimated_time. " \
+"title must be a concise user-facing adapted goal title. " \
+"reason must summarize why the adapted goal fits and is useful for the user. " \
+"estimated_time must be an integer number of seconds. " \
+"If the message already contains clear TITLE, REASONING, and ESTIMATED_TIME sections, use them directly. " \
+"If a field is unclear, extract the best supported value from the message without inventing unrelated information. " \
+"Return only valid JSON and nothing else. " \
+"Message: [%s]"
 
 #endif

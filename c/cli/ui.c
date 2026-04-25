@@ -103,8 +103,7 @@ static void Run(int i){
 		if (read < 0) input_size = 0;
 
 		if (input_size > 5){
-			memcpy(task.name, input_raw, input_size);
-			task.name_len = input_size;
+			CatString(&task.name, input_raw, input_size);
 			task.minDepth = 2;
 		}
 

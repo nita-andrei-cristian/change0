@@ -695,7 +695,7 @@ static void handle_post_research_start(int client_fd, const HttpRequest* req) {
 	char task_name[256];
 	int min_rounds = 0;
 	String out;
-	Task task;
+	Task task = {0};
 
 	research_id[0] = '\0';
 	task_name[0] = '\0';
@@ -757,9 +757,7 @@ static void handle_post_research_start(int client_fd, const HttpRequest* req) {
 
 	memset(&task, 0, sizeof(task));
 
-	strncpy(task.name, task_name, sizeof(task.name) - 1);
-	task.name[sizeof(task.name) - 1] = '\0';
-	task.name_len = strlen(task.name);
+	CatString(&task.name, task_name, strlen(task_name));
 	task.minDepth = min_rounds;
 
 	InitString(&out, 1024);
