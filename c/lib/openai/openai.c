@@ -1,19 +1,20 @@
-#define _POSIX_C_SOURCE 200112L // forces definitions
-				// december 2001 standard
+#define _POSIX_C_SOURCE 200112L
 
 #include "openai.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-#include "config.h"
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
-#include "util.h"
-#include "assert.h"
 #include <sys/socket.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+
+#include "config.h"
+#include "util.h"
+#include "assert.h"
 
 #define AI_OPENAI_HOST "api.openai.com"
 #define AI_OPENAI_PORT "443"
@@ -27,15 +28,18 @@ typedef struct {
 
 static void ai_tls_close(ai_tls_conn *c) {
     if (!c) return;
+
     if (c->ssl) {
         SSL_shutdown(c->ssl);
         SSL_free(c->ssl);
         c->ssl = NULL;
     }
+
     if (c->ctx) {
         SSL_CTX_free(c->ctx);
         c->ctx = NULL;
     }
+
     if (c->fd >= 0) {
         close(c->fd);
         c->fd = -1;
@@ -55,6 +59,7 @@ static ai_openai_status ai_tls_connect(ai_tls_conn *conn) {
 
     struct addrinfo hints;
     struct addrinfo *res = NULL;
+
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -65,13 +70,15 @@ static ai_openai_status ai_tls_connect(ai_tls_conn *conn) {
     }
 
     int fd = -1;
-    struct addrinfo *it = res;
-    for (; it; it = it->ai_next) {
+
+    for (struct addrinfo *it = res; it; it = it->ai_next) {
         fd = socket(it->ai_family, it->ai_socktype, it->ai_protocol);
         if (fd < 0) continue;
+
         if (connect(fd, it->ai_addr, it->ai_addrlen) == 0) {
             break;
         }
+
         close(fd);
         fd = -1;
     }
@@ -111,49 +118,57 @@ static ai_openai_status ai_tls_connect(ai_tls_conn *conn) {
     }
 
     freeaddrinfo(res);
+
     conn->fd = fd;
     conn->ctx = ctx;
     conn->ssl = ssl;
+
     return AI_OPENAI_OK;
 }
 
 static ai_openai_status ai_ssl_write_all(SSL *ssl, const char *buf, size_t len) {
+    if (!ssl || !buf) return AI_OPENAI_ERR_ARG;
+
     size_t sent = 0;
+
     while (sent < len) {
         int n = SSL_write(ssl, buf + sent, (int)(len - sent));
         if (n <= 0) {
             return AI_OPENAI_ERR_WRITE;
         }
+
         sent += (size_t)n;
     }
+
     return AI_OPENAI_OK;
 }
 
-static ai_openai_status ai_read_all(SSL *ssl, ai_string *out) {
+static ai_openai_status ai_read_all(SSL *ssl, String *out) {
     if (!ssl || !out) return AI_OPENAI_ERR_ARG;
 
-    char *buf = malloc(AI_OPENAI_RAW_CAP);
-    if (!buf) return AI_OPENAI_ERR_ALLOC;
+    InitString(out, 8192);
 
-    size_t total = 0;
     for (;;) {
         char chunk[8192];
         int n = SSL_read(ssl, chunk, sizeof(chunk));
+
         if (n > 0) {
-            if (total + (size_t)n + 1 > AI_OPENAI_RAW_CAP) {
-                free(buf);
+            if (out->len + (size_t)n + 1 > AI_OPENAI_RAW_CAP) {
+                FreeString(out);
+                out->p = NULL;
+                out->len = 0;
+                out->cap = 0;
+                out->used = 0;
                 return AI_OPENAI_ERR_READ;
             }
-            memcpy(buf + total, chunk, (size_t)n);
-            total += (size_t)n;
+
+            CatString(out, chunk, (size_t)n);
             continue;
         }
+
         break;
     }
 
-    buf[total] = '\0';
-    out->data = buf;
-    out->len = total;
     return AI_OPENAI_OK;
 }
 
@@ -164,10 +179,13 @@ static char *ai_find_body(char *http_response) {
 
 static int ai_http_status_code(const char *http_response) {
     if (!http_response) return 0;
+
     int code = 0;
+
     if (sscanf(http_response, "HTTP/%*s %d", &code) == 1) {
         return code;
     }
+
     return 0;
 }
 
@@ -180,6 +198,7 @@ static int ai_extract_json_string_field(
     if (!json || !field || !out || out_size == 0) return 0;
 
     char needle[128];
+
     int written = snprintf(needle, sizeof(needle), "\"%s\"", field);
     if (written <= 0 || (size_t)written >= sizeof(needle)) return 0;
 
@@ -188,6 +207,7 @@ static int ai_extract_json_string_field(
 
     p = strchr(p, ':');
     if (!p) return 0;
+
     p++;
 
     while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') {
@@ -195,6 +215,7 @@ static int ai_extract_json_string_field(
     }
 
     if (*p != '"') return 0;
+
     p++;
 
     const char *end = strchr(p, '"');
@@ -205,17 +226,18 @@ static int ai_extract_json_string_field(
 
     memcpy(out, p, len);
     out[len] = '\0';
+
     return 1;
 }
 
-static ai_openai_status ai_dup_string(const char *src, ai_string *dst) {
+static ai_openai_status ai_dup_string(const char *src, String *dst) {
     if (!src || !dst) return AI_OPENAI_ERR_ARG;
+
     size_t len = strlen(src);
-    char *copy = malloc(len + 1);
-    if (!copy) return AI_OPENAI_ERR_ALLOC;
-    memcpy(copy, src, len + 1);
-    dst->data = copy;
-    dst->len = len;
+
+    InitString(dst, len + 1);
+    CatString(dst, (char *)src, len);
+
     return AI_OPENAI_OK;
 }
 
@@ -225,9 +247,11 @@ static ai_openai_status ai_openai_request(
     int expect_id
 ) {
     if (!request || !out) return AI_OPENAI_ERR_ARG;
+
     memset(out, 0, sizeof(*out));
 
     ai_tls_conn conn;
+
     ai_openai_status st = ai_tls_connect(&conn);
     if (st != AI_OPENAI_OK) {
         return st;
@@ -239,32 +263,40 @@ static ai_openai_status ai_openai_request(
         return st;
     }
 
-    ai_string raw = {0};
+    String raw = {0};
+
     st = ai_read_all(conn.ssl, &raw);
+
     ai_tls_close(&conn);
+
     if (st != AI_OPENAI_OK) {
         return st;
     }
 
-    int code = ai_http_status_code(raw.data);
+    int code = ai_http_status_code(c_str(&raw));
+
     if (code < 200 || code >= 300) {
-	dump_to_file(PROJECT_ROOT "sent.txt", request, strlen(request));
-	dump_to_file(PROJECT_ROOT "received.txt", raw.data, raw.len);
+        dump_to_file(PROJECT_ROOT "sent.txt", request, strlen(request));
+        dump_to_file(PROJECT_ROOT "received.txt", c_str(&raw), raw.len);
+
         out->raw_http = raw;
-        char *body = ai_find_body(out->raw_http.data);
+
+        char *body = ai_find_body(c_str(&out->raw_http));
         if (body) {
             ai_dup_string(body, &out->body);
         }
+
         return AI_OPENAI_ERR_HTTP;
     }
 
-    char *body = ai_find_body(raw.data);
+    char *body = ai_find_body(c_str(&raw));
     if (!body) {
-        free(raw.data);
+        FreeString(&raw);
         return AI_OPENAI_ERR_PARSE;
     }
 
     out->raw_http = raw;
+
     st = ai_dup_string(body, &out->body);
     if (st != AI_OPENAI_OK) {
         ai_openai_response_free(out);
@@ -272,7 +304,12 @@ static ai_openai_status ai_openai_request(
     }
 
     if (expect_id) {
-        if (!ai_extract_json_string_field(out->body.data, "id", out->id, sizeof(out->id))) {
+        if (!ai_extract_json_string_field(
+                c_str(&out->body),
+                "id",
+                out->id,
+                sizeof(out->id)
+            )) {
             ai_openai_response_free(out);
             return AI_OPENAI_ERR_PARSE;
         }
@@ -294,11 +331,13 @@ ai_openai_status ai_openai_create_response(
 
     size_t body_len = strlen(json_body);
     size_t cap = body_len + strlen(api_key) + 2048;
+
     char *req = malloc(cap);
     if (!req) return AI_OPENAI_ERR_ALLOC;
 
     int n = snprintf(
-        req, cap,
+        req,
+        cap,
         "POST /v1/responses HTTP/1.1\r\n"
         "Host: " AI_OPENAI_HOST "\r\n"
         "Authorization: Bearer %s\r\n"
@@ -318,7 +357,9 @@ ai_openai_status ai_openai_create_response(
     }
 
     ai_openai_status st = ai_openai_request(req, out, 1);
+
     free(req);
+
     return st;
 }
 
@@ -334,11 +375,13 @@ ai_openai_status ai_openai_get_response(
     }
 
     size_t cap = strlen(response_id) + strlen(api_key) + 2048;
+
     char *req = malloc(cap);
     if (!req) return AI_OPENAI_ERR_ALLOC;
 
     int n = snprintf(
-        req, cap,
+        req,
+        cap,
         "GET /v1/responses/%s HTTP/1.1\r\n"
         "Host: " AI_OPENAI_HOST "\r\n"
         "Authorization: Bearer %s\r\n"
@@ -355,18 +398,28 @@ ai_openai_status ai_openai_get_response(
     }
 
     ai_openai_status st = ai_openai_request(req, out, 1);
+
     free(req);
+
     return st;
 }
 
 void ai_openai_response_free(ai_openai_response *resp) {
     if (!resp) return;
-    free(resp->raw_http.data);
-    free(resp->body.data);
-    resp->raw_http.data = NULL;
+
+    FreeString(&resp->raw_http);
+    FreeString(&resp->body);
+
+    resp->raw_http.p = NULL;
     resp->raw_http.len = 0;
-    resp->body.data = NULL;
+    resp->raw_http.cap = 0;
+    resp->raw_http.used = 0;
+
+    resp->body.p = NULL;
     resp->body.len = 0;
+    resp->body.cap = 0;
+    resp->body.used = 0;
+
     resp->id[0] = '\0';
 }
 
@@ -388,77 +441,219 @@ const char *ai_openai_strerror(ai_openai_status status) {
     }
 }
 
-char *openai_extract_output_text_dup(json_value *root, size_t *out_len){
-	if (!(root && root->type == json_object)) assert( "Invalid OpenAI root JSON.\n");
+char *openai_extract_output_text_dup(json_value *root, size_t *out_len) {
+    if (!(root && root->type == json_object)) {
+        assert("Invalid OpenAI root JSON.\n");
+    }
 
-	json_value *output = NULL;
+    json_value *output = NULL;
 
-	for (unsigned i = 0; i < root->u.object.length; i++){
-		json_object_entry *e = &root->u.object.values[i];
-		if (strcmp(e->name, "output") == 0){
-			output = e->value;
-			break;
-		}
-	}
+    for (unsigned i = 0; i < root->u.object.length; i++) {
+        json_object_entry *e = &root->u.object.values[i];
 
-	if (!(output && output->type == json_array)) assert( "Missing output array in OpenAI response.\n");
+        if (strcmp(e->name, "output") == 0) {
+            output = e->value;
+            break;
+        }
+    }
 
-	for (unsigned i = 0; i < output->u.array.length; i++){
-		json_value *item = output->u.array.values[i];
-		if (!item || item->type != json_object) continue;
+    if (!(output && output->type == json_array)) {
+        assert("Missing output array in OpenAI response.\n");
+    }
 
-		json_value *content = NULL;
+    for (unsigned i = 0; i < output->u.array.length; i++) {
+        json_value *item = output->u.array.values[i];
+        if (!item || item->type != json_object) continue;
 
-		for (unsigned j = 0; j < item->u.object.length; j++){
-			json_object_entry *e = &item->u.object.values[j];
-			if (strcmp(e->name, "content") == 0){
-				content = e->value;
-				break;
-			}
-		}
+        json_value *content = NULL;
 
-		if (!content || content->type != json_array) continue;
+        for (unsigned j = 0; j < item->u.object.length; j++) {
+            json_object_entry *e = &item->u.object.values[j];
 
-		for (unsigned k = 0; k < content->u.array.length; k++){
-			json_value *c = content->u.array.values[k];
-			if (!c || c->type != json_object) continue;
+            if (strcmp(e->name, "content") == 0) {
+                content = e->value;
+                break;
+            }
+        }
 
-			json_value *text = NULL;
+        if (!content || content->type != json_array) continue;
 
-			for (unsigned t = 0; t < c->u.object.length; t++){
-				json_object_entry *e = &c->u.object.values[t];
-				if (strcmp(e->name, "text") == 0){
-					text = e->value;
-					break;
-				}
-			}
+        for (unsigned k = 0; k < content->u.array.length; k++) {
+            json_value *c = content->u.array.values[k];
+            if (!c || c->type != json_object) continue;
 
-			if (text && text->type == json_string){
-				size_t len = text->u.string.length;
-				char *dup = malloc(len + 1);
-				if (!dup) assert("Failed to allocate extracted OpenAI text.\n");
+            json_value *text = NULL;
 
-				memcpy(dup, text->u.string.ptr, len);
-				dup[len] = '\0';
+            for (unsigned t = 0; t < c->u.object.length; t++) {
+                json_object_entry *e = &c->u.object.values[t];
 
-				if (out_len) *out_len = len;
-				return dup;
-			}
-		}
-	}
+                if (strcmp(e->name, "text") == 0) {
+                    text = e->value;
+                    break;
+                }
+            }
 
-	assert("Could not extract text from OpenAI response.\n");
-	return NULL;
+            if (text && text->type == json_string) {
+                size_t len = text->u.string.length;
+
+                char *dup = malloc(len + 1);
+                if (!dup) {
+                    assert("Failed to allocate extracted OpenAI text.\n");
+                }
+
+                memcpy(dup, text->u.string.ptr, len);
+                dup[len] = '\0';
+
+                if (out_len) {
+                    *out_len = len;
+                }
+
+                return dup;
+            }
+        }
+    }
+
+    assert("Could not extract text from OpenAI response.\n");
+    return NULL;
 }
 
-json_value *openai_extract_text_json(json_value *root){
-	size_t len = 0;
-	char *text = openai_extract_output_text_dup(root, &len);
-	if (!text) assert("Failed to extract OpenAI text.\n");
+json_value *openai_extract_text_json(json_value *root) {
+    size_t len = 0;
 
-	json_value *parsed = json_parse(text, len);
-	free(text);
+    char *text = openai_extract_output_text_dup(root, &len);
+    if (!text) {
+        assert("Failed to extract OpenAI text.\n");
+    }
 
-	if (!parsed) assert("Failed to parse extracted OpenAI text as JSON.\n");
-	return parsed;
+    json_value *parsed = json_parse(text, len);
+
+    free(text);
+
+    if (!parsed) {
+        assert("Failed to parse extracted OpenAI text as JSON.\n");
+    }
+
+    return parsed;
+}
+
+const char *ai_openai_model_name(ai_openai_model model) {
+    switch (model) {
+        case AI_OPENAI_MODEL_GPT_5_5:       return "gpt-5.5";
+        case AI_OPENAI_MODEL_GPT_5_4_MINI:  return "gpt-5.4-mini";
+        case AI_OPENAI_MODEL_GPT_5_4_NANO:  return "gpt-5.4-nano";
+        case AI_OPENAI_MODEL_GPT_5_1:       return "gpt-5.1";
+        case AI_OPENAI_MODEL_GPT_5_MINI:    return "gpt-5-mini";
+        default:                            return "gpt-5.4-mini";
+    }
+}
+
+String *ai_openai_call_gpt_request(ai_gpt_request *req) {
+    cassert(req, "Error: NULL ai_gpt_request passed.\n");
+    cassert(req->prompt.p, "Error: request prompt is NULL.\n");
+    cassert(req->schema.p, "Error: request schema is NULL.\n");
+
+    const char *model = ai_openai_model_name(req->model);
+
+    const char *schema_name = req->schema_name
+        ? req->schema_name
+        : "openai_structured_response";
+
+    char *escaped_prompt = json_escape_dup(c_str(&req->prompt));
+    cassert(escaped_prompt, "Error: Failed to escape prompt.\n");
+
+    char *escaped_schema_name = json_escape_dup(schema_name);
+    cassert(escaped_schema_name, "Error: Failed to escape schema name.\n");
+
+    size_t body_cap =
+        strlen(model) +
+        strlen(escaped_prompt) +
+        strlen(escaped_schema_name) +
+        req->schema.len +
+        2048;
+
+    char *json_body = malloc(body_cap);
+    cassert(json_body, "Error: Failed to allocate OpenAI JSON body.\n");
+
+    int body_size;
+
+    if (req->use_temperature) {
+        body_size = snprintf(
+            json_body,
+            body_cap,
+            "{"
+                "\"model\":\"%s\","
+                "\"input\":\"%s\","
+                "\"temperature\":%.6f,"
+                "\"text\":{"
+                    "\"format\":{"
+                        "\"type\":\"json_schema\","
+                        "\"strict\":true,"
+                        "\"name\":\"%s\","
+                        "\"schema\":%s"
+                    "}"
+                "}"
+            "}",
+            model,
+            escaped_prompt,
+            req->temperature,
+            escaped_schema_name,
+            c_str(&req->schema)
+        );
+    } else {
+        body_size = snprintf(
+            json_body,
+            body_cap,
+            "{"
+                "\"model\":\"%s\","
+                "\"input\":\"%s\","
+                "\"text\":{"
+                    "\"format\":{"
+                        "\"type\":\"json_schema\","
+                        "\"strict\":true,"
+                        "\"name\":\"%s\","
+                        "\"schema\":%s"
+                    "}"
+                "}"
+            "}",
+            model,
+            escaped_prompt,
+            escaped_schema_name,
+            c_str(&req->schema)
+        );
+    }
+
+    free(escaped_prompt);
+    free(escaped_schema_name);
+
+    cassert(
+        body_size > 0 && (size_t)body_size < body_cap,
+        "Error: Failed to build OpenAI request JSON body.\n"
+    );
+
+    ai_openai_response created = {0};
+
+    ai_openai_status st = ai_openai_create_response(json_body, &created);
+
+    free(json_body);
+
+    cassert(st == AI_OPENAI_OK, (char *)ai_openai_strerror(st));
+    cassert(created.body.p, "Error: OpenAI returned empty body.\n");
+
+    json_value *root = json_parse(c_str(&created.body), created.body.len);
+    cassert(root, "Error: Failed to parse OpenAI response body.\n");
+
+    ai_openai_response_free(&created);
+
+    size_t answer_len = 0;
+    char *answer = openai_extract_output_text_dup(root, &answer_len);
+
+    json_value_free(root);
+
+    cassert(answer, "Error: Failed to extract OpenAI output text.\n");
+
+    String *out = CreateStringFrom(answer, answer_len);
+
+    free(answer);
+
+    return out;
 }

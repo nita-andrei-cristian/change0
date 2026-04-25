@@ -47,9 +47,9 @@ static json_value *call_gpt_decomposition(String *input){
 	FreeString(&prompt);
 
 	cassert(st == AI_OPENAI_OK, (char*) ai_openai_strerror(st));
-	cassert(created.body.data, "OpenAI returned empty body.\n");
+	cassert(c_str(&created.body), "OpenAI returned empty body.\n");
 
-	json_value *root = json_parse(created.body.data, created.body.len);
+	json_value *root = json_parse(c_str(&created.body), created.body.len);
 	cassert(root, "Failed to parse OpenAI response body.\n");
 
 	ai_openai_response_free(&created);

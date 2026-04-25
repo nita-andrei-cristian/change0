@@ -231,9 +231,12 @@ void InitString(String* s, size_t init_cap){
 	s->p = malloc(s->cap);
 	cassert(s->p, "Coudln't initialize string");
 	*s->p = '\0';
+	s->used = 0;
 }
+
 void FreeString(String* s){
 	if (!s || !s->p) return;
+	s->used = 0;
 	free(c_str(s));
 }
 
@@ -250,6 +253,8 @@ void CatString(String* s, char* c, size_t len){
 	memcpy(c_str(s) + s->len, c, len);
 	s->len += len;
 	*(c_str(s) + s->len) = '\0';
+
+	s->used = 1;
 }
 
 void ResizeString(String* s, size_t new_cap){

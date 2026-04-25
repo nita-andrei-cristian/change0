@@ -3,24 +3,16 @@
 
 #include <stddef.h>
 #include "json.h"
+#include "util.h"
 
 #ifndef OPENAI_PATH_CAP
 #define OPENAI_PATH_CAP 512
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct {
-    char *data;
-    size_t len;
-} ai_string;
-
 typedef struct {
     char id[256];
-    ai_string raw_http;
-    ai_string body;
+    String raw_http;
+    String body;
 } ai_openai_response;
 
 typedef enum {
@@ -52,12 +44,31 @@ void ai_openai_response_free(ai_openai_response *resp);
 
 const char *ai_openai_strerror(ai_openai_status status);
 
-// AI generated functions
 char *openai_extract_output_text_dup(json_value *root, size_t *out_len);
 json_value *openai_extract_text_json(json_value *root);
 
-#ifdef __cplusplus
-}
-#endif
+typedef enum {
+    AI_OPENAI_MODEL_GPT_5_5,
+    AI_OPENAI_MODEL_GPT_5_4_MINI,
+    AI_OPENAI_MODEL_GPT_5_4_NANO,
+    AI_OPENAI_MODEL_GPT_5_1,
+    AI_OPENAI_MODEL_GPT_5_MINI
+} ai_openai_model;
 
-#endif /* AI_OPENAI_H */
+typedef struct {
+    String prompt;
+    String schema;
+
+    ai_openai_model model;
+
+    const char *schema_name;
+
+    double temperature;
+    int use_temperature;
+} ai_gpt_request;
+
+const char *ai_openai_model_name(ai_openai_model model);
+
+String *ai_openai_call_gpt_request(ai_gpt_request *req);
+
+#endif

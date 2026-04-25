@@ -27,12 +27,17 @@ add_library(openai SHARED ${CMAKE_SOURCE_DIR}/c/lib/openai/openai.c)
 target_include_directories(openai PUBLIC 
 	${CMAKE_SOURCE_DIR}/c/lib/openai
         ${CMAKE_SOURCE_DIR}/c/lib/util
+        ${CMAKE_SOURCE_DIR}/c/lib/jsonp
         ${CMAKE_SOURCE_DIR}/c
 )
-target_link_libraries(openai PRIVATE OpenSSL::SSL OpenSSL::Crypto util)
+target_link_libraries(openai
+    PUBLIC util jsonp
+    PRIVATE OpenSSL::SSL OpenSSL::Crypto
+)
 
 add_library(mockopenai SHARED ${CMAKE_SOURCE_DIR}/c/lib/openai/mockopenai.c)
 target_include_directories(mockopenai PUBLIC ${CMAKE_SOURCE_DIR}/c/lib/openai ${CMAKE_SOURCE_DIR}/c/lib/jsonp)
+target_link_libraries(mockopenai PUBLIC openai)
 
 add_library(ui SHARED ${CMAKE_SOURCE_DIR}/c/cli/ui.c)
 target_include_directories(ui PUBLIC
@@ -197,11 +202,12 @@ target_include_directories(globals PUBLIC
 add_library(goal SHARED ${CMAKE_SOURCE_DIR}/c/ne/goal/goal.c)
 target_include_directories(goal PUBLIC
 	${CMAKE_SOURCE_DIR}/c/lib/util
+	${CMAKE_SOURCE_DIR}/c/lib/jsonp
 	${CMAKE_SOURCE_DIR}/c/ne
 	${CMAKE_SOURCE_DIR}/c/ne/goal
 	${CMAKE_SOURCE_DIR}/c/ne/search
 )
-target_link_libraries(goal PUBLIC util node deepsearchsession )
+target_link_libraries(goal PUBLIC util jsonp node deepsearchsession )
 
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 target_include_directories(change PRIVATE

@@ -147,10 +147,13 @@ static void Run(int i){
 		String input0; InitString(&input0, input_size0 + 1);
 		String input1; InitString(&input1, input_size1 + 1);
 
-		Goal *g = create_goal(&input0, &input1, 60 * 60, NULL);
+		Goal *g = CreateUserGoal(&input0, &input1);
 
 		printf("Goal Created...\nUpdaing goal...\n\n");
+
 		update_goal(g);
+
+		printf("Done\n");
 
 		FreeString(&input0);
 		FreeString(&input1);

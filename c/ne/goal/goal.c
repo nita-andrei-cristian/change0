@@ -4,12 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "node.h"
+#include "json.h"
 #include "deep-search-session.h"
 
 static Goal *GOAL_CONTAINER[1024];
 static size_t GOAL_CONTAINER_COUNT = 0;
 
-Goal *create_goal(String *input_goal, String *input_reasoning, size_t estimated_time, Goal *parent)
+static Goal *create_goal(String *input_goal, String *input_reasoning, size_t estimated_time, Goal *parent)
 {
 	Goal *g = malloc(sizeof(Goal));
 
@@ -129,29 +130,82 @@ void free_goals()
 	}
 }
 
-// those are mapped to input1 -> title input2 -> reason
-void pre_process_goal(String *input1, String *input2)
-{
-	String out;
-	InitString(&out, 2048);
-	
-	Task task;
-	task.name_len = sprintf(task.name, "Customize the goal for the [%s]. With reasoning [%s], Come with an estimated_time in settings be pragmatic and gen JSON.", input1->p, input2->p);
-	task.minDepth = 10;
+static void create_goal_deep_search_id(char* name, char* deep_search_id){
+	size_t index_end = MAX(strlen(name), 200);
+	memcpy(deep_search_id, name, index_end);
 
-	cassert(task.name_len < TASK_NAME_MAX_SIZE, "Task name is too big");
+	memcpy(deep_search_id + index_end, FSTRING_SIZE_PARAMS("-deep-search-id"));
+	*(deep_search_id + index_end + FSIZE("-deep-search-id")) = '\0';
+}
+
+static void create_goal_task(String* input1, String* input2, Task *task){
+	task->name_len = sprintf(task->name, "Adapth the goal [%s] for the user. With reasoning [%s], Come with an estimated_time in settings be pragmatic and reason why. Esimated time is total time, not work time. Sturcture clearly your arguments as 1. title and 2. reasoning and 3. estumated_time (in seconds)", input1->p, input2->p);
+	task->minDepth = 10;
+
+	cassert(task->name_len < TASK_NAME_MAX_SIZE, "Task name is too big");
+
+} 
+
+static void mock_call_title_reason(String *input, String* out){
+	String prompt;
+	InitString(&prompt, input->cap + 2048);
+
+	size_t len = sprintf(c_str(&prompt), "You are an agent supposed to extract a json file, nothing more, nothign less, you will extract a title, reason and estimated_time (in seconds, integer) json from the following message. It should be deomposed, if not, extract apropiatelly without inventing amnything. Message : [%s]", c_str(input));
+	cassert(len < input->cap, "Length is too big, or cap is too small.\n");
+	prompt.len = len;
+
+	// here goes work ...
+
+	CatString(out, FSTRING_SIZE_PARAMS("{\"reason\" : \"become rich and cool\", \"title\" : \"get one million dollars\", \"estimated_time\" : 999999}"));
+}
+
+// those are mapped to input1 -> title input2 -> reason
+Goal* CreateUserGoal(String *input1, String *input2)
+{
+	// Init params
+	String deep_search_result, json_extract_result;
+	InitString(&deep_search_result, 2048);
+	InitString(&json_extract_result, 2048);
+
+	char search_id[256];
+	create_goal_deep_search_id(c_str(input1), search_id);
+
+	Task task;
+	create_goal_task(input1, input2, &task);
 	
 	// customize goal
-	//start_ds_session()
+	//start_ds_session(&task, search_id, &deep_search_result);
+
+	//printf("Goal advice to user: [%s]\n\n", deep_search_result.p);
 
 	// extract process goals
 	String title, reason;
 	time_t estimated_time = 0;
 	InitString(&title, 256); InitString(&reason, 1024);
 
-	// obtain title and reason
+	mock_call_title_reason(&deep_search_result, &json_extract_result);
 
-	cassert(0, "TODO : Extract title, reason and estimated time");
+	json_value* doc = json_parse(c_str(&json_extract_result), json_extract_result.cap);
+	cassert(doc, "AI produced an invalid JSON. (for goals)\n");
+	cassert(doc->type == json_object, "JSON is not an object. (for goal)");
+
+	for (size_t i = 0; i < doc->u.object.length; i++){
+		json_object_entry candidate = doc->u.object.values[i];
+
+		if (strcmp(candidate.name, "reason") == 0){
+			cassert(candidate.value->type == json_string, "JSON \"reason\" is not a string.\n");
+			CatString(&reason, candidate.value->u.string.ptr, candidate.value->u.string.length);
+		}else if (strcmp(candidate.name, "title") == 0){
+			cassert(candidate.value->type == json_string, "JSON \"title\" is not a string.\n");
+			CatString(&title, candidate.value->u.string.ptr, candidate.value->u.string.length);
+		}else if (strcmp(candidate.name, "estimated_time") == 0){
+			cassert(candidate.value->type == json_integer, "JSON \"estimated_time\" is not an integer.\n");
+			estimated_time = candidate.value->u.integer;
+		}
+	}
+	json_value_free(doc);
+
+	printf("Goal estimated time [%ld], reason [%s], title [%s].\n", estimated_time, reason.p, title.p);
 	
-	create_goal(&title, &reason, estimated_time, NULL);
+	return create_goal(&title, &reason, estimated_time, NULL);
 }

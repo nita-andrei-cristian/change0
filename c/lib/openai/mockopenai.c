@@ -199,17 +199,17 @@ _Bool RegenMocksOpenAI(){
     free(body);
 
     if (st != AI_OPENAI_OK){
-        if (r.body.data) fprintf(stderr, "%s\n", r.body.data);
+        if (r.body.p) fprintf(stderr, "%s\n", r.body.p);
         cassert(0, "OpenAI failed");
         return 0;
     }
 
-    cassert(r.body.data, "empty response");
+    cassert(r.body.p, "empty response");
 
     /* debug full response */
-    write_text_file("openai_raw.json", r.body.data);
+    write_text_file("openai_raw.json", r.body.p);
 
-    json_value *root = json_parse(r.body.data, strlen(r.body.data));
+    json_value *root = json_parse(r.body.p, strlen(r.body.p));
     cassert(root, "parse failed");
 
     const char *bundle_text = extract_output_text_bundle(root);

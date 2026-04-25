@@ -70,6 +70,7 @@ typedef struct {
 	char* p;
 	size_t len;
 	size_t cap;
+	_Bool used;
 } String;
 
 void InitString(String* s, size_t init_cap);
