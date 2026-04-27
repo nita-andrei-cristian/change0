@@ -20,8 +20,9 @@ add_library(util SHARED ${CMAKE_SOURCE_DIR}/c/lib/util/util.c)
 target_include_directories(util PUBLIC 
 	${CMAKE_SOURCE_DIR}/c/lib/util
 	${CMAKE_SOURCE_DIR}/c/lib/jsonp
+	${CMAKE_SOURCE_DIR}/c
 )
-target_link_libraries(util PUBLIC jsonp)
+target_link_libraries(util PUBLIC jsonp )
 
 add_library(openai SHARED ${CMAKE_SOURCE_DIR}/c/lib/openai/openai.c)
 target_include_directories(openai PUBLIC 

@@ -136,10 +136,13 @@ void DecomposeInputIntoGraph(String *input){
 	json_value* response_target = extract_ai_json(root);
 	cassert(response_target, "Respose from OpenAI seems corrupt, can t parse\n");
 
-	for (size_t i = 0; i < response_target->u.object.length; i++)
-		AddContextNodesFromJSON(&response_target->u.object.values[i]);
+	for (size_t i = 0; i < response_target->u.object.length; i++){
+		json_object_entry entry = response_target->u.object.values[i];
+	
+		AddContextNodesFromJSON(entry.name, entry.name_length, entry.value);
+	}
+
 
 	json_value_free(response_target);
 	json_value_free(root);
 }
-

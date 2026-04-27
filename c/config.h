@@ -10,6 +10,7 @@
 /* Don't change unless you know what you are doing */
 ///////////////////////////////////////////////////////////
 #define DEFAULT_MOCK_DIRECTORY PROJECT_ROOT "mocks/"
+#define DEFAULT_DUMP_DIRECTORY PROJECT_ROOT "dumps/"
 #define DEFAULT_GRAPH_EXPORT PROJECT_ROOT "export.json"
 #define CONFIG_STR(x) #x
 #define CONFIG_XSTR(x) CONFIG_STR(x)

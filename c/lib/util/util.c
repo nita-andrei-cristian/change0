@@ -1,4 +1,6 @@
 #include "util.h"
+#include "config.h"
+#include <time.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -220,7 +222,15 @@ _Bool massert(_Bool assertion, char* message){
 }
 void cassert(_Bool assertion, char* message){
 	if (!assertion && message){
-		fprintf(stderr, "%s", message);
+		// prepare for saving log
+
+		char file_name[256];
+		time_t now = time(NULL);
+
+		sprintf(file_name, DEFAULT_DUMP_DIRECTORY "error-[%s]", ctime(&now));
+		dump_to_file(file_name, FSTRING_SIZE_PARAMS(message));
+
+		fprintf(stderr, "----------------------\n\n\nCHANGE FAILURE MESSAGE\n\n\n[%s]", message);
 		exit(EXIT_FAILURE);
 	}
 }

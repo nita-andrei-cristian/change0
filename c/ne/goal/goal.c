@@ -90,8 +90,13 @@ enum GOAL_STATUS validate_goal(Goal *g)
 
 void repair_goal(Goal *g)
 {
-	// TODO REPAIR GOAL
-	cassert(0, "Implement Goal repairing");
+	time_t max_end_date = g->start_date + g->required_time * (1 + TIME_MARIGN);
+	time_t now = time(NULL);
+
+	time_t delta = (max_end_date - now) * (max_end_date - g->start_date);
+
+	g->end_date = delta;
+	// TODO case 2: g itself is changed
 }
 
 void update_goal(Goal *g)
@@ -147,7 +152,7 @@ static void create_goal_task(String* input1, String* input2, Task *task){
 
 	task->name.len = new_len;
 		
-	task->minDepth = 6;
+	task->minDepth = 1;
 
 } 
 
@@ -184,14 +189,10 @@ static void call_title_reason(String *input, String *out)
     FreeString(result);
 }
 
-// those are mapped to input1 -> title input2 -> reason
-Goal* CreateUserGoal(String *input1, String *input2)
-{
-	// Init params
-	String deep_search_result, json_extract_result;
-	InitString(&deep_search_result, 2048);
-	InitString(&json_extract_result, 2048);
+static void personalize_goal(String* input1, String *input2, String* out){
+	InitString(out, 2048);
 
+	// Init params
 	char search_id[256];
 	create_goal_deep_search_id(c_str(input1), search_id);
 
@@ -199,36 +200,54 @@ Goal* CreateUserGoal(String *input1, String *input2)
 	create_goal_task(input1, input2, &task);
 	
 	// customize goal
-	start_ds_session(&task, search_id, &deep_search_result);
+	start_ds_session(&task, search_id, out);
+}
+
+static void extract_goal(String* deep_search_result, String* title, String* reason, time_t *estimated_time){
+	String json_extract_result;
 
 	// extract process goals
-	String title, reason;
-	time_t estimated_time = 0;
-	InitString(&title, 256); InitString(&reason, 1024);
+	InitString(title, 256); InitString(reason, 1024);
+	InitString(&json_extract_result, 2048);
 
-	call_title_reason(&deep_search_result, &json_extract_result);
+	call_title_reason(deep_search_result, &json_extract_result);
 
 	json_value* doc = json_parse(c_str(&json_extract_result), json_extract_result.cap);
 	cassert(doc, "AI produced an invalid JSON. (for goals)\n");
-	cassert(doc->type == json_object, "JSON is not an object. (for goal)");
+
+	if (massert(doc->type == json_object, "JSON is not an object. (for goal)")){
+		// Fails here
+		exit(EXIT_FAILURE);
+	};
 
 	for (size_t i = 0; i < doc->u.object.length; i++){
 		json_object_entry candidate = doc->u.object.values[i];
 
 		if (strcmp(candidate.name, "reason") == 0){
 			cassert(candidate.value->type == json_string, "JSON \"reason\" is not a string.\n");
-			CatString(&reason, candidate.value->u.string.ptr, candidate.value->u.string.length);
+			CatString(reason, candidate.value->u.string.ptr, candidate.value->u.string.length);
 		}else if (strcmp(candidate.name, "title") == 0){
 			cassert(candidate.value->type == json_string, "JSON \"title\" is not a string.\n");
-			CatString(&title, candidate.value->u.string.ptr, candidate.value->u.string.length);
+			CatString(title, candidate.value->u.string.ptr, candidate.value->u.string.length);
 		}else if (strcmp(candidate.name, "estimated_time") == 0){
 			cassert(candidate.value->type == json_integer, "JSON \"estimated_time\" is not an integer.\n");
-			estimated_time = candidate.value->u.integer;
+			*estimated_time = candidate.value->u.integer;
 		}
 	}
 	json_value_free(doc);
 
-	printf("Goal estimated time [%ld], reason [%s], title [%s].\n", estimated_time, reason.p, title.p);
+}
+
+// those are mapped to input1 -> title input2 -> reason
+Goal* CreateUserGoal(String *input1, String *input2)
+{
+	String title, reason, deep_search_result;
+	time_t estimated_time = 0;
+
+	personalize_goal(input1, input2, &deep_search_result);
+	extract_goal(&deep_search_result, &title, &reason, &estimated_time);
+
+	printf("Goal created:\ntime [%ld]\nreason [%s]\ntitle [%s]\n\n", estimated_time, reason.p, title.p);
 	
 	return create_goal(&title, &reason, estimated_time, NULL);
 }
