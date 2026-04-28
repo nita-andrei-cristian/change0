@@ -11,7 +11,7 @@ typedef struct GoalType {
 
 	time_t start_date;
 	time_t end_date;
-	size_t required_time;
+	time_t required_time;
 
 	struct GoalType **subgoals;
 	size_t subgoals_len;

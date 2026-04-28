@@ -88,15 +88,66 @@ enum GOAL_STATUS validate_goal(Goal *g)
 	return GOAL_VALID;
 }
 
+// reasoning, title,same layer goals, parent chain (reasoning and titel and time respectvely)
+#define SHORTEN_GOAL_AI_PROMPT "You are a agent that's ultra bigg inteligent, the first AGI. You are very smart."'\
+"There is a certain user with a goal. The goal's reasoning is [%s] with the title [%s],"\
+"the goal are in a hriearhial order, you ceceive this message becasue the user failed achieving the time,"\
+"This goal is on a certain layer, here are the goals on the same layers [%s], so be sure to not collide,"\
+"for mroe context, you will find the current parent goal chain with each reasoning [%s]"
+
+static Goal *get_root(Goal *g){
+	while (g->parent != NULL){
+		g = g->parent;
+	}
+	return g;
+}
+
+static time_t get_goal_required_time(Goal *g){
+
+	/*
+		If a goal has children, return the children sum
+		else return the default required time 
+	*/
+
+	if (g->subgoals_len == 0){
+		return g->required_time;
+	}
+
+	time_t sum = 0;
+
+	for (size_t i = 0; i < g->subgoals_len; i++){
+		Goal *subgoal = g->subgoals[i];
+		
+		sum += get_goal_required_time(subgoal);		
+	}
+
+	return sum;
+}
+
+
+void shorten_goal(Goal *g, time_t new_time_frame){
+	String context; InitString(&context, 256);
+
+	time_t old_required_time = g.required_time;
+	cassert(start_date, "You can't shorten a goal without start date.");
+
+	FreeString(&context);
+}
+
 void repair_goal(Goal *g)
 {
 	time_t max_end_date = g->start_date + g->required_time * (1 + TIME_MARIGN);
 	time_t now = time(NULL);
 
 	time_t delta = (max_end_date - now) * (max_end_date - g->start_date);
-
-	g->end_date = delta;
-	// TODO case 2: g itself is changed
+	
+	_Bool shouldExtend = 0;
+	cassert(shouldExtend, "DO NOT FORGET TO MAEK THIS");
+	if (shouldExtend){
+		g->end_date = delta;
+	}else{
+		shorten_goal(g, );
+	}
 }
 
 void update_goal(Goal *g)
