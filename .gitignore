@@ -1,6 +1,6 @@
 build/
 debug/
-dumps/
+dumps/*
 compile_commands.json
 .cache/clangd/index
 models/

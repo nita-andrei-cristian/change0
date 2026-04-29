@@ -220,6 +220,7 @@ _Bool massert(_Bool assertion, char* message){
 	if (!assertion && message) fprintf(stderr, "%s", message);
 	return !assertion;
 }
+
 void cassert(_Bool assertion, char* message){
 	if (!assertion && message){
 		// prepare for saving log
@@ -227,7 +228,7 @@ void cassert(_Bool assertion, char* message){
 		char file_name[256];
 		time_t now = time(NULL);
 
-		sprintf(file_name, DEFAULT_DUMP_DIRECTORY "error-[%s]", ctime(&now));
+		sprintf(file_name, DEFAULT_DUMP_DIRECTORY "error %s", ctime(&now));
 		dump_to_file(file_name, FSTRING_SIZE_PARAMS(message));
 
 		fprintf(stderr, "----------------------\n\n\nCHANGE FAILURE MESSAGE\n\n\n[%s]", message);
