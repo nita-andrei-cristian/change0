@@ -22,7 +22,13 @@ target_include_directories(util PUBLIC
 	${CMAKE_SOURCE_DIR}/c/lib/jsonp
 	${CMAKE_SOURCE_DIR}/c
 )
-target_link_libraries(util PUBLIC jsonp )
+target_link_libraries(util PUBLIC jsonp change-errors)
+
+add_library(change-errors SHARED ${CMAKE_SOURCE_DIR}/c/lib/util/change-errors.c)
+target_include_directories(change-errors PUBLIC 
+	${CMAKE_SOURCE_DIR}/c
+	${CMAKE_SOURCE_DIR}/c/lib/util
+)
 
 add_library(openai SHARED ${CMAKE_SOURCE_DIR}/c/lib/openai/openai.c)
 target_include_directories(openai PUBLIC 
@@ -194,6 +200,7 @@ target_link_libraries(http-server PUBLIC
 	node
 	graphexport
 	util
+	goal
 	inputprocessor
 	pthread
 )

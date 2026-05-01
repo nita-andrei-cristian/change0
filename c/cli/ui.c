@@ -58,6 +58,7 @@ void UIStart(){
 
 	// Setup Global Pointers
 	SetGlobalPointerF("ds_emit", &ds_emit_event);
+	SetGlobalPointerF("goal_emit", &goal_emit_event);
 }
 
 static void Run(int i){
@@ -149,12 +150,6 @@ static void Run(int i){
 		String input1; InitString(&input1, input_size1 + 1);
 
 		Goal *g = CreateUserGoal(&input0, &input1);
-
-		printf("Goal Created...\nUpdaing goal...\n\n");
-
-		update_goal(g);
-
-		printf("Done\n");
 
 		FreeString(&input0);
 		FreeString(&input1);

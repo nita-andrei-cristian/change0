@@ -61,18 +61,9 @@ _Bool try_terminate(DS_memory *mem, String *out, size_t depth, Task* task, Strin
 	return 0; // did not finish
 }
 
-static void write_feedback(String* mem, String* reason){
-	char* buffer = malloc(reason->len + 1024);
-	cassert(buffer, "Can't allocate memory for writing feedback");
-
-	size_t len = sprintf(buffer, "{ Server Intervention :  You had previously tried to execute this task, but failed the automatic validation, here is feedback: [%s]. You may repeat the round with this hint. }", c_str(reason));
-
-	EmptyString(mem);
-
-	mem->len = 0;
-	CatString(mem, buffer, len);
-
-	free(buffer);
+static inline void write_feedback(DS_memory* mem, String* reason){
+	EmptyString(&mem->dynamic);
+	CatTemplateString(&mem->persistent, "{ Server Intervention :  You had previously tried to execute this task, but failed the automatic validation, here is feedback: [%s]. You may repeat the round with this hint. }", c_str(reason));
 }
 
 static _Bool judge_result(String *out, String* reason, Task *task, char *ds_id){
@@ -205,7 +196,7 @@ void start_ds_session(Task *task, char* id, String* out){
 
 
 		// failed task 
-		write_feedback(&mem.dynamic, &reason);
+		write_feedback(&mem, &reason);
 	}
 
 	ds_emit(id, "d-mem", mem.dynamic.p, mem.dynamic.len);

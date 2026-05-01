@@ -220,8 +220,8 @@
 "TITLE: " \
 "<concise, specific adapted goal title> " \
 \
-"REASONING: " \
-"<why this goal fits the user, why it is useful for the user, including supporting evidence and constraints> " \
+"EXTRA_INFO: " \
+"<why this goal fits the user, why it is useful for the user, including supporting evidence and constraints, any other kind of info, here the server will also automatically include future edits of the goal> " \
 \
 "ESTIMATED_TIME: " \
 "<integer number of seconds> " \
@@ -232,11 +232,11 @@
 #define GOAL_JSON_EXTRACT_PROMPT \
 "You are a strict extraction agent. " \
 "Extract exactly one JSON object from the following goal adaptation message. " \
-"The JSON object must contain exactly: title, reason, estimated_time. " \
+"The JSON object must contain exactly: title, extrainfo, estimated_time. " \
 "title must be a concise user-facing adapted goal title. " \
-"reason must summarize why the adapted goal fits and is useful for the user. " \
+"extrainfo must summarize why the adapted goal fits and is useful for the user. ALong with other extra info. " \
 "estimated_time must be an integer number of seconds. " \
-"If the message already contains clear TITLE, REASONING, and ESTIMATED_TIME sections, use them directly. " \
+"If the message already contains clear TITLE, EXTRA_INFO and ESTIMATED_TIME sections, use them directly. " \
 "If a field is unclear, extract the best supported value from the message without inventing unrelated information. " \
 "Return only valid JSON and nothing else. " \
 "Message: [%s]"

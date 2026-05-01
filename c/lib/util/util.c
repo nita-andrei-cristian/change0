@@ -1,5 +1,5 @@
 #include "util.h"
-#include "config.h"
+#include <stdarg.h>
 #include <time.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -8,6 +8,7 @@
 #include <string.h>
 #include <string.h>
 #include <stdlib.h>
+#include "change-errors.h"
 
 size_t mystrnlen(const char* s, size_t maxlen) {
     size_t i;
@@ -216,26 +217,6 @@ void lowerAll(char** s, size_t len){
 		a[i] = a[i] < 'a' ? a[i] + ('a' - 'A') : a[i];
 }
 
-_Bool massert(_Bool assertion, char* message){
-	if (!assertion && message) fprintf(stderr, "%s", message);
-	return !assertion;
-}
-
-void cassert(_Bool assertion, char* message){
-	if (!assertion && message){
-		// prepare for saving log
-
-		char file_name[256];
-		time_t now = time(NULL);
-
-		sprintf(file_name, DEFAULT_DUMP_DIRECTORY "error %s", ctime(&now));
-		dump_to_file(file_name, FSTRING_SIZE_PARAMS(message));
-
-		fprintf(stderr, "----------------------\n\n\nCHANGE FAILURE MESSAGE\n\n\n[%s]", message);
-		exit(EXIT_FAILURE);
-	}
-}
-
 void InitString(String* s, size_t init_cap){
 	s->cap = init_cap + 1;
 	s->len = 0;
@@ -251,11 +232,12 @@ void FreeString(String* s){
 	s->used = 0;
 	s->init = 0;
 	free(c_str(s));
+	c_str(s) = NULL;
 }
 
 void CatString(String* s, char* c, size_t len){
-	if (massert(s, "No string passed...")) return;
-	cassert(s, "Can't concatinate : String not initialized");
+	change_assert(s, "No String passed...\n");
+	if (!s || !s->init) InitString(s, len+2);
 
 	if (s->cap <= len + s->len + 1){
 		size_t req_cap = s->cap ? s->cap : 1; // avoid 0
@@ -267,6 +249,42 @@ void CatString(String* s, char* c, size_t len){
 	s->len += len;
 	*(c_str(s) + s->len) = '\0';
 
+	s->used = 1;
+}
+
+// AI INSPIRED
+void CatTemplateString(String* s, char *fmt, ...){
+	if (massert(s, "No string passed...")) return;
+	cassert(s && s->init, "Can't concatinate : String not initialized");
+
+	va_list args;
+	va_start(args, fmt);
+
+	va_list args_copy;
+	va_copy(args_copy, args);
+
+	long needed = vsnprintf(NULL, 0, fmt, args_copy);
+	
+	if (needed < 0){
+		va_end(args);
+		cassert(0, "Formatting failed\n");
+		return;
+	}
+
+	size_t add_len = (size_t)needed;
+	size_t required_len = s->len + add_len;
+
+	if (s->cap <= required_len + 1) {
+		size_t new_cap = s->cap ? s->cap : 16;
+		while (new_cap <= required_len + 1) 
+			new_cap *= 2;
+		ResizeString(s, new_cap);
+	}
+
+	vsnprintf(c_str(s) + s->len, s->cap - s->len, fmt, args);
+	va_end(args);
+
+	s->len += add_len;
 	s->used = 1;
 }
 
@@ -410,14 +428,4 @@ char *json_escape_dup(const char *src){
 	}
 	*w = '\0';
 	return out;
-}
-
-void dump_to_file(const char *path, const char *data, size_t len){
-    FILE *f = fopen(path, "wb");
-    cassert(f, "Failed to open debug file.\n");
-
-    size_t written = fwrite(data, 1, len, f);
-    cassert(written == len, "Failed to write full buffer to file.\n");
-
-    fclose(f);
 }

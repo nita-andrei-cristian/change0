@@ -8,22 +8,21 @@
     :root {
       color-scheme: dark;
       --bg: #050505;
-      --panel-bg: #090909;
-      --panel-border: rgba(255, 255, 255, 0.06);
-      --panel-muted: rgba(255, 255, 255, 0.64);
-      --panel-soft: rgba(255, 255, 255, 0.03);
-      --panel-soft-strong: rgba(255, 255, 255, 0.06);
-      --panel-text: #f5f7fb;
+      --panel: #080808;
+      --panel-2: #0c0c0c;
+      --text: #f5f7fb;
+      --muted: rgba(255,255,255,.58);
+      --soft: rgba(255,255,255,.045);
+      --soft-2: rgba(255,255,255,.075);
+      --line: rgba(255,255,255,.05);
       --accent: #7dd3fc;
       --accent-strong: #38bdf8;
-      --danger: #fb7185;
       --success: #34d399;
       --warning: #fbbf24;
+      --danger: #fb7185;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html,
     body {
@@ -35,9 +34,13 @@
     }
 
     body {
-      font-family: system-ui, sans-serif;
-      color: var(--panel-text);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
+
+    button,
+    input,
+    textarea { font: inherit; }
 
     .app {
       position: relative;
@@ -55,7 +58,7 @@
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 180ms ease, visibility 180ms ease;
+      transition: opacity 160ms ease, visibility 160ms ease;
     }
 
     .view.is-active {
@@ -65,15 +68,13 @@
     }
 
     .graph-shell {
-      position: absolute;
-      inset: 0;
       overflow: hidden;
       background: #000;
     }
 
-    .deep-search-view {
+    .work-view {
       display: grid;
-      grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+      grid-template-columns: minmax(310px, 400px) minmax(0, 1fr);
       width: 100%;
       height: 100%;
       background: var(--bg);
@@ -84,33 +85,31 @@
       min-height: 0;
       display: flex;
       flex-direction: column;
-      background: var(--panel-bg);
-      border-right: 1px solid rgba(255, 255, 255, 0.05);
-      box-shadow: none;
+      background: var(--panel);
+      box-shadow: inset -1px 0 0 var(--line);
       overflow: hidden;
     }
 
     .sidebar__top {
       padding: 22px 20px 18px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       overflow: auto;
     }
 
     .sidebar__title {
       margin: 0;
-      color: var(--panel-text);
-      font: 700 24px/1.1 system-ui, sans-serif;
-      letter-spacing: -0.03em;
+      color: var(--text);
+      font: 750 24px/1.08 system-ui, sans-serif;
+      letter-spacing: -0.035em;
     }
 
     .sidebar__subtitle,
     .sidebar__hint {
-      margin: 10px 0 0;
-      color: var(--panel-muted);
+      margin: 9px 0 0;
+      color: var(--muted);
       font: 500 13px/1.45 system-ui, sans-serif;
     }
 
-    .research-form {
+    .form-grid {
       margin-top: 18px;
       display: grid;
       gap: 12px;
@@ -122,85 +121,80 @@
     }
 
     .field__label {
-      color: rgba(255, 255, 255, 0.86);
-      font: 600 12px/1.2 system-ui, sans-serif;
-      letter-spacing: 0.08em;
+      color: rgba(255,255,255,.82);
+      font: 700 11px/1.2 system-ui, sans-serif;
+      letter-spacing: .08em;
       text-transform: uppercase;
     }
 
     .field input,
     .field textarea {
-      appearance: none;
       width: 100%;
-      border: 1px solid rgba(255, 255, 255, 0.07);
+      border: 0;
       border-radius: 14px;
       padding: 12px 14px;
-      color: var(--panel-text);
-      background: rgba(255, 255, 255, 0.025);
-      font: 500 14px/1.4 system-ui, sans-serif;
-      transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+      color: var(--text);
+      background: var(--soft);
+      outline: 1px solid transparent;
       resize: vertical;
+      font: 500 14px/1.42 system-ui, sans-serif;
+      transition: background 140ms ease, outline-color 140ms ease;
     }
 
     .field input:focus,
     .field textarea:focus {
-      outline: none;
-      border-color: rgba(125, 211, 252, 0.22);
-      background: rgba(255, 255, 255, 0.04);
-      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.08);
+      background: rgba(255,255,255,.065);
+      outline-color: rgba(125,211,252,.26);
     }
 
     .field textarea {
       min-height: 92px;
-      max-height: 220px;
+      max-height: 240px;
     }
 
-    .research-form__actions {
-      display: block;
+    .button-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
     .sidebar-button {
       appearance: none;
-      width: 100%;
-      min-height: 44px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 0;
       border-radius: 999px;
-      color: #f8fbff;
+      min-height: 42px;
+      padding: 0 16px;
+      background: rgba(255,255,255,.07);
+      color: #fff;
       cursor: pointer;
-      font: 700 12px/1 system-ui, sans-serif;
-      letter-spacing: 0.08em;
+      font: 750 11px/1 system-ui, sans-serif;
+      letter-spacing: .08em;
       text-transform: uppercase;
-      transition:
-        transform 180ms ease,
-        border-color 140ms ease,
-        background 140ms ease,
-        opacity 140ms ease;
-      background: rgba(255, 255, 255, 0.035);
+      transition: transform 160ms ease, background 140ms ease, opacity 140ms ease;
     }
 
     .sidebar-button:hover:not(:disabled) {
       transform: translateY(-1px);
-      border-color: rgba(255, 255, 255, 0.14);
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255,255,255,.105);
     }
 
     .sidebar-button:disabled {
-      opacity: 0.46;
+      opacity: .42;
       cursor: default;
       transform: none;
     }
 
-    .research-status {
+    .sidebar-button.is-wide { width: 100%; }
+    .sidebar-button.is-secondary { min-height: 36px; background: rgba(255,255,255,.045); }
+
+    .status-block {
       margin-top: 14px;
-      padding: 0;
-      border: none;
-      border-radius: 0;
-      background: transparent;
       display: grid;
       gap: 8px;
     }
 
-    .research-status__line {
+    .status-line {
       display: flex;
       align-items: center;
       gap: 10px;
@@ -208,16 +202,16 @@
       flex-wrap: wrap;
     }
 
-    .research-status__detail {
-      margin: 2px 0 0;
-      color: rgba(255, 255, 255, 0.46);
-      font: 500 12px/1.4 system-ui, sans-serif;
+    .status-detail {
+      margin: 0;
+      color: rgba(255,255,255,.46);
+      font: 500 12px/1.42 system-ui, sans-serif;
     }
 
     .status-inline {
-      color: rgba(255, 255, 255, 0.82);
-      font: 600 12px/1 system-ui, sans-serif;
-      letter-spacing: 0.04em;
+      color: rgba(255,255,255,.82);
+      font: 700 11px/1 system-ui, sans-serif;
+      letter-spacing: .06em;
       text-transform: uppercase;
     }
 
@@ -225,17 +219,15 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 0;
-      border: none;
-      background: transparent;
       color: #fff;
-      font: 700 12px/1 system-ui, sans-serif;
-      letter-spacing: 0.04em;
+      font: 750 11px/1 system-ui, sans-serif;
+      letter-spacing: .05em;
+      text-transform: uppercase;
     }
 
     .status-chip__icon {
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       display: block;
       flex: 0 0 auto;
     }
@@ -248,15 +240,66 @@
       stroke-linejoin: round;
     }
 
-    .status-chip.is-connected {
-      color: var(--success);
-    }
-
+    .status-chip.is-connected { color: var(--success); }
     .status-chip.is-disconnected,
     .status-chip.is-connecting,
     .status-chip.is-reconnecting,
-    .status-chip.is-error {
-      color: var(--warning);
+    .status-chip.is-error { color: var(--warning); }
+
+    .session-list {
+      margin-top: 18px;
+      display: grid;
+      gap: 6px;
+      max-height: 34vh;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .session-empty {
+      padding: 10px 2px;
+      color: rgba(255,255,255,.46);
+      font: 500 12px/1.45 system-ui, sans-serif;
+    }
+
+    .session-item {
+      appearance: none;
+      border: 0;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 14px;
+      padding: 10px 11px;
+      background: transparent;
+      color: #fff;
+      display: grid;
+      gap: 5px;
+      transition: background 140ms ease, transform 140ms ease;
+    }
+
+    .session-item:hover {
+      background: rgba(255,255,255,.045);
+      transform: translateY(-1px);
+    }
+
+    .session-item.is-active {
+      background: rgba(125,211,252,.09);
+    }
+
+    .session-item__title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font: 720 13px/1.25 system-ui, sans-serif;
+    }
+
+    .session-item__meta {
+      color: rgba(255,255,255,.48);
+      font: 600 10px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .session-item__status {
+      color: rgba(255,255,255,.68);
+      font: 650 11px/1.3 system-ui, sans-serif;
     }
 
     .timeline-stage {
@@ -265,7 +308,7 @@
       min-height: 0;
       overflow: hidden;
       background:
-        radial-gradient(circle at top right, rgba(56, 189, 248, 0.06), transparent 24%),
+        radial-gradient(circle at top right, rgba(56,189,248,.055), transparent 24%),
         #030508;
     }
 
@@ -280,38 +323,37 @@
       justify-content: space-between;
       gap: 16px;
       padding: 22px 24px 18px;
-      background: linear-gradient(180deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0));
+      background: linear-gradient(180deg, rgba(0,0,0,.62), rgba(0,0,0,0));
       pointer-events: none;
     }
 
     .timeline-header__title {
       margin: 0;
-      font: 700 22px/1.1 system-ui, sans-serif;
-      letter-spacing: -0.03em;
+      font: 750 22px/1.1 system-ui, sans-serif;
+      letter-spacing: -.032em;
     }
 
     .timeline-header__subtitle {
       margin: 8px 0 0;
-      max-width: 720px;
-      color: var(--panel-muted);
+      max-width: 740px;
+      color: var(--muted);
       font: 500 13px/1.5 system-ui, sans-serif;
     }
 
     .timeline-summary {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
 
     .timeline-chip {
-      padding: 8px 11px;
+      padding: 8px 10px;
       border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.04);
+      background: rgba(255,255,255,.045);
       color: #fff;
-      font: 700 11px/1 system-ui, sans-serif;
-      letter-spacing: 0.08em;
+      font: 750 10px/1 system-ui, sans-serif;
+      letter-spacing: .08em;
       text-transform: uppercase;
       pointer-events: auto;
     }
@@ -322,8 +364,8 @@
       width: 100%;
       height: 100%;
       display: block;
-      cursor: default;
       background: transparent;
+      cursor: grab;
     }
 
     .timeline-tooltip {
@@ -333,10 +375,9 @@
       max-width: min(360px, calc(100vw - 32px));
       padding: 12px 13px 10px;
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(4, 8, 14, 0.92);
+      background: rgba(4,8,14,.94);
       backdrop-filter: blur(12px);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.28);
+      box-shadow: 0 12px 30px rgba(0,0,0,.26);
       pointer-events: none;
       opacity: 0;
       transform: translateY(6px);
@@ -357,19 +398,19 @@
     }
 
     .timeline-tooltip__title {
-      font: 700 13px/1.3 system-ui, sans-serif;
+      font: 750 13px/1.3 system-ui, sans-serif;
       color: #fff;
     }
 
     .timeline-tooltip__time {
-      color: rgba(255,255,255,0.68);
-      font: 600 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: rgba(255,255,255,.68);
+      font: 650 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
       white-space: nowrap;
     }
 
     .timeline-tooltip__role {
       margin: 0 0 8px;
-      color: rgba(255,255,255,0.72);
+      color: rgba(255,255,255,.72);
       font: 500 12px/1.45 system-ui, sans-serif;
     }
 
@@ -379,7 +420,7 @@
       overflow: auto;
       white-space: pre-wrap;
       word-break: break-word;
-      color: rgba(255,255,255,0.88);
+      color: rgba(255,255,255,.88);
       font: 500 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
     }
 
@@ -392,11 +433,10 @@
       max-height: calc(100% - 48px);
       overflow: hidden;
       display: none;
-      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 22px;
-      background: rgba(5, 9, 15, 0.94);
+      background: rgba(5,9,15,.96);
       backdrop-filter: blur(16px);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+      box-shadow: 0 10px 30px rgba(0,0,0,.24);
     }
 
     .timeline-inspector.is-visible {
@@ -410,45 +450,46 @@
       justify-content: space-between;
       gap: 14px;
       padding: 18px 18px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      box-shadow: inset 0 -1px 0 var(--line);
     }
 
     .timeline-inspector__title {
       margin: 0;
       color: #fff;
-      font: 700 16px/1.25 system-ui, sans-serif;
+      font: 750 16px/1.25 system-ui, sans-serif;
     }
 
     .timeline-inspector__meta {
       margin: 6px 0 0;
-      color: rgba(255,255,255,0.66);
+      color: rgba(255,255,255,.62);
       font: 600 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
     }
 
-    .timeline-inspector__close {
+    .timeline-inspector__close,
+    .message-panel__close,
+    .message-panel__submit {
       appearance: none;
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 0;
       border-radius: 999px;
-      min-width: 40px;
-      min-height: 40px;
+      min-height: 38px;
       padding: 0 14px;
-      background: rgba(255,255,255,0.04);
+      background: rgba(255,255,255,.055);
       color: #fff;
       cursor: pointer;
-      font: 700 12px/1 system-ui, sans-serif;
-      letter-spacing: 0.06em;
+      font: 750 11px/1 system-ui, sans-serif;
+      letter-spacing: .06em;
       text-transform: uppercase;
     }
 
-    .timeline-inspector__close:hover {
-      background: rgba(255,255,255,0.08);
-      border-color: rgba(255,255,255,0.14);
-    }
+    .timeline-inspector__close:hover,
+    .message-panel__close:hover,
+    .message-panel__submit:hover:not(:disabled) { background: rgba(255,255,255,.095); }
+    .message-panel__submit:disabled { opacity: .45; cursor: default; }
 
     .timeline-inspector__role {
       margin: 0;
       padding: 14px 18px 0;
-      color: rgba(255,255,255,0.78);
+      color: rgba(255,255,255,.78);
       font: 500 13px/1.5 system-ui, sans-serif;
     }
 
@@ -458,7 +499,7 @@
       overflow: auto;
       white-space: pre-wrap;
       word-break: break-word;
-      color: rgba(255,255,255,0.9);
+      color: rgba(255,255,255,.9);
       font: 500 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
     }
 
@@ -470,11 +511,10 @@
       z-index: 6;
       width: min(560px, calc(100vw - 32px));
       padding: 16px;
-      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 22px;
-      background: rgba(5, 9, 15, 0.94);
+      background: rgba(5,9,15,.95);
       backdrop-filter: blur(16px);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+      box-shadow: 0 10px 30px rgba(0,0,0,.24);
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
@@ -499,58 +539,34 @@
     .message-panel__title {
       margin: 0;
       color: #fff;
-      font: 700 16px/1.25 system-ui, sans-serif;
+      font: 750 16px/1.25 system-ui, sans-serif;
     }
 
     .message-panel__subtitle {
       margin: 6px 0 0;
-      color: rgba(255,255,255,0.68);
+      color: rgba(255,255,255,.66);
       font: 500 12px/1.45 system-ui, sans-serif;
     }
 
-    .message-panel__close {
-      appearance: none;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 999px;
-      min-width: 40px;
-      min-height: 40px;
-      padding: 0 14px;
-      background: rgba(255,255,255,0.04);
-      color: #fff;
-      cursor: pointer;
-      font: 700 12px/1 system-ui, sans-serif;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .message-panel__close:hover {
-      background: rgba(255,255,255,0.08);
-      border-color: rgba(255,255,255,0.14);
-    }
-
-    .message-panel__form {
-      display: grid;
-      gap: 12px;
-    }
+    .message-panel__form { display: grid; gap: 12px; }
 
     .message-panel__textarea {
       width: 100%;
       min-height: 140px;
       max-height: 320px;
       resize: vertical;
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 0;
       border-radius: 16px;
       padding: 14px;
-      background: rgba(255,255,255,0.04);
+      background: rgba(255,255,255,.055);
       color: #fff;
+      outline: 1px solid transparent;
       font: 500 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
     }
 
     .message-panel__textarea:focus {
-      outline: none;
-      border-color: rgba(125, 211, 252, 0.22);
-      background: rgba(255,255,255,0.06);
-      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.08);
+      outline-color: rgba(125,211,252,.28);
+      background: rgba(255,255,255,.075);
     }
 
     .message-panel__actions {
@@ -562,38 +578,13 @@
     }
 
     .message-panel__status {
-      color: rgba(255,255,255,0.7);
+      color: rgba(255,255,255,.68);
       font: 500 12px/1.45 system-ui, sans-serif;
     }
 
-    .message-panel__submit {
-      appearance: none;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 999px;
-      min-height: 42px;
-      padding: 0 16px;
-      background: rgba(255,255,255,0.04);
-      color: #fff;
-      cursor: pointer;
-      font: 700 12px/1 system-ui, sans-serif;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .message-panel__submit:hover:not(:disabled) {
-      background: rgba(255,255,255,0.08);
-      border-color: rgba(255,255,255,0.14);
-    }
-
-    .message-panel__submit:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
-
-    .view-switcher {
+    .view-switcher,
+    .graph-controls {
       position: absolute;
-      right: 18px;
-      bottom: 18px;
       z-index: 6;
       display: flex;
       align-items: center;
@@ -601,12 +592,23 @@
       gap: 8px;
       width: auto;
       padding: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 999px;
-      background: rgba(0, 0, 0, 0.72);
+      background: rgba(0,0,0,.72);
       backdrop-filter: blur(12px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
       overflow: hidden;
+    }
+
+    .view-switcher {
+      right: 18px;
+      bottom: 18px;
+    }
+
+    .graph-controls {
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 5;
     }
 
     .view-switcher button,
@@ -618,80 +620,41 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-sizing: border-box;
-      min-height: 42px;
-      border-radius: 999px;
-      cursor: pointer;
-      transition:
-        transform 220ms cubic-bezier(0.2, 0.9, 0.24, 1),
-        background 160ms ease,
-        border-color 160ms ease,
-        opacity 160ms ease,
-        box-shadow 220ms ease;
-      backdrop-filter: blur(10px);
-    }
-
-    .view-switcher button,
-    .graph-controls button {
       width: 42px;
       min-width: 42px;
-      flex: 0 0 42px;
+      min-height: 42px;
       padding: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform 160ms ease, background 140ms ease, opacity 140ms ease;
     }
 
     .view-switcher button:hover:not(:disabled),
-    .graph-controls button:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.08);
+    .graph-controls button:hover:not(:disabled),
+    .view-switcher button.is-active,
+    .graph-controls button.is-active {
+      background: rgba(255,255,255,.085);
     }
 
     .view-switcher button.is-active,
-    .graph-controls button.is-active {
-      background: rgba(255, 255, 255, 0.08);
-      transform: translateY(-1px);
-      box-shadow: none;
-    }
-
+    .graph-controls button.is-active { transform: translateY(-1px); }
     .view-switcher button:disabled,
-    .graph-controls button:disabled {
-      opacity: 0.45;
-      cursor: default;
-    }
+    .graph-controls button:disabled { opacity: .42; cursor: default; }
 
-    .view-switcher button svg,
-    .graph-controls button svg {
+    .view-switcher svg,
+    .graph-controls svg {
       width: 18px;
       height: 18px;
       display: block;
     }
 
-    .view-switcher button svg *,
-    .graph-controls button svg * {
+    .view-switcher svg *,
+    .graph-controls svg * {
       fill: none;
       stroke: currentColor;
       stroke-width: 1.8;
       stroke-linecap: round;
       stroke-linejoin: round;
-    }
-
-    .graph-controls {
-      position: absolute;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      z-index: 5;
-      pointer-events: auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: auto;
-      padding: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.72);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
-      overflow: hidden;
     }
 
     .focus-node {
@@ -707,7 +670,7 @@
       color: #fff;
       opacity: 0;
       transition: opacity 160ms ease, transform 160ms ease;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+      text-shadow: 0 2px 12px rgba(0,0,0,.5);
     }
 
     .focus-node.is-visible {
@@ -720,13 +683,12 @@
       height: 18px;
       border-radius: 999px;
       border: 2px solid currentColor;
-      box-sizing: border-box;
       flex: 0 0 auto;
     }
 
     .focus-node__label {
-      font: 600 13px/1 system-ui, sans-serif;
-      letter-spacing: 0.02em;
+      font: 650 13px/1 system-ui, sans-serif;
+      letter-spacing: .02em;
       white-space: nowrap;
     }
 
@@ -740,14 +702,13 @@
     }
 
     @media (max-width: 1080px) {
-      .deep-search-view {
+      .work-view {
         grid-template-columns: 1fr;
         grid-template-rows: minmax(320px, 42vh) minmax(0, 1fr);
       }
 
       .sidebar {
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        box-shadow: inset 0 -1px 0 var(--line);
       }
     }
 
@@ -772,13 +733,8 @@
         align-items: stretch;
       }
 
-      .timeline-summary {
-        justify-content: flex-start;
-      }
-
-      .focus-node {
-        top: 14px;
-      }
+      .timeline-summary { justify-content: flex-start; }
+      .focus-node { top: 14px; }
     }
   </style>
 </head>
@@ -818,7 +774,7 @@
         <div class="message-panel__header">
           <div>
             <h2 class="message-panel__title">Input Message</h2>
-            <p class="message-panel__subtitle">Send text to <code>/message</code> as JSON. The server will decompose it into graph nodes in the background.</p>
+            <p class="message-panel__subtitle">Send text to <code>/message</code>. Refresh happens after the server accepts it.</p>
           </div>
           <button id="close-message-panel" class="message-panel__close" type="button">Close</button>
         </div>
@@ -827,7 +783,7 @@
           <textarea id="message-input" class="message-panel__textarea" placeholder="Write the input text that should be sent to the graph server..."></textarea>
           <div class="message-panel__actions">
             <div id="message-panel-status" class="message-panel__status">Ready.</div>
-            <button id="submit-message" class="message-panel__submit" type="submit">Send to /message</button>
+            <button id="submit-message" class="message-panel__submit" type="submit">Send</button>
           </div>
         </form>
       </aside>
@@ -835,15 +791,22 @@
       <canvas id="graph" aria-label="Interactive graph viewer"></canvas>
     </section>
 
-    <section id="deep-search-view" class="view deep-search-view" aria-label="Deep search view">
+    <section id="deep-search-view" class="view work-view" aria-label="Deep search view">
       <aside class="sidebar">
         <div class="sidebar__top">
           <h1 class="sidebar__title">Deep Search Hub</h1>
+          <p class="sidebar__subtitle">Local saved sessions. Open an old timeline or start a clean run.</p>
 
-          <form id="research-form" class="research-form">
+          <div class="button-row" style="margin-top:16px">
+            <button id="new-research-session" class="sidebar-button is-secondary" type="button">New Deep Search</button>
+          </div>
+
+          <div id="research-session-list" class="session-list" aria-label="Saved deep-search sessions"></div>
+
+          <form id="research-form" class="form-grid">
             <label class="field" for="research-task">
               <span class="field__label">Task Name</span>
-              <textarea id="research-task" name="research-task" placeholder="Example: Analyze which nodes and connections support the hypothesis that the user avoids conflict through overcompensation."></textarea>
+              <textarea id="research-task" name="research-task" placeholder="Example: Analyze which nodes and connections support the hypothesis..."></textarea>
             </label>
 
             <label class="field" for="research-min-rounds">
@@ -851,13 +814,11 @@
               <input id="research-min-rounds" name="research-min-rounds" type="number" min="1" step="1" value="2" inputmode="numeric">
             </label>
 
-            <div class="research-form__actions">
-              <button id="start-research" class="sidebar-button" type="submit">Start Deep Search</button>
-            </div>
+            <button id="start-research" class="sidebar-button is-wide" type="submit">Start Deep Search</button>
           </form>
 
-          <div class="research-status">
-            <div class="research-status__line">
+          <div class="status-block">
+            <div class="status-line">
               <span id="research-connection-state" class="status-chip is-disconnected" data-state="disconnected">
                 <svg id="research-connection-icon" class="status-chip__icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 9v4"></path>
@@ -866,11 +827,9 @@
                 </svg>
                 <span id="research-connection-text">Disconnected</span>
               </span>
-
               <span id="research-run-state" class="status-inline">Idle</span>
             </div>
-
-            <p id="research-status-detail" class="research-status__detail">Ready.</p>
+            <p id="research-status-detail" class="status-detail">Ready.</p>
           </div>
         </div>
       </aside>
@@ -879,7 +838,7 @@
         <div class="timeline-header">
           <div>
             <h2 class="timeline-header__title">Deep Search Timeline</h2>
-            <p id="timeline-header-subtitle" class="timeline-header__subtitle">Hover any node to inspect its exact emitted value, payload, and chronological position.</p>
+            <p id="timeline-header-subtitle" class="timeline-header__subtitle">Start or open a session to inspect emitted events.</p>
           </div>
           <div class="timeline-summary">
             <div class="timeline-chip" id="timeline-total-chip">0 Events</div>
@@ -911,6 +870,81 @@
       </section>
     </section>
 
+    <section id="goal-view" class="view work-view" aria-label="Goal view">
+      <aside class="sidebar">
+        <div class="sidebar__top">
+          <h1 class="sidebar__title">Goals Hub</h1>
+          <p class="sidebar__subtitle">Local goals. Each goal keeps its own timeline from <code>goal_emit</code>.</p>
+
+          <form id="goal-form" class="form-grid">
+            <label class="field" for="goal-title">
+              <span class="field__label">Goal Title</span>
+              <input id="goal-title" name="goal-title" type="text" placeholder="Example: Build a memory system">
+            </label>
+
+            <label class="field" for="goal-extra-info">
+              <span class="field__label">Extra Info</span>
+              <textarea id="goal-extra-info" name="goal-extra-info" placeholder="Context, constraints, notes, or desired outcome..."></textarea>
+            </label>
+
+            <button id="create-goal" class="sidebar-button is-wide" type="submit">Create Goal</button>
+          </form>
+
+          <div class="status-block">
+            <div class="status-line">
+              <span id="goal-connection-state" class="status-chip is-disconnected" data-state="disconnected">
+                <svg id="goal-connection-icon" class="status-chip__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 9v4"></path>
+                  <path d="M12 17h.01"></path>
+                  <path d="M10.29 3.86l-7.5 13A1 1 0 0 0 3.71 18h16.58a1 1 0 0 0 .92-1.5l-7.5-13a1 1 0 0 0-1.84 0z"></path>
+                </svg>
+                <span id="goal-connection-text">Disconnected</span>
+              </span>
+              <span id="goal-run-state" class="status-inline">Idle</span>
+            </div>
+            <p id="goal-status-detail" class="status-detail">Ready.</p>
+          </div>
+
+          <div id="goal-list" class="session-list" aria-label="Saved goals"></div>
+        </div>
+      </aside>
+
+      <section class="timeline-stage">
+        <div class="timeline-header">
+          <div>
+            <h2 class="timeline-header__title">Goal Timeline</h2>
+            <p id="goal-timeline-header-subtitle" class="timeline-header__subtitle">Create or open a goal to inspect goal events.</p>
+          </div>
+          <div class="timeline-summary">
+            <div class="timeline-chip" id="goal-timeline-total-chip">0 Events</div>
+            <div class="timeline-chip" id="goal-timeline-session-chip">No Goal</div>
+          </div>
+        </div>
+
+        <canvas id="goal-timeline-canvas" class="timeline-canvas" aria-label="Goal timeline visualization"></canvas>
+        <div id="goal-timeline-tooltip" class="timeline-tooltip" aria-hidden="true">
+          <div class="timeline-tooltip__top">
+            <div id="goal-timeline-tooltip-title" class="timeline-tooltip__title"></div>
+            <div id="goal-timeline-tooltip-time" class="timeline-tooltip__time"></div>
+          </div>
+          <p id="goal-timeline-tooltip-role" class="timeline-tooltip__role"></p>
+          <pre id="goal-timeline-tooltip-payload" class="timeline-tooltip__payload"></pre>
+        </div>
+
+        <aside id="goal-timeline-inspector" class="timeline-inspector" aria-hidden="true">
+          <div class="timeline-inspector__header">
+            <div>
+              <h3 id="goal-timeline-inspector-title" class="timeline-inspector__title">Goal Event Inspector</h3>
+              <p id="goal-timeline-inspector-meta" class="timeline-inspector__meta"></p>
+            </div>
+            <button id="goal-timeline-inspector-close" class="timeline-inspector__close" type="button">Close</button>
+          </div>
+          <p id="goal-timeline-inspector-role" class="timeline-inspector__role"></p>
+          <pre id="goal-timeline-inspector-body" class="timeline-inspector__body"></pre>
+        </aside>
+      </section>
+    </section>
+
     <div class="view-switcher" aria-label="View switcher">
       <button id="graph-view-toggle" type="button" class="is-active" aria-label="Graph View" title="Graph View">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -936,6 +970,13 @@
           <circle cx="18" cy="12" r="1.5"></circle>
         </svg>
       </button>
+
+      <button id="goal-view-toggle" type="button" aria-label="Goals View" title="Goals View">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 21s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z"></path>
+          <circle cx="12" cy="10" r="2.4"></circle>
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -945,13 +986,13 @@
 
       const canvas = document.getElementById("graph");
       const ctx = canvas.getContext("2d");
-      const timelineCanvas = document.getElementById("timeline-canvas");
-      const timelineCtx = timelineCanvas.getContext("2d");
 
       const graphView = document.getElementById("graph-view");
       const deepSearchView = document.getElementById("deep-search-view");
+      const goalView = document.getElementById("goal-view");
       const graphViewToggle = document.getElementById("graph-view-toggle");
       const deepSearchViewToggle = document.getElementById("deep-search-view-toggle");
+      const goalViewToggle = document.getElementById("goal-view-toggle");
 
       const refreshButton = document.getElementById("refresh-graph");
       const explodeToggle = document.getElementById("explode-toggle");
@@ -962,120 +1003,77 @@
       const messageInput = document.getElementById("message-input");
       const messagePanelStatus = document.getElementById("message-panel-status");
       const submitMessageButton = document.getElementById("submit-message");
+      const focusNodeBadge = document.getElementById("focus-node");
+      const focusNodeRing = document.getElementById("focus-node-ring");
+      const focusNodeLabel = document.getElementById("focus-node-label");
+
       const researchForm = document.getElementById("research-form");
       const researchTaskInput = document.getElementById("research-task");
       const researchMinRoundsInput = document.getElementById("research-min-rounds");
       const startResearchButton = document.getElementById("start-research");
+      const newResearchSessionButton = document.getElementById("new-research-session");
+      const researchSessionList = document.getElementById("research-session-list");
       const researchConnectionState = document.getElementById("research-connection-state");
       const researchConnectionText = document.getElementById("research-connection-text");
       const researchConnectionIcon = document.getElementById("research-connection-icon");
       const researchRunState = document.getElementById("research-run-state");
       const researchStatusDetail = document.getElementById("research-status-detail");
-      const focusNodeBadge = document.getElementById("focus-node");
-      const focusNodeRing = document.getElementById("focus-node-ring");
-      const focusNodeLabel = document.getElementById("focus-node-label");
-      const timelineTooltip = document.getElementById("timeline-tooltip");
-      const timelineTooltipTitle = document.getElementById("timeline-tooltip-title");
-      const timelineTooltipTime = document.getElementById("timeline-tooltip-time");
-      const timelineTooltipRole = document.getElementById("timeline-tooltip-role");
-      const timelineTooltipPayload = document.getElementById("timeline-tooltip-payload");
-      const timelineInspector = document.getElementById("timeline-inspector");
-      const timelineInspectorTitle = document.getElementById("timeline-inspector-title");
-      const timelineInspectorMeta = document.getElementById("timeline-inspector-meta");
-      const timelineInspectorRole = document.getElementById("timeline-inspector-role");
-      const timelineInspectorBody = document.getElementById("timeline-inspector-body");
-      const timelineInspectorClose = document.getElementById("timeline-inspector-close");
-      const timelineTotalChip = document.getElementById("timeline-total-chip");
-      const timelineSessionChip = document.getElementById("timeline-session-chip");
-      const timelineHeaderSubtitle = document.getElementById("timeline-header-subtitle");
+
+      const goalForm = document.getElementById("goal-form");
+      const goalTitleInput = document.getElementById("goal-title");
+      const goalExtraInfoInput = document.getElementById("goal-extra-info");
+      const createGoalButton = document.getElementById("create-goal");
+      const goalList = document.getElementById("goal-list");
+      const goalConnectionState = document.getElementById("goal-connection-state");
+      const goalConnectionText = document.getElementById("goal-connection-text");
+      const goalConnectionIcon = document.getElementById("goal-connection-icon");
+      const goalRunState = document.getElementById("goal-run-state");
+      const goalStatusDetail = document.getElementById("goal-status-detail");
 
       const GRAPH_SERVER_HOST = "127.0.0.1";
       const GRAPH_SERVER_PORT = 8085;
       const GRAPH_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/graph`;
       const RESEARCH_START_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/research/start`;
       const RESEARCH_EVENTS_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/research/events`;
+      const GOAL_CREATE_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/goal/create`;
+      const GOAL_EVENTS_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/goal/events`;
       const MESSAGE_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/message`;
       const SERVER_OFFLINE_HINT = "Open CHANGE terminal client and select Start Server (run ./build.sh)";
+
+      const STORAGE_KEYS = {
+        researchSessions: "graph-viewer.research-sessions.v2",
+        goals: "graph-viewer.goals.v2"
+      };
+
       const WARNING_SVG = `
         <path d="M12 9v4"></path>
         <path d="M12 17h.01"></path>
         <path d="M10.29 3.86l-7.5 13A1 1 0 0 0 3.71 18h16.58a1 1 0 0 0 .92-1.5l-7.5-13a1 1 0 0 0-1.84 0z"></path>
       `;
-      const CONNECTED_SVG = `
-        <path d="M20 6L9 17l-5-5"></path>
-      `;
+      const CONNECTED_SVG = `<path d="M20 6L9 17l-5-5"></path>`;
 
       const EVENT_TYPE_META = {
-        sse_connected: {
-          label: "SSE Connected",
-          role: "The server confirms that the /research/events stream is attached and can receive messages for this research session.",
-          accent: "#34d399"
-        },
-        research_started: {
-          label: "Research Started",
-          role: "The HTTP handler accepted /research/start and launched the real deep-search session.",
-          accent: "#38bdf8"
-        },
-        "p-mem": {
-          label: "Persistent Memory",
-          role: "The persistent deep-search prompt emitted once at the beginning of the session.",
-          accent: "#a78bfa"
-        },
-        "ds-start": {
-          label: "Deep Search Start",
-          role: "Start marker emitted after RefreshGraph() and immediately before the investigation loop begins.",
-          accent: "#60a5fa"
-        },
-        "round-start": {
-          label: "Round Start",
-          role: "A new round header appended to the session's dynamic memory.",
-          accent: "#f59e0b"
-        },
-        "ds-model-response": {
-          label: "Model Response",
-          role: "The raw structured response returned by the deep-search model before command execution.",
-          accent: "#22d3ee"
-        },
-        "cmd-1": {
-          label: "Command 1",
-          role: "Result of the global top-node search ranked by activation or weight.",
-          accent: "#f472b6"
-        },
-        "cmd-2": {
-          label: "Command 2",
-          role: "Result of the target-node neighbor search filtered by activation or weight.",
-          accent: "#fb7185"
-        },
-        "cmd-3": {
-          label: "Command 3",
-          role: "Subgraph or node-family exploration built around a target node at a chosen depth.",
-          accent: "#f97316"
-        },
-        "d-mem": {
-          label: "Dynamic Memory",
-          role: "Snapshot of accumulated dynamic memory emitted after rounds and again at the end.",
-          accent: "#eab308"
-        },
-        "judge-start": {
-          label: "Judge Start",
-          role: "The automatic validator starts evaluating the current session conclusion.",
-          accent: "#c084fc"
-        },
-        "judge-pass": {
-          label: "Judge Pass",
-          role: "The validator accepted the conclusion, so the session can close successfully.",
-          accent: "#34d399"
-        },
-        "judge-fail": {
-          label: "Judge Fail",
-          role: "The validator rejected the conclusion and sent feedback for another iteration.",
-          accent: "#f87171"
-        },
-        "ds-end": {
-          label: "Deep Search End",
-          role: "Final conclusion produced by the deep-search session and emitted to the client at the end.",
-          accent: "#38bdf8"
-        }
+        sse_connected: { label: "SSE Connected", role: "The server confirmed that the stream is attached.", accent: "#34d399" },
+        research_started: { label: "Research Started", role: "The HTTP handler accepted /research/start and launched the session.", accent: "#38bdf8" },
+        "p-mem": { label: "Persistent Memory", role: "Persistent deep-search prompt emitted at the start.", accent: "#a78bfa" },
+        "ds-start": { label: "Deep Search Start", role: "Start marker before the investigation loop begins.", accent: "#60a5fa" },
+        "round-start": { label: "Round Start", role: "A new round begins.", accent: "#f59e0b", small: true },
+        "ds-model-response": { label: "Model Response", role: "Raw structured response returned by the model.", accent: "#22d3ee" },
+        "cmd-1": { label: "Command 1", role: "Global top-node search result.", accent: "#f472b6" },
+        "cmd-2": { label: "Command 2", role: "Target-node neighbor search result.", accent: "#fb7185" },
+        "cmd-3": { label: "Command 3", role: "Subgraph or node-family exploration result.", accent: "#f97316" },
+        "d-mem": { label: "Dynamic Memory", role: "Snapshot of accumulated dynamic memory.", accent: "#eab308" },
+        "judge-start": { label: "Judge Start", role: "Validator starts evaluating the current conclusion.", accent: "#c084fc" },
+        "judge-pass": { label: "Judge Pass", role: "Validator accepted the conclusion.", accent: "#34d399" },
+        "judge-fail": { label: "Judge Fail", role: "Validator rejected the conclusion and asked for another iteration.", accent: "#f87171" },
+        "ds-end": { label: "Deep Search End", role: "Final conclusion emitted at the end.", accent: "#38bdf8" }
+      };
+
+      const GOAL_EVENT_TYPE_META = {
+        sse_connected: { label: "SSE Connected", role: "The server confirmed that /goal/events is attached for this goal.", accent: "#34d399" },
+        goal_create_started: { label: "Goal Create Started", role: "The server accepted the request and started CreateUserGoal().", accent: "#38bdf8" },
+        goal_created: { label: "Goal Created", role: "CreateUserGoal() returned a valid Goal pointer.", accent: "#34d399" },
+        goal_create_failed: { label: "Goal Create Failed", role: "CreateUserGoal() failed or returned null.", accent: "#fb7185" }
       };
 
       const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
@@ -1085,7 +1083,7 @@
         return Number.isFinite(parsed) ? parsed : fallback;
       };
 
-      const state = {
+      const graphState = {
         allNodes: [],
         roots: [],
         nodeById: new Map(),
@@ -1093,15 +1091,12 @@
         allEdges: [],
         focusPath: [],
         explodeMode: false,
-        currentLayerParents: [],
         visibleNodes: [],
         visibleEdges: [],
         visibleGroups: [],
         hoveredNode: null,
         hoveredGroup: null,
-        hoveredEdge: null,
         selectedNode: null,
-        selectedEdge: null,
         loading: true,
         error: null,
         requestSerial: 0,
@@ -1109,12 +1104,7 @@
         height: 0,
         dpr: 1,
         lastFrame: performance.now(),
-        camera: {
-          x: 0,
-          y: 0,
-          scale: 1
-        },
-        navPulse: null,
+        camera: { x: 0, y: 0, scale: 1 },
         pointer: {
           isDown: false,
           dragging: false,
@@ -1130,16 +1120,29 @@
       };
 
       const researchState = {
+        sessions: [],
         eventSource: null,
         connectionState: "disconnected",
         startInFlight: false,
-        connectedResearchId: "",
-        activeResearchId: "",
-        preparedResearchId: "",
+        connectedId: "",
+        activeId: "",
+        preparedId: "",
         statusDetail: "Ready.",
         runStateLabel: "Idle",
-        lastEventLabel: "No events yet",
-        events: [],
+        firstServerEventPerf: null,
+        connectPromise: null,
+        connectSerial: 0
+      };
+
+      const goalState = {
+        goals: [],
+        eventSource: null,
+        connectionState: "disconnected",
+        createInFlight: false,
+        connectedId: "",
+        activeId: "",
+        statusDetail: "Ready.",
+        runStateLabel: "Idle",
         firstServerEventPerf: null,
         connectPromise: null,
         connectSerial: 0
@@ -1152,57 +1155,72 @@
         messageStatus: "Ready."
       };
 
-      const timelineState = {
-        width: 0,
-        height: 0,
-        dpr: 1,
-        hoveredNode: null,
-        selectedNode: null,
-        mouseX: 0,
-        mouseY: 0,
-        positions: [],
-        cameraX: 0,
-        isPointerDown: false,
-        isDragging: false,
-        pointerId: null,
-        pointerStartX: 0,
-        pointerLastX: 0,
-        dragDistance: 0,
-        movedDuringPointer: false
-      };
-
-      function sanitizeResearchId(value) {
+      function sanitizeId(value) {
         const cleaned = String(value || "")
           .trim()
           .replace(/[^a-zA-Z0-9_-]/g, "-")
           .replace(/-+/g, "-")
           .replace(/^-|-$/g, "");
-
         return cleaned.slice(0, 63) || "default";
       }
 
-      function generateResearchId() {
+      function generateId(prefix) {
         const timePart = Date.now().toString(36);
-
         if (window.crypto && typeof window.crypto.getRandomValues === "function") {
-          const bytes = new Uint8Array(18);
+          const bytes = new Uint8Array(16);
           window.crypto.getRandomValues(bytes);
           const randomPart = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-          return sanitizeResearchId(`rs-${timePart}-${randomPart}`);
+          return sanitizeId(`${prefix}-${timePart}-${randomPart}`);
         }
-
-        const randomPart = Array.from({ length: 5 }, () => (
-          Math.floor(Math.random() * 0xffffffff).toString(16).padStart(8, "0")
-        )).join("");
-        return sanitizeResearchId(`rs-${timePart}-${randomPart}`);
+        return sanitizeId(`${prefix}-${timePart}-${Math.random().toString(36).slice(2)}`);
       }
 
       function ensurePreparedResearchId(forceNew = false) {
-        if (forceNew || !researchState.preparedResearchId) {
-          researchState.preparedResearchId = generateResearchId();
-        }
+        if (forceNew || !researchState.preparedId) researchState.preparedId = generateId("rs");
+        return researchState.preparedId;
+      }
 
-        return researchState.preparedResearchId;
+      function safeLoadJson(key, fallback) {
+        try {
+          const raw = window.localStorage.getItem(key);
+          if (!raw) return fallback;
+          const parsed = JSON.parse(raw);
+          return parsed ?? fallback;
+        } catch (error) {
+          console.warn(`Failed to load ${key}`, error);
+          return fallback;
+        }
+      }
+
+      function safeSaveJson(key, value) {
+        try {
+          window.localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+          console.warn(`Failed to save ${key}`, error);
+        }
+      }
+
+      function formatClock(date) {
+        return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}.${String(date.getMilliseconds()).padStart(3, "0")}`;
+      }
+
+      function formatLocalTime(value) {
+        if (!value) return "unknown";
+        const date = new Date(value);
+        return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+      }
+
+      function formatElapsedMs(value) {
+        return `+${(value / 1000).toFixed(3)}s`;
+      }
+
+      function formatPayload(value) {
+        const text = typeof value === "string" ? value.trim() : String(value ?? "");
+        if (!text) return "";
+        if ((text.startsWith("{") && text.endsWith("}")) || (text.startsWith("[") && text.endsWith("]"))) {
+          try { return JSON.stringify(JSON.parse(text), null, 2); } catch (_) { return text; }
+        }
+        return text;
       }
 
       function normalizeMinRounds(value) {
@@ -1210,48 +1228,12 @@
         return Number.isFinite(parsed) && parsed > 0 ? parsed : 2;
       }
 
-      function readResearchForm() {
-        const id = ensurePreparedResearchId();
-        const taskName = researchTaskInput.value.trim();
-        const minRounds = normalizeMinRounds(researchMinRoundsInput.value);
-
-        researchMinRoundsInput.value = String(minRounds);
-
-        return { id, taskName, minRounds };
-      }
-
-      function buildResearchEventsUrl(id) {
-        return `${RESEARCH_EVENTS_ENDPOINT}?id=${encodeURIComponent(id)}`;
-      }
-
-      function formatClock(date) {
-        const hours = String(date.getHours()).padStart(2, "0");
-        const minutes = String(date.getMinutes()).padStart(2, "0");
-        const seconds = String(date.getSeconds()).padStart(2, "0");
-        const millis = String(date.getMilliseconds()).padStart(3, "0");
-        return `${hours}:${minutes}:${seconds}.${millis}`;
-      }
-
-      function formatElapsedMs(value) {
-        return `+${(value / 1000).toFixed(3)}s`;
-      }
-
-      function formatResearchPayload(value) {
-        const text = typeof value === "string" ? value.trim() : String(value ?? "");
-
-        if (!text) {
-          return "";
+      function buildTransportMessage(error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (error instanceof TypeError || /Failed to fetch|timed out|Could not connect/i.test(message)) {
+          return `Transport unavailable. ${SERVER_OFFLINE_HINT}`;
         }
-
-        if ((text.startsWith("{") && text.endsWith("}")) || (text.startsWith("[") && text.endsWith("]"))) {
-          try {
-            return JSON.stringify(JSON.parse(text), null, 2);
-          } catch (error) {
-            return text;
-          }
-        }
-
-        return text;
+        return message;
       }
 
       function getResearchEventMeta(type) {
@@ -1262,22 +1244,17 @@
         };
       }
 
-      function isRoundStartEvent(type) {
-        return type === "round-start";
+      function getGoalEventMeta(type) {
+        return GOAL_EVENT_TYPE_META[type] || {
+          label: type || "Unknown Goal Event",
+          role: "Goal SSE event without an explicit client-side classification.",
+          accent: "#94a3b8"
+        };
       }
 
-      function resetResearchLog(activeResearchId = researchState.activeResearchId) {
-        researchState.activeResearchId = activeResearchId;
-        researchState.events = [];
-        researchState.firstServerEventPerf = null;
-        researchState.lastEventLabel = "No events yet";
-      }
-
-      function updateConnectionIndicator() {
-        const stateName = researchState.connectionState;
-        researchConnectionState.dataset.state = stateName;
-        researchConnectionState.classList.remove("is-connected", "is-disconnected", "is-connecting", "is-reconnecting", "is-error");
-
+      function updateConnectionIndicator(root, iconNode, textNode, stateName) {
+        root.dataset.state = stateName;
+        root.classList.remove("is-connected", "is-disconnected", "is-connecting", "is-reconnecting", "is-error");
         let text = "Disconnected";
         let icon = WARNING_SVG;
         let cls = "is-disconnected";
@@ -1288,262 +1265,948 @@
           cls = "is-connected";
         } else if (stateName === "connecting") {
           text = "Connecting";
-          icon = WARNING_SVG;
           cls = "is-connecting";
         } else if (stateName === "reconnecting") {
           text = "Reconnecting";
-          icon = WARNING_SVG;
           cls = "is-reconnecting";
         } else if (stateName === "error") {
           text = "Disconnected";
-          icon = WARNING_SVG;
           cls = "is-error";
         }
 
-        researchConnectionState.classList.add(cls);
-        researchConnectionText.textContent = text;
-        researchConnectionIcon.innerHTML = icon;
+        root.classList.add(cls);
+        textNode.textContent = text;
+        iconNode.innerHTML = icon;
+      }
+
+      class TimelineView {
+        constructor(options) {
+          this.canvas = document.getElementById(options.canvasId);
+          this.ctx = this.canvas.getContext("2d");
+          this.tooltip = document.getElementById(options.tooltipId);
+          this.tooltipTitle = document.getElementById(options.tooltipTitleId);
+          this.tooltipTime = document.getElementById(options.tooltipTimeId);
+          this.tooltipRole = document.getElementById(options.tooltipRoleId);
+          this.tooltipPayload = document.getElementById(options.tooltipPayloadId);
+          this.inspector = document.getElementById(options.inspectorId);
+          this.inspectorTitle = document.getElementById(options.inspectorTitleId);
+          this.inspectorMeta = document.getElementById(options.inspectorMetaId);
+          this.inspectorRole = document.getElementById(options.inspectorRoleId);
+          this.inspectorBody = document.getElementById(options.inspectorBodyId);
+          this.inspectorClose = document.getElementById(options.inspectorCloseId);
+          this.emptyTitle = options.emptyTitle;
+          this.emptySubtitle = options.emptySubtitle;
+          this.getMeta = options.getMeta;
+          this.events = [];
+          this.width = 0;
+          this.height = 0;
+          this.dpr = 1;
+          this.hoveredNode = null;
+          this.selectedNode = null;
+          this.positions = [];
+          this.cameraX = 0;
+          this.mouseX = 0;
+          this.mouseY = 0;
+          this.isPointerDown = false;
+          this.isDragging = false;
+          this.pointerId = null;
+          this.pointerStartX = 0;
+          this.pointerLastX = 0;
+          this.canvas.style.cursor = "grab";
+          this.bind();
+        }
+
+        bind() {
+          this.canvas.addEventListener("pointerdown", (event) => this.onPointerDown(event));
+          this.canvas.addEventListener("pointermove", (event) => this.onPointerMove(event));
+          this.canvas.addEventListener("pointerup", (event) => this.onPointerUp(event));
+          this.canvas.addEventListener("pointercancel", () => this.onPointerCancel());
+          this.canvas.addEventListener("pointerleave", () => this.onPointerLeave());
+          this.inspectorClose.addEventListener("click", () => this.closeInspector());
+        }
+
+        setEvents(events) {
+          this.events = Array.isArray(events) ? events : [];
+          this.render();
+        }
+
+        resize() {
+          const rect = this.canvas.getBoundingClientRect();
+          this.width = Math.max(1, Math.round(rect.width));
+          this.height = Math.max(1, Math.round(rect.height));
+          this.dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+          this.canvas.width = Math.round(this.width * this.dpr);
+          this.canvas.height = Math.round(this.height * this.dpr);
+          this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+        }
+
+        getPositions() {
+          const events = this.events;
+          const topPadding = 132;
+          const bottomPadding = 96;
+          const leftPadding = 76;
+          const rightPadding = 80;
+          const usableWidth = Math.max(220, this.width - leftPadding - rightPadding);
+          const baselineY = Math.round(this.height * 0.56);
+          const amplitude = Math.min(96, Math.max(34, this.height * 0.12));
+
+          if (events.length === 0) return [];
+
+          if (events.length === 1) {
+            const entry = events[0];
+            const meta = this.getMeta(entry.type);
+            return [{
+              entry,
+              x: leftPadding + usableWidth * 0.5 + this.cameraX,
+              y: baselineY,
+              radius: meta.small ? 4 : 16,
+              meta,
+              isSmall: Boolean(meta.small)
+            }];
+          }
+
+          const stepX = Math.max(112, usableWidth / 5);
+          const totalWidth = Math.max(usableWidth, (events.length - 1) * stepX);
+
+          return events.map((entry, index) => {
+            const progress = index / (events.length - 1);
+            const x = leftPadding + progress * totalWidth + this.cameraX;
+            const wave = Math.sin(progress * Math.PI * Math.max(1, Math.min(events.length - 1, 5)));
+            const offsetY = (index % 2 === 0 ? -1 : 1) * amplitude * (0.34 + Math.abs(wave) * 0.66);
+            const meta = this.getMeta(entry.type);
+            const isSmall = Boolean(meta.small);
+            return {
+              entry,
+              x,
+              y: clamp(baselineY + offsetY, topPadding, this.height - bottomPadding),
+              radius: isSmall ? 4 : clamp(12 + Math.min(18, Math.sqrt(Math.max(0, String(entry.data || "").length)) * 0.6), 12, 22),
+              meta,
+              isSmall
+            };
+          });
+        }
+
+        pick(x, y) {
+          for (let index = this.positions.length - 1; index >= 0; index -= 1) {
+            const item = this.positions[index];
+            const dx = x - item.x;
+            const dy = y - item.y;
+            const radius = item.radius + (item.isSmall ? 8 : 6);
+            if (dx * dx + dy * dy <= radius * radius) return item;
+          }
+          return null;
+        }
+
+        updateTooltip() {
+          const item = this.hoveredNode;
+          if (!item) {
+            this.tooltip.classList.remove("is-visible");
+            this.tooltip.setAttribute("aria-hidden", "true");
+            return;
+          }
+
+          this.tooltipTitle.textContent = `${item.entry.sequence}. ${item.meta.label}`;
+          this.tooltipTime.textContent = item.entry.elapsedLabel || "";
+          this.tooltipRole.textContent = "Click to inspect";
+          this.tooltipPayload.textContent = item.entry.receivedClock || "";
+
+          const tooltipWidth = 260;
+          const left = clamp(this.mouseX + 18, 12, this.width - tooltipWidth - 12);
+          const top = clamp(this.mouseY + 18, 12, this.height - 120);
+          this.tooltip.style.left = `${left}px`;
+          this.tooltip.style.top = `${top}px`;
+          this.tooltip.style.width = `${tooltipWidth}px`;
+          this.tooltip.classList.add("is-visible");
+          this.tooltip.setAttribute("aria-hidden", "false");
+        }
+
+        openInspector(item) {
+          if (!item) return;
+          this.selectedNode = item;
+          this.inspectorTitle.textContent = `${item.entry.sequence}. ${item.meta.label}`;
+          this.inspectorMeta.textContent = `${item.entry.receivedClock || ""} · ${item.entry.elapsedLabel || ""} · type=${item.entry.type}`;
+          this.inspectorRole.textContent = item.meta.role;
+          this.inspectorBody.textContent = formatPayload(item.entry.data) || "(empty)";
+          this.inspector.classList.add("is-visible");
+          this.inspector.setAttribute("aria-hidden", "false");
+          this.render();
+        }
+
+        closeInspector() {
+          this.selectedNode = null;
+          this.inspector.classList.remove("is-visible");
+          this.inspector.setAttribute("aria-hidden", "true");
+          this.render();
+        }
+
+        renderEmpty() {
+          const c = this.ctx;
+          c.clearRect(0, 0, this.width, this.height);
+          c.fillStyle = "#030508";
+          c.fillRect(0, 0, this.width, this.height);
+          c.save();
+          c.fillStyle = "rgba(255,255,255,.94)";
+          c.font = "750 24px system-ui, sans-serif";
+          c.textAlign = "center";
+          c.textBaseline = "middle";
+          c.fillText(this.emptyTitle, this.width * 0.5, this.height * 0.48);
+          c.fillStyle = "rgba(255,255,255,.62)";
+          c.font = "500 13px system-ui, sans-serif";
+          c.fillText(this.emptySubtitle, this.width * 0.5, this.height * 0.48 + 30);
+          c.restore();
+        }
+
+        render() {
+          this.resize();
+          const c = this.ctx;
+          c.clearRect(0, 0, this.width, this.height);
+          c.fillStyle = "#030508";
+          c.fillRect(0, 0, this.width, this.height);
+
+          if (this.events.length === 0) {
+            this.positions = [];
+            this.hoveredNode = null;
+            this.updateTooltip();
+            this.renderEmpty();
+            return;
+          }
+
+          this.positions = this.getPositions();
+          const baselineY = Math.round(this.height * 0.56);
+
+          c.save();
+          c.strokeStyle = "rgba(255,255,255,.08)";
+          c.lineWidth = 1;
+          c.setLineDash([6, 10]);
+          c.beginPath();
+          c.moveTo(48, baselineY);
+          c.lineTo(this.width - 48, baselineY);
+          c.stroke();
+          c.restore();
+
+          if (this.positions.length > 1) {
+            c.save();
+            c.strokeStyle = "rgba(125,211,252,.32)";
+            c.lineWidth = 1.5;
+            c.setLineDash([3, 8]);
+            c.beginPath();
+            c.moveTo(this.positions[0].x, this.positions[0].y);
+            for (let index = 1; index < this.positions.length; index += 1) {
+              const prev = this.positions[index - 1];
+              const curr = this.positions[index];
+              const cpx = (prev.x + curr.x) * 0.5;
+              c.bezierCurveTo(cpx, prev.y, cpx, curr.y, curr.x, curr.y);
+            }
+            c.stroke();
+            c.restore();
+          }
+
+          c.save();
+          c.textAlign = "center";
+          c.textBaseline = "bottom";
+
+          for (const item of this.positions) {
+            const hovered = this.hoveredNode && this.hoveredNode.entry.sequence === item.entry.sequence;
+            const selected = this.selectedNode && this.selectedNode.entry.sequence === item.entry.sequence;
+            const radius = item.isSmall ? item.radius + (hovered ? 2 : selected ? 1 : 0) : item.radius + (hovered ? 3 : selected ? 2 : 0);
+
+            if (!item.isSmall) {
+              c.save();
+              c.beginPath();
+              c.arc(item.x, item.y, radius + 10, 0, Math.PI * 2);
+              c.fillStyle = selected ? "rgba(255,255,255,.1)" : hovered ? "rgba(255,255,255,.08)" : "rgba(255,255,255,.03)";
+              c.fill();
+              c.restore();
+            }
+
+            c.beginPath();
+            c.arc(item.x, item.y, radius, 0, Math.PI * 2);
+            c.fillStyle = "#05070a";
+            c.fill();
+            c.strokeStyle = item.meta.accent;
+            c.lineWidth = item.isSmall ? (selected ? 2.5 : hovered ? 2.2 : 1.8) : (selected ? 4.5 : hovered ? 4 : 2.5);
+            c.stroke();
+
+            if (!item.isSmall) {
+              c.fillStyle = "#fff";
+              c.font = "750 10px system-ui, sans-serif";
+              c.textBaseline = "middle";
+              c.fillText(String(item.entry.sequence), item.x, item.y + 0.5);
+
+              c.textBaseline = "bottom";
+              c.font = hovered || selected ? "750 12px system-ui, sans-serif" : "650 11px system-ui, sans-serif";
+              c.fillStyle = hovered || selected ? "#fff" : "rgba(255,255,255,.72)";
+              c.fillText(item.meta.label, item.x, item.y - radius - 12);
+
+              c.textBaseline = "top";
+              c.font = "650 10px ui-monospace, SFMono-Regular, Menlo, monospace";
+              c.fillStyle = "rgba(255,255,255,.5)";
+              c.fillText(item.entry.elapsedLabel || "", item.x, item.y + radius + 10);
+            }
+          }
+
+          c.restore();
+          this.updateTooltip();
+        }
+
+        onPointerDown(event) {
+          const rect = this.canvas.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          this.isPointerDown = true;
+          this.isDragging = false;
+          this.pointerId = event.pointerId;
+          this.pointerStartX = x;
+          this.pointerLastX = x;
+          this.mouseX = x;
+          this.mouseY = y;
+          this.canvas.setPointerCapture(event.pointerId);
+        }
+
+        onPointerMove(event) {
+          const rect = this.canvas.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          this.mouseX = x;
+          this.mouseY = y;
+
+          if (this.isPointerDown) {
+            const deltaX = x - this.pointerLastX;
+            if (!this.isDragging && Math.abs(x - this.pointerStartX) > 4) this.isDragging = true;
+            if (this.isDragging) {
+              this.cameraX += deltaX;
+              this.hoveredNode = null;
+              this.canvas.style.cursor = "grabbing";
+              this.render();
+            }
+          } else {
+            this.hoveredNode = this.pick(x, y);
+            this.canvas.style.cursor = this.hoveredNode ? "pointer" : "grab";
+            this.render();
+          }
+
+          this.pointerLastX = x;
+        }
+
+        onPointerUp(event) {
+          const rect = this.canvas.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          const wasDragging = this.isDragging;
+
+          if (this.pointerId !== null) this.canvas.releasePointerCapture(this.pointerId);
+          this.isPointerDown = false;
+          this.isDragging = false;
+          this.pointerId = null;
+          this.pointerLastX = x;
+          this.mouseX = x;
+          this.mouseY = y;
+
+          if (!wasDragging) {
+            const hit = this.pick(x, y);
+            this.hoveredNode = hit;
+            if (hit) this.openInspector(hit);
+          }
+
+          this.canvas.style.cursor = this.hoveredNode ? "pointer" : "grab";
+          this.render();
+        }
+
+        onPointerLeave() {
+          if (!this.isPointerDown) {
+            this.hoveredNode = null;
+            this.canvas.style.cursor = "grab";
+            this.updateTooltip();
+            this.render();
+          }
+        }
+
+        onPointerCancel() {
+          this.isPointerDown = false;
+          this.isDragging = false;
+          this.pointerId = null;
+          this.hoveredNode = null;
+          this.canvas.style.cursor = "grab";
+          this.updateTooltip();
+          this.render();
+        }
+      }
+
+      const researchTimeline = new TimelineView({
+        canvasId: "timeline-canvas",
+        tooltipId: "timeline-tooltip",
+        tooltipTitleId: "timeline-tooltip-title",
+        tooltipTimeId: "timeline-tooltip-time",
+        tooltipRoleId: "timeline-tooltip-role",
+        tooltipPayloadId: "timeline-tooltip-payload",
+        inspectorId: "timeline-inspector",
+        inspectorTitleId: "timeline-inspector-title",
+        inspectorMetaId: "timeline-inspector-meta",
+        inspectorRoleId: "timeline-inspector-role",
+        inspectorBodyId: "timeline-inspector-body",
+        inspectorCloseId: "timeline-inspector-close",
+        emptyTitle: "No deep-search events",
+        emptySubtitle: "Start or open a session to populate the timeline.",
+        getMeta: getResearchEventMeta
+      });
+
+      const goalTimeline = new TimelineView({
+        canvasId: "goal-timeline-canvas",
+        tooltipId: "goal-timeline-tooltip",
+        tooltipTitleId: "goal-timeline-tooltip-title",
+        tooltipTimeId: "goal-timeline-tooltip-time",
+        tooltipRoleId: "goal-timeline-tooltip-role",
+        tooltipPayloadId: "goal-timeline-tooltip-payload",
+        inspectorId: "goal-timeline-inspector",
+        inspectorTitleId: "goal-timeline-inspector-title",
+        inspectorMetaId: "goal-timeline-inspector-meta",
+        inspectorRoleId: "goal-timeline-inspector-role",
+        inspectorBodyId: "goal-timeline-inspector-body",
+        inspectorCloseId: "goal-timeline-inspector-close",
+        emptyTitle: "No goal events",
+        emptySubtitle: "Create or open a goal to populate the timeline.",
+        getMeta: getGoalEventMeta
+      });
+
+      function findResearchSession(id) {
+        return researchState.sessions.find((session) => session.id === id) || null;
+      }
+
+      function findGoal(id) {
+        return goalState.goals.find((goal) => goal.id === id) || null;
+      }
+
+      function saveResearchSessions() {
+        safeSaveJson(STORAGE_KEYS.researchSessions, researchState.sessions);
+      }
+
+      function saveGoals() {
+        safeSaveJson(STORAGE_KEYS.goals, goalState.goals);
+      }
+
+      function makeResearchSession({ id, taskName, minRounds }) {
+        const now = Date.now();
+        return { id, taskName, minRounds, status: "Starting", createdAt: now, updatedAt: now, events: [] };
+      }
+
+      function makeGoal({ id, title, extraInfo }) {
+        const now = Date.now();
+        return { id, title, extraInfo, status: "Creating", createdAt: now, updatedAt: now, events: [] };
+      }
+
+      function moveToTop(list, id) {
+        const index = list.findIndex((item) => item.id === id);
+        if (index <= 0) return;
+        const [item] = list.splice(index, 1);
+        list.unshift(item);
+      }
+
+      function loadLocalState() {
+        const sessions = safeLoadJson(STORAGE_KEYS.researchSessions, []);
+        const goals = safeLoadJson(STORAGE_KEYS.goals, []);
+        researchState.sessions = Array.isArray(sessions) ? sessions : [];
+        goalState.goals = Array.isArray(goals) ? goals : [];
+
+        for (const session of researchState.sessions) {
+          if (!Array.isArray(session.events)) session.events = [];
+        }
+        for (const goal of goalState.goals) {
+          if (!Array.isArray(goal.events)) goal.events = [];
+        }
+
+        if (researchState.sessions.length > 0) activateResearchSession(researchState.sessions[0].id, false);
+        if (goalState.goals.length > 0) activateGoal(goalState.goals[0].id, false);
+      }
+
+      function getActiveResearchEvents() {
+        const session = findResearchSession(researchState.activeId);
+        return session && Array.isArray(session.events) ? session.events : [];
+      }
+
+      function getActiveGoalEvents() {
+        const goal = findGoal(goalState.activeId);
+        return goal && Array.isArray(goal.events) ? goal.events : [];
+      }
+
+      function renderResearchSessionList() {
+        if (researchState.sessions.length === 0) {
+          researchSessionList.innerHTML = `<div class="session-empty">No saved deep-search sessions yet.</div>`;
+          return;
+        }
+        researchSessionList.innerHTML = "";
+        for (const session of researchState.sessions) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "session-item";
+          button.classList.toggle("is-active", session.id === researchState.activeId);
+          const title = document.createElement("div");
+          title.className = "session-item__title";
+          title.textContent = session.taskName || "Untitled deep search";
+          const meta = document.createElement("div");
+          meta.className = "session-item__meta";
+          meta.textContent = `${session.events.length} events · ${formatLocalTime(session.createdAt)} · ${session.id}`;
+          const status = document.createElement("div");
+          status.className = "session-item__status";
+          status.textContent = session.status || "Saved";
+          button.append(title, meta, status);
+          button.addEventListener("click", () => activateResearchSession(session.id, true));
+          researchSessionList.appendChild(button);
+        }
+      }
+
+      function renderGoalList() {
+        if (goalState.goals.length === 0) {
+          goalList.innerHTML = `<div class="session-empty">No saved goals yet.</div>`;
+          return;
+        }
+        goalList.innerHTML = "";
+        for (const goal of goalState.goals) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "session-item";
+          button.classList.toggle("is-active", goal.id === goalState.activeId);
+          const title = document.createElement("div");
+          title.className = "session-item__title";
+          title.textContent = goal.title || "Untitled goal";
+          const meta = document.createElement("div");
+          meta.className = "session-item__meta";
+          meta.textContent = `${goal.events.length} events · ${formatLocalTime(goal.createdAt)} · ${goal.id}`;
+          const status = document.createElement("div");
+          status.className = "session-item__status";
+          status.textContent = goal.status || "Saved";
+          button.append(title, meta, status);
+          button.addEventListener("click", () => activateGoal(goal.id, true));
+          goalList.appendChild(button);
+        }
+      }
+
+      function activateResearchSession(id, switchView) {
+        const session = findResearchSession(id);
+        if (!session) return;
+        researchState.activeId = session.id;
+        researchTaskInput.value = session.taskName || "";
+        researchMinRoundsInput.value = String(session.minRounds || 2);
+        researchState.runStateLabel = session.status || "Saved";
+        researchState.statusDetail = `Opened saved session ${session.id}.`;
+        researchTimeline.setEvents(session.events);
+        renderResearchSessionList();
+        updateResearchPanel();
+        if (switchView) setActiveView("deep-search");
+      }
+
+      function activateGoal(id, switchView) {
+        const goal = findGoal(id);
+        if (!goal) return;
+        goalState.activeId = goal.id;
+        goalTitleInput.value = goal.title || "";
+        goalExtraInfoInput.value = goal.extraInfo || "";
+        goalState.runStateLabel = goal.status || "Saved";
+        goalState.statusDetail = `Opened saved goal ${goal.id}.`;
+        goalTimeline.setEvents(goal.events);
+        renderGoalList();
+        updateGoalPanel();
+        if (switchView) setActiveView("goal");
+      }
+
+      function updateResearchPanel() {
+        updateConnectionIndicator(researchConnectionState, researchConnectionIcon, researchConnectionText, researchState.connectionState);
+        const events = getActiveResearchEvents();
+        const hasTask = researchTaskInput.value.trim().length > 0;
+        researchRunState.textContent = researchState.runStateLabel;
+        researchStatusDetail.textContent = researchState.statusDetail;
+        startResearchButton.disabled = researchState.startInFlight || !hasTask;
+        startResearchButton.textContent = researchState.startInFlight ? "Running..." : "Start Deep Search";
+        document.getElementById("timeline-total-chip").textContent = `${events.length} ${events.length === 1 ? "Event" : "Events"}`;
+        document.getElementById("timeline-session-chip").textContent = researchState.activeId ? `Session ${researchState.activeId}` : "No Session";
+        document.getElementById("timeline-header-subtitle").textContent = events.length > 0
+          ? "Chronological nodes are connected in order of arrival. Hover and click to inspect raw payloads."
+          : "Start or open a deep-search session to populate the timeline.";
+        renderResearchSessionList();
+      }
+
+      function updateGoalPanel() {
+        updateConnectionIndicator(goalConnectionState, goalConnectionIcon, goalConnectionText, goalState.connectionState);
+        const activeGoal = findGoal(goalState.activeId);
+        const events = getActiveGoalEvents();
+        goalRunState.textContent = goalState.runStateLabel;
+        goalStatusDetail.textContent = goalState.statusDetail;
+        createGoalButton.disabled = goalState.createInFlight || goalTitleInput.value.trim().length === 0;
+        createGoalButton.textContent = goalState.createInFlight ? "Creating..." : "Create Goal";
+        document.getElementById("goal-timeline-total-chip").textContent = `${events.length} ${events.length === 1 ? "Event" : "Events"}`;
+        document.getElementById("goal-timeline-session-chip").textContent = activeGoal ? `Goal ${activeGoal.id}` : "No Goal";
+        document.getElementById("goal-timeline-header-subtitle").textContent = activeGoal
+          ? `Timeline for: ${activeGoal.title}`
+          : "Create or open a goal to inspect goal_emit messages.";
+        renderGoalList();
       }
 
       function updateViewSwitcher() {
         const graphActive = uiState.activeView === "graph";
+        const deepActive = uiState.activeView === "deep-search";
+        const goalActive = uiState.activeView === "goal";
         graphView.classList.toggle("is-active", graphActive);
-        deepSearchView.classList.toggle("is-active", !graphActive);
+        deepSearchView.classList.toggle("is-active", deepActive);
+        goalView.classList.toggle("is-active", goalActive);
         graphViewToggle.classList.toggle("is-active", graphActive);
-        deepSearchViewToggle.classList.toggle("is-active", !graphActive);
+        deepSearchViewToggle.classList.toggle("is-active", deepActive);
+        goalViewToggle.classList.toggle("is-active", goalActive);
         graphViewToggle.setAttribute("aria-pressed", String(graphActive));
-        deepSearchViewToggle.setAttribute("aria-pressed", String(!graphActive));
-        if (!graphActive) {
-          resizeTimelineCanvas();
-          renderTimeline();
-        }
+        deepSearchViewToggle.setAttribute("aria-pressed", String(deepActive));
+        goalViewToggle.setAttribute("aria-pressed", String(goalActive));
+        if (deepActive) researchTimeline.render();
+        if (goalActive) goalTimeline.render();
       }
 
       function setActiveView(view) {
-        uiState.activeView = view === "deep-search" ? "deep-search" : "graph";
+        uiState.activeView = view === "deep-search" || view === "goal" ? view : "graph";
         updateViewSwitcher();
       }
 
-      function updateResearchPanel() {
-        updateConnectionIndicator();
-
-        researchRunState.textContent = researchState.runStateLabel;
-        researchStatusDetail.textContent = researchState.statusDetail;
-
-        startResearchButton.disabled = researchState.startInFlight || readResearchForm().taskName.length === 0;
-        startResearchButton.textContent = researchState.startInFlight ? "Running..." : "Start Deep Search";
-
-        timelineTotalChip.textContent = `${researchState.events.length} ${researchState.events.length === 1 ? "Event" : "Events"}`;
-        timelineSessionChip.textContent = researchState.activeResearchId ? `Session ${researchState.activeResearchId}` : "No Session";
-        timelineHeaderSubtitle.textContent = researchState.events.length > 0
-          ? "Chronological nodes are connected in order of arrival. Hover any node to inspect the raw emitted value and metadata."
-          : "No deep-search events yet. Start a run to populate the timeline.";
+      function newResearchSession() {
+        closeResearchStream();
+        researchState.preparedId = generateId("rs");
+        researchState.activeId = researchState.preparedId;
+        researchState.firstServerEventPerf = null;
+        researchState.connectionState = "disconnected";
+        researchState.runStateLabel = "Idle";
+        researchState.statusDetail = "Ready for a new deep-search session.";
+        researchTaskInput.value = "";
+        researchMinRoundsInput.value = "2";
+        researchTimeline.setEvents([]);
+        researchTimeline.closeInspector();
+        updateResearchPanel();
+        setActiveView("deep-search");
+        researchTaskInput.focus();
       }
 
-      function buildResearchTransportMessage(error) {
-        const message = error instanceof Error ? error.message : String(error);
+      function buildResearchEventsUrl(id) {
+        return `${RESEARCH_EVENTS_ENDPOINT}?id=${encodeURIComponent(id)}`;
+      }
 
-        if (error instanceof TypeError || /Failed to fetch|timed out|Could not connect/i.test(message)) {
-          return `Research transport unavailable. ${SERVER_OFFLINE_HINT}`;
+      function buildGoalEventsUrl(id) {
+        return `${GOAL_EVENTS_ENDPOINT}?id=${encodeURIComponent(id)}`;
+      }
+
+      function closeResearchStream() {
+        if (researchState.eventSource) researchState.eventSource.close();
+        researchState.eventSource = null;
+        researchState.connectPromise = null;
+      }
+
+      function closeGoalStream() {
+        if (goalState.eventSource) goalState.eventSource.close();
+        goalState.eventSource = null;
+        goalState.connectPromise = null;
+      }
+
+      function connectStream(kind, id, forceReconnect) {
+        const isGoal = kind === "goal";
+        const store = isGoal ? goalState : researchState;
+        const buildUrl = isGoal ? buildGoalEventsUrl : buildResearchEventsUrl;
+        const closeStream = isGoal ? closeGoalStream : closeResearchStream;
+        const updatePanel = isGoal ? updateGoalPanel : updateResearchPanel;
+        const record = isGoal ? recordGoalEvent : recordResearchEvent;
+        const targetId = sanitizeId(id);
+
+        if (!forceReconnect && store.eventSource && store.connectedId === targetId && store.connectionState === "connected") {
+          return Promise.resolve();
         }
 
-        return message;
+        if (!forceReconnect && store.connectPromise && store.connectedId === targetId) {
+          return store.connectPromise;
+        }
+
+        closeStream();
+        store.connectSerial += 1;
+        const serial = store.connectSerial;
+        store.connectedId = targetId;
+        store.activeId = targetId;
+        store.connectionState = "connecting";
+        store.statusDetail = isGoal ? "Connecting goal SSE stream." : "Connecting SSE stream.";
+        updatePanel();
+
+        const source = new EventSource(buildUrl(targetId));
+        store.eventSource = source;
+
+        store.connectPromise = new Promise((resolve, reject) => {
+          let settled = false;
+          const timeoutId = window.setTimeout(() => {
+            if (settled || store.connectSerial !== serial) return;
+            settled = true;
+            closeStream();
+            store.connectionState = "error";
+            store.statusDetail = `SSE connection timed out. ${SERVER_OFFLINE_HINT}`;
+            updatePanel();
+            reject(new Error("Timed out while connecting SSE."));
+          }, 5000);
+
+          const settleSuccess = () => {
+            if (settled || store.connectSerial !== serial) return;
+            settled = true;
+            window.clearTimeout(timeoutId);
+            store.connectPromise = null;
+            resolve();
+          };
+
+          const settleFailure = (message) => {
+            if (settled || store.connectSerial !== serial) return;
+            settled = true;
+            window.clearTimeout(timeoutId);
+            store.connectPromise = null;
+            reject(new Error(message));
+          };
+
+          source.onopen = () => {
+            if (store.eventSource !== source) return;
+            store.connectionState = "connected";
+            store.statusDetail = "SSE connected.";
+            updatePanel();
+            settleSuccess();
+          };
+
+          source.onmessage = (messageEvent) => {
+            if (store.eventSource !== source) return;
+            try {
+              record(JSON.parse(messageEvent.data));
+            } catch (error) {
+              console.error("Failed to parse SSE payload", error, messageEvent.data);
+              store.connectionState = "error";
+              store.statusDetail = "Received malformed SSE payload from server.";
+              updatePanel();
+            }
+          };
+
+          source.onerror = () => {
+            if (store.eventSource !== source) return;
+            if (source.readyState === EventSource.CONNECTING) {
+              store.connectionState = "reconnecting";
+              store.statusDetail = "Reconnecting SSE stream.";
+              updatePanel();
+              return;
+            }
+            store.connectionState = "error";
+            store.statusDetail = `SSE connection closed. ${SERVER_OFFLINE_HINT}`;
+            closeStream();
+            updatePanel();
+            settleFailure("Could not connect SSE.");
+          };
+        });
+
+        return store.connectPromise;
       }
 
       function updateResearchRunState(type) {
-        if (type === "research_started" || type === "ds-start") {
-          researchState.runStateLabel = "Running";
-          return;
-        }
-
-        if (type === "judge-fail") {
-          researchState.runStateLabel = "Retrying";
-          return;
-        }
-
-        if (type === "judge-pass") {
-          researchState.runStateLabel = "Validated";
-          return;
-        }
-
-        if (type === "ds-end") {
-          researchState.runStateLabel = "Completed";
-        }
+        if (type === "research_started" || type === "ds-start") researchState.runStateLabel = "Running";
+        else if (type === "judge-fail") researchState.runStateLabel = "Retrying";
+        else if (type === "judge-pass") researchState.runStateLabel = "Validated";
+        else if (type === "ds-end") researchState.runStateLabel = "Completed";
       }
 
       function recordResearchEvent(payload) {
         const receivedDate = new Date();
         const receivedPerf = performance.now();
-
-        if (researchState.firstServerEventPerf === null) {
-          researchState.firstServerEventPerf = receivedPerf;
-        }
-
+        if (researchState.firstServerEventPerf === null) researchState.firstServerEventPerf = receivedPerf;
         const type = typeof payload.type === "string" ? payload.type : "unknown";
-        const researchId = typeof payload.id === "string" && payload.id.length > 0
-          ? payload.id
-          : researchState.connectedResearchId || "default";
-        const data = typeof payload.data === "string"
-          ? payload.data
-          : JSON.stringify(payload.data ?? "");
+        const id = typeof payload.id === "string" && payload.id.length > 0 ? payload.id : researchState.connectedId || "default";
+        let session = findResearchSession(id);
+        if (!session) {
+          session = makeResearchSession({ id, taskName: `Recovered session ${id}`, minRounds: 1 });
+          session.status = "Recovered";
+          researchState.sessions.unshift(session);
+        }
+        const data = typeof payload.data === "string" ? payload.data : JSON.stringify(payload.data ?? "");
         const meta = getResearchEventMeta(type);
         const elapsedMs = receivedPerf - researchState.firstServerEventPerf;
-
-        researchState.activeResearchId = researchId;
-        researchState.events.push({
-          sequence: researchState.events.length + 1,
+        session.events.push({
+          sequence: session.events.length + 1,
           type,
-          researchId,
+          researchId: id,
           data,
           receivedClock: formatClock(receivedDate),
           elapsedLabel: formatElapsedMs(elapsedMs),
-          meta,
           timestamp: receivedDate.getTime()
         });
-
-        researchState.lastEventLabel = `${meta.label} @ ${formatClock(receivedDate)}`;
-        researchState.statusDetail = meta.role;
-
-        if (type === "sse_connected") {
-          researchState.connectionState = "connected";
-          researchState.statusDetail = "SSE connected.";
-        }
-
+        session.updatedAt = Date.now();
+        researchState.activeId = id;
+        researchState.statusDetail = type === "sse_connected" ? "SSE connected." : meta.role;
+        if (type === "sse_connected") researchState.connectionState = "connected";
         updateResearchRunState(type);
+        session.status = researchState.runStateLabel;
+        moveToTop(researchState.sessions, session.id);
+        saveResearchSessions();
+        researchTimeline.setEvents(session.events);
         updateResearchPanel();
-        renderTimeline();
       }
 
-      function handleResearchMessage(messageEvent) {
-        try {
-          const payload = JSON.parse(messageEvent.data);
-          recordResearchEvent(payload);
-        } catch (error) {
-          console.error("Failed to parse SSE payload", error, messageEvent.data);
-          researchState.connectionState = "error";
-          researchState.statusDetail = "Received malformed SSE payload from server.";
-          updateResearchPanel();
-          renderTimeline();
+      function recordGoalEvent(payload) {
+        const receivedDate = new Date();
+        const receivedPerf = performance.now();
+        if (goalState.firstServerEventPerf === null) goalState.firstServerEventPerf = receivedPerf;
+        const type = typeof payload.type === "string" ? payload.type : "unknown";
+        const id = typeof payload.id === "string" && payload.id.length > 0 ? payload.id : goalState.connectedId || "default";
+        let goal = findGoal(id);
+        if (!goal) {
+          goal = makeGoal({ id, title: `Recovered goal ${id}`, extraInfo: "" });
+          goal.status = "Recovered";
+          goalState.goals.unshift(goal);
         }
-      }
-
-      function closeResearchStream() {
-        if (researchState.eventSource) {
-          researchState.eventSource.close();
-        }
-
-        researchState.eventSource = null;
-        researchState.connectPromise = null;
-      }
-
-      function connectResearchStream(researchId, forceReconnect = false) {
-        const targetId = sanitizeResearchId(researchId);
-
-        if (!forceReconnect &&
-            researchState.eventSource &&
-            researchState.connectedResearchId === targetId &&
-            researchState.connectionState === "connected") {
-          return Promise.resolve();
-        }
-
-        if (!forceReconnect &&
-            researchState.connectPromise &&
-            researchState.connectedResearchId === targetId) {
-          return researchState.connectPromise;
-        }
-
-        closeResearchStream();
-
-        researchState.connectSerial += 1;
-        const currentConnectSerial = researchState.connectSerial;
-        const streamUrl = buildResearchEventsUrl(targetId);
-
-        researchState.connectedResearchId = targetId;
-        researchState.activeResearchId = targetId;
-        researchState.connectionState = "connecting";
-        researchState.statusDetail = "Connecting SSE stream.";
-        updateResearchPanel();
-
-        const source = new EventSource(streamUrl);
-        researchState.eventSource = source;
-
-        researchState.connectPromise = new Promise((resolve, reject) => {
-          let settled = false;
-          const timeoutId = window.setTimeout(() => {
-            if (settled || researchState.connectSerial !== currentConnectSerial) {
-              return;
-            }
-
-            settled = true;
-            closeResearchStream();
-            researchState.connectionState = "error";
-            researchState.statusDetail = `SSE connection timed out. ${SERVER_OFFLINE_HINT}`;
-            updateResearchPanel();
-            reject(new Error("Timed out while connecting SSE."));
-          }, 5000);
-
-          function settleSuccess() {
-            if (settled || researchState.connectSerial !== currentConnectSerial) {
-              return;
-            }
-
-            settled = true;
-            window.clearTimeout(timeoutId);
-            researchState.connectPromise = null;
-            resolve();
-          }
-
-          function settleFailure(message) {
-            if (settled || researchState.connectSerial !== currentConnectSerial) {
-              return;
-            }
-
-            settled = true;
-            window.clearTimeout(timeoutId);
-            researchState.connectPromise = null;
-            reject(new Error(message));
-          }
-
-          source.onopen = () => {
-            if (researchState.eventSource !== source) {
-              return;
-            }
-
-            researchState.connectionState = "connected";
-            researchState.statusDetail = "SSE connected.";
-            updateResearchPanel();
-            settleSuccess();
-          };
-
-          source.onmessage = (messageEvent) => {
-            if (researchState.eventSource !== source) {
-              return;
-            }
-
-            handleResearchMessage(messageEvent);
-          };
-
-          source.onerror = () => {
-            if (researchState.eventSource !== source) {
-              return;
-            }
-
-            if (source.readyState === EventSource.CONNECTING) {
-              researchState.connectionState = "reconnecting";
-              researchState.statusDetail = "Reconnecting SSE stream.";
-              updateResearchPanel();
-              return;
-            }
-
-            researchState.connectionState = "error";
-            researchState.statusDetail = `SSE connection closed. ${SERVER_OFFLINE_HINT}`;
-            closeResearchStream();
-            updateResearchPanel();
-            settleFailure("Could not connect SSE.");
-          };
+        const data = typeof payload.data === "string" ? payload.data : JSON.stringify(payload.data ?? "");
+        const meta = getGoalEventMeta(type);
+        const elapsedMs = receivedPerf - goalState.firstServerEventPerf;
+        goal.events.push({
+          sequence: goal.events.length + 1,
+          type,
+          goalId: id,
+          data,
+          receivedClock: formatClock(receivedDate),
+          elapsedLabel: formatElapsedMs(elapsedMs),
+          timestamp: receivedDate.getTime()
         });
+        goal.updatedAt = Date.now();
+        goalState.activeId = id;
+        goalState.statusDetail = type === "sse_connected" ? "Goal SSE connected." : meta.role;
+        if (type === "sse_connected") goalState.connectionState = "connected";
+        if (type === "goal_create_started") goalState.runStateLabel = "Creating";
+        else if (type === "goal_created") goalState.runStateLabel = "Created";
+        else if (type === "goal_create_failed") goalState.runStateLabel = "Error";
+        goal.status = goalState.runStateLabel;
+        moveToTop(goalState.goals, goal.id);
+        saveGoals();
+        goalTimeline.setEvents(goal.events);
+        updateGoalPanel();
+      }
 
-        return researchState.connectPromise;
+      async function startDeepSearch(event) {
+        event.preventDefault();
+        const taskName = researchTaskInput.value.trim();
+        const minRounds = normalizeMinRounds(researchMinRoundsInput.value);
+        researchMinRoundsInput.value = String(minRounds);
+        const id = ensurePreparedResearchId();
+
+        if (!taskName) {
+          researchState.runStateLabel = "Idle";
+          researchState.statusDetail = "Task Name is required.";
+          updateResearchPanel();
+          researchTaskInput.focus();
+          return;
+        }
+
+        let session = findResearchSession(id);
+        if (!session) {
+          session = makeResearchSession({ id, taskName, minRounds });
+          researchState.sessions.unshift(session);
+        }
+        session.taskName = taskName;
+        session.minRounds = minRounds;
+        session.status = "Starting";
+        session.updatedAt = Date.now();
+        session.events = [];
+        researchState.activeId = id;
+        researchState.firstServerEventPerf = null;
+        researchState.startInFlight = true;
+        researchState.runStateLabel = "Starting";
+        researchState.statusDetail = "Preparing deep search.";
+        saveResearchSessions();
+        researchTimeline.closeInspector();
+        researchTimeline.setEvents(session.events);
+        updateResearchPanel();
+        setActiveView("deep-search");
+
+        try {
+          await connectStream("research", id, true);
+          researchState.statusDetail = `POST ${RESEARCH_START_ENDPOINT}`;
+          updateResearchPanel();
+
+          const response = await fetch(RESEARCH_START_ENDPOINT, {
+            method: "POST",
+            cache: "no-store",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, taskName, minRounds })
+          });
+
+          const responseText = await response.text();
+          if (!response.ok) throw new Error(responseText || `HTTP ${response.status}`);
+          if (researchState.runStateLabel === "Starting" || researchState.runStateLabel === "Running") {
+            researchState.runStateLabel = "Completed";
+          }
+          session.status = researchState.runStateLabel;
+          session.updatedAt = Date.now();
+          researchState.statusDetail = responseText.trim() ? "Deep search completed and HTTP response returned." : "Deep search completed.";
+          researchState.preparedId = "";
+          saveResearchSessions();
+          loadGraph();
+        } catch (error) {
+          console.error(error);
+          session.status = "Error";
+          session.updatedAt = Date.now();
+          researchState.connectionState = researchState.eventSource ? researchState.connectionState : "error";
+          researchState.runStateLabel = "Error";
+          researchState.statusDetail = buildTransportMessage(error);
+          saveResearchSessions();
+        } finally {
+          researchState.startInFlight = false;
+          updateResearchPanel();
+        }
+      }
+
+      async function createGoal(event) {
+        event.preventDefault();
+        const title = goalTitleInput.value.trim();
+        const extraInfo = goalExtraInfoInput.value.trim();
+
+        if (!title) {
+          goalState.statusDetail = "Goal Title is required.";
+          updateGoalPanel();
+          goalTitleInput.focus();
+          return;
+        }
+
+        const id = generateId("goal");
+        const goal = makeGoal({ id, title, extraInfo });
+        goalState.goals.unshift(goal);
+        goalState.activeId = id;
+        goalState.firstServerEventPerf = null;
+        goalState.createInFlight = true;
+        goalState.runStateLabel = "Creating";
+        goalState.statusDetail = "Preparing goal creation.";
+        saveGoals();
+        goalTimeline.closeInspector();
+        goalTimeline.setEvents(goal.events);
+        updateGoalPanel();
+        setActiveView("goal");
+
+        try {
+          await connectStream("goal", id, true);
+          goalState.statusDetail = `POST ${GOAL_CREATE_ENDPOINT}`;
+          updateGoalPanel();
+
+          const response = await fetch(GOAL_CREATE_ENDPOINT, {
+            method: "POST",
+            cache: "no-store",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, title, extraInfo })
+          });
+
+          const responseText = await response.text();
+          if (!response.ok) throw new Error(responseText || `HTTP ${response.status}`);
+          if (goalState.runStateLabel === "Creating") goalState.runStateLabel = "Created";
+          goal.status = goalState.runStateLabel;
+          goal.updatedAt = Date.now();
+          goalState.statusDetail = "Goal creation request completed.";
+          saveGoals();
+        } catch (error) {
+          console.error(error);
+          goal.status = "Error";
+          goal.updatedAt = Date.now();
+          goalState.connectionState = goalState.eventSource ? goalState.connectionState : "error";
+          goalState.runStateLabel = "Error";
+          goalState.statusDetail = buildTransportMessage(error);
+          saveGoals();
+        } finally {
+          goalState.createInFlight = false;
+          updateGoalPanel();
+          goalTimeline.setEvents(goal.events);
+        }
       }
 
       function generatedColorFromId(id) {
@@ -1556,134 +2219,22 @@
         return clamp(14 + emphasis * 6, 18, 30);
       }
 
-      function normalizeMessageLines(detail) {
-        if (Array.isArray(detail)) {
-          return detail.filter((line) => typeof line === "string" && line.trim().length > 0);
-        }
-
-        if (typeof detail === "string" && detail.trim().length > 0) {
-          return [detail];
-        }
-
-        return [];
-      }
-
-      function wrapTextLine(text, font, maxWidth) {
-        const value = typeof text === "string" ? text.trim() : "";
-        if (value.length === 0) {
-          return [];
-        }
-
-        const words = value.split(/\s+/);
-        const lines = [];
-        let currentLine = "";
-
-        ctx.save();
-        ctx.font = font;
-
-        for (const word of words) {
-          const candidate = currentLine ? `${currentLine} ${word}` : word;
-          if (currentLine && ctx.measureText(candidate).width > maxWidth) {
-            lines.push(currentLine);
-            currentLine = word;
-          } else {
-            currentLine = candidate;
-          }
-        }
-
-        if (currentLine) {
-          lines.push(currentLine);
-        }
-
-        ctx.restore();
-        return lines;
-      }
-
-      function remapNode(node, nodeById) {
-        if (!node || !Number.isFinite(node.id)) {
-          return null;
-        }
-
-        return nodeById.get(node.id) || null;
-      }
-
-      function remapFocusPath(path, nodeById) {
-        const remappedPath = [];
-
-        for (const item of path) {
-          const node = remapNode(item, nodeById);
-          if (!node) {
-            break;
-          }
-
-          if (remappedPath.length > 0) {
-            const parent = remappedPath[remappedPath.length - 1];
-            if (node.parentId !== parent.id) {
-              break;
-            }
-          }
-
-          remappedPath.push(node);
-        }
-
-        return remappedPath;
-      }
-
-      function createErrorState(title, details) {
-        return {
-          title,
-          details: normalizeMessageLines(details)
-        };
-      }
-
-      function buildGraphLoadError(error) {
-        if (error instanceof TypeError) {
-          return createErrorState("Graph server unavailable", [
-            `Could not reach ${GRAPH_ENDPOINT}`,
-            SERVER_OFFLINE_HINT
-          ]);
-        }
-
-        const message = error instanceof Error ? error.message : String(error);
-        return createErrorState("Failed to load graph", message);
-      }
-
       function resizeCanvas() {
         const rect = canvas.getBoundingClientRect();
-        state.width = Math.max(1, Math.round(rect.width));
-        state.height = Math.max(1, Math.round(rect.height));
-        state.dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
-        canvas.width = Math.round(state.width * state.dpr);
-        canvas.height = Math.round(state.height * state.dpr);
-        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
-      }
-
-      function resizeTimelineCanvas() {
-        const rect = timelineCanvas.getBoundingClientRect();
-        timelineState.width = Math.max(1, Math.round(rect.width));
-        timelineState.height = Math.max(1, Math.round(rect.height));
-        timelineState.dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
-        timelineCanvas.width = Math.round(timelineState.width * timelineState.dpr);
-        timelineCanvas.height = Math.round(timelineState.height * timelineState.dpr);
-        timelineCtx.setTransform(timelineState.dpr, 0, 0, timelineState.dpr, 0, 0);
+        graphState.width = Math.max(1, Math.round(rect.width));
+        graphState.height = Math.max(1, Math.round(rect.height));
+        graphState.dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+        canvas.width = Math.round(graphState.width * graphState.dpr);
+        canvas.height = Math.round(graphState.height * graphState.dpr);
+        ctx.setTransform(graphState.dpr, 0, 0, graphState.dpr, 0, 0);
       }
 
       function parseNodes(rawNodes) {
         const nodes = [];
         const nodeById = new Map();
-
         for (const item of rawNodes) {
           const id = Number(item.id);
-          if (!Number.isFinite(id)) {
-            console.warn("Skipping node with invalid numeric id", item);
-            continue;
-          }
-
-          if (nodeById.has(id)) {
-            console.warn("Skipping duplicate node id", item);
-            continue;
-          }
-
+          if (!Number.isFinite(id) || nodeById.has(id)) continue;
           const hasParent = hasOwn(item, "parent");
           const parsedParentId = hasParent ? Number(item.parent) : null;
           const node = {
@@ -1695,7 +2246,6 @@
             hasParent,
             parentId: hasParent && Number.isFinite(parsedParentId) ? parsedParentId : null,
             isRoot: hasParent === false,
-            baseColor: null,
             color: null,
             radius: 0,
             x: 0,
@@ -1706,102 +2256,58 @@
             pinX: 0,
             pinY: 0,
             layoutGroupId: null,
+            directChildCount: 0,
             seed: ((id * 9301 + 49297) % 233280) / 233280
           };
-
           node.radius = computeNodeRadius(node);
           nodes.push(node);
           nodeById.set(id, node);
         }
-
         nodes.sort((a, b) => a.id - b.id);
         return { nodes, nodeById };
       }
 
       function buildChildrenByParent(nodes) {
-        const childrenByParent = new Map();
-
+        const map = new Map();
         for (const node of nodes) {
-          if (node.hasParent !== true || !Number.isFinite(node.parentId)) {
-            continue;
-          }
-
-          if (!childrenByParent.has(node.parentId)) {
-            childrenByParent.set(node.parentId, []);
-          }
-
-          childrenByParent.get(node.parentId).push(node);
+          if (!node.hasParent || !Number.isFinite(node.parentId)) continue;
+          if (!map.has(node.parentId)) map.set(node.parentId, []);
+          map.get(node.parentId).push(node);
         }
-
-        for (const children of childrenByParent.values()) {
-          children.sort((a, b) => a.id - b.id);
-        }
-
-        return childrenByParent;
+        for (const children of map.values()) children.sort((a, b) => a.id - b.id);
+        return map;
       }
 
       function assignColors(nodes, nodeById) {
         const resolving = new Set();
-
-        function resolveColor(node) {
-          if (node.color) {
+        function resolve(node) {
+          if (node.color) return node.color;
+          if (resolving.has(node.id) || !node.hasParent) {
+            node.color = generatedColorFromId(node.id);
             return node.color;
           }
-
-          if (node.hasParent === false) {
-            node.baseColor = generatedColorFromId(node.id);
-            node.color = node.baseColor;
-            return node.color;
-          }
-
-          if (resolving.has(node.id)) {
-            node.baseColor = generatedColorFromId(node.id);
-            node.color = node.baseColor;
-            return node.color;
-          }
-
           resolving.add(node.id);
           const parent = Number.isFinite(node.parentId) ? nodeById.get(node.parentId) : null;
-
-          if (!parent) {
-            node.baseColor = generatedColorFromId(node.id);
-            node.color = node.baseColor;
-          } else {
-            const parentColor = resolveColor(parent);
-            node.baseColor = parent.baseColor || parentColor;
-            node.color = node.baseColor;
-          }
-
+          node.color = parent ? resolve(parent) : generatedColorFromId(node.id);
           resolving.delete(node.id);
           return node.color;
         }
+        for (const node of nodes) resolve(node);
+      }
 
+      function annotateChildren(nodes) {
         for (const node of nodes) {
-          resolveColor(node);
+          node.directChildCount = (graphState.childrenByParent.get(node.id) || []).length;
         }
       }
 
       function buildEdges(rawConnections, nodeById) {
         const edges = [];
-
         for (const item of rawConnections) {
-          if (!item || !Array.isArray(item.nodes) || item.nodes.length !== 2) {
-            continue;
-          }
-
-          const sourceId = Number(item.nodes[0]);
-          const targetId = Number(item.nodes[1]);
-
-          if (!Number.isFinite(sourceId) || !Number.isFinite(targetId)) {
-            continue;
-          }
-
-          const source = nodeById.get(sourceId);
-          const target = nodeById.get(targetId);
-          if (!source || !target || source === target) {
-            continue;
-          }
-
+          if (!item || !Array.isArray(item.nodes) || item.nodes.length !== 2) continue;
+          const source = nodeById.get(Number(item.nodes[0]));
+          const target = nodeById.get(Number(item.nodes[1]));
+          if (!source || !target || source === target) continue;
           edges.push({
             source,
             target,
@@ -1809,126 +2315,34 @@
             activation: clamp(toNumber(item.activation, 1), 0.1, 5)
           });
         }
-
         return edges;
       }
 
-      function annotateHierarchy(nodes) {
-        const memo = new Map();
-
-        function visit(nodeId) {
-          if (memo.has(nodeId)) {
-            return memo.get(nodeId);
-          }
-
-          const children = state.childrenByParent.get(nodeId) || [];
-          let descendantCount = children.length;
-          let subtreeDepth = children.length > 0 ? 1 : 0;
-
-          for (const child of children) {
-            const childMeta = visit(child.id);
-            descendantCount += childMeta.descendantCount;
-            subtreeDepth = Math.max(subtreeDepth, childMeta.subtreeDepth + 1);
-          }
-
-          const meta = {
-            directChildCount: children.length,
-            descendantCount,
-            subtreeDepth
-          };
-          memo.set(nodeId, meta);
-          return meta;
-        }
-
-        for (const node of nodes) {
-          const meta = visit(node.id);
-          node.directChildCount = meta.directChildCount;
-          node.descendantCount = meta.descendantCount;
-          node.subtreeDepth = meta.subtreeDepth;
-        }
-      }
-
       function getFocusNode() {
-        return state.focusPath.length === 0 ? null : state.focusPath[state.focusPath.length - 1];
-      }
-
-      function nodeHasChildren(node) {
-        return Boolean(node && node.directChildCount > 0);
-      }
-
-      function getActiveDisplayNode() {
-        return state.selectedNode || getFocusNode();
-      }
-
-      function updateFocusNodeBadge() {
-        const activeNode = getActiveDisplayNode();
-
-        if (!activeNode) {
-          focusNodeBadge.classList.remove("is-visible");
-          focusNodeLabel.textContent = "";
-          return;
-        }
-
-        focusNodeBadge.classList.add("is-visible");
-        focusNodeBadge.style.color = activeNode.color;
-        focusNodeRing.style.borderColor = activeNode.color;
-        focusNodeLabel.textContent = activeNode.name;
+        return graphState.focusPath.length > 0 ? graphState.focusPath[graphState.focusPath.length - 1] : null;
       }
 
       function getCurrentLayerParents() {
-        const focusNode = getFocusNode();
-        return focusNode === null
-          ? state.roots.slice()
-          : (state.childrenByParent.get(focusNode.id) || []).slice();
+        const focus = getFocusNode();
+        return focus ? (graphState.childrenByParent.get(focus.id) || []).slice() : graphState.roots.slice();
       }
 
       function buildExplodedGroups(parents) {
         const groups = [];
-
         for (const parent of parents) {
-          const members = (state.childrenByParent.get(parent.id) || []).slice();
-          if (members.length === 0) {
-            continue;
-          }
-
-          groups.push({
-            id: parent.id,
-            parent,
-            color: parent.color,
-            members,
-            anchorX: 0,
-            anchorY: 0,
-            targetRadius: 0,
-            centerX: 0,
-            centerY: 0,
-            radius: 0
-          });
+          const members = (graphState.childrenByParent.get(parent.id) || []).slice();
+          if (members.length === 0) continue;
+          groups.push({ id: parent.id, parent, color: parent.color, members, anchorX: 0, anchorY: 0, centerX: 0, centerY: 0, radius: 0, targetRadius: 0 });
         }
-
-        groups.sort((a, b) => a.parent.id - b.parent.id);
-        return groups;
-      }
-
-      function clearNodeKinematics(nodes) {
-        for (const node of nodes) {
-          node.vx = 0;
-          node.vy = 0;
-        }
+        return groups.sort((a, b) => a.id - b.id);
       }
 
       function seedCompactLayout(nodes, centerX = 0, centerY = 0, spread = null) {
         const count = nodes.length;
-        if (count === 0) {
-          return;
-        }
-
-        const averageRadius = nodes.reduce((sum, node) => sum + node.radius, 0) / count;
-        const spacing = spread === null
-          ? clamp(averageRadius * 2.35, 40, 68)
-          : clamp(spread * 0.2, 24, 40);
+        if (count === 0) return;
+        const spacing = spread === null ? 56 : clamp(spread * 0.22, 26, 42);
         const maxDistance = spread === null ? Infinity : spread;
         const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-
         for (let index = 0; index < count; index += 1) {
           const node = nodes[index];
           const distance = count === 1 ? 0 : Math.min(spacing * Math.sqrt(index + 0.45), maxDistance);
@@ -1943,397 +2357,188 @@
 
       function seedExplodedLayout(groups) {
         const count = groups.length;
-        if (count === 0) {
-          return;
-        }
-
         const ringRadius = clamp(140 + count * 32, 180, 420);
-
-        for (let index = 0; index < count; index += 1) {
-          const group = groups[index];
-          const angle = count === 1
-            ? -Math.PI * 0.5
-            : -Math.PI * 0.5 + (Math.PI * 2 * index) / count + (group.parent.seed - 0.5) * 0.22;
-
+        groups.forEach((group, index) => {
+          const angle = count === 1 ? -Math.PI * 0.5 : -Math.PI * 0.5 + (Math.PI * 2 * index) / count + (group.parent.seed - 0.5) * 0.22;
           group.anchorX = Math.cos(angle) * ringRadius;
           group.anchorY = Math.sin(angle) * ringRadius * 0.72;
           group.targetRadius = clamp(84 + Math.sqrt(group.members.length) * 26, 92, 210);
-
-          seedCompactLayout(
-            group.members,
-            group.anchorX,
-            group.anchorY,
-            group.targetRadius * 0.45
-          );
-
-          for (const member of group.members) {
-            member.layoutGroupId = group.id;
-          }
-        }
+          seedCompactLayout(group.members, group.anchorX, group.anchorY, group.targetRadius * 0.45);
+          for (const member of group.members) member.layoutGroupId = group.id;
+        });
+        refreshGroupGeometry();
       }
 
       function refreshGroupGeometry() {
-        for (const group of state.visibleGroups) {
-          if (group.members.length === 0) {
-            group.centerX = group.anchorX;
-            group.centerY = group.anchorY;
-            group.radius = group.targetRadius;
-            continue;
-          }
-
+        for (const group of graphState.visibleGroups) {
+          if (group.members.length === 0) continue;
           let sumX = 0;
           let sumY = 0;
-
           for (const node of group.members) {
             sumX += node.x;
             sumY += node.y;
           }
-
-          const averageX = sumX / group.members.length;
-          const averageY = sumY / group.members.length;
-          group.centerX = averageX * 0.72 + group.anchorX * 0.28;
-          group.centerY = averageY * 0.72 + group.anchorY * 0.28;
-
+          group.centerX = sumX / group.members.length;
+          group.centerY = sumY / group.members.length;
           let radius = group.targetRadius;
           for (const node of group.members) {
-            const dx = node.x - group.centerX;
-            const dy = node.y - group.centerY;
-            radius = Math.max(radius, Math.sqrt(dx * dx + dy * dy) + node.radius + 22);
+            radius = Math.max(radius, Math.hypot(node.x - group.centerX, node.y - group.centerY) + node.radius + 22);
           }
-
           group.radius = radius;
         }
       }
 
-      function computeDefaultScale() {
-        const count = Math.max(1, state.visibleNodes.length);
-        if (state.explodeMode) {
-          return clamp(1.04 - Math.sqrt(count) * 0.03, 0.54, 0.86);
-        }
-
-        if (getFocusNode() !== null) {
-          return clamp(1.12 - Math.sqrt(count) * 0.015, 0.8, 1.08);
-        }
-
-        return clamp(1.0 - Math.sqrt(count) * 0.012, 0.88, 0.98);
-      }
-
-      function setCameraForCurrentView() {
-        state.camera.x = 0;
-        state.camera.y = 0;
-        state.camera.scale = computeDefaultScale();
-      }
-
-      function startPulse(anchorX, anchorY, amplitude = 0.24, duration = 280) {
-        state.navPulse = {
-          start: performance.now(),
-          duration,
-          amplitude,
-          anchorX,
-          anchorY
-        };
-      }
-
-      function getSceneTransform(now = performance.now()) {
-        if (!state.navPulse) {
-          return {
-            pulseMultiplier: 1,
-            anchorX: state.width * 0.5,
-            anchorY: state.height * 0.5,
-            totalScale: state.camera.scale
-          };
-        }
-
-        const elapsed = now - state.navPulse.start;
-        const progress = elapsed / state.navPulse.duration;
-
-        if (progress >= 1) {
-          const anchorX = state.navPulse.anchorX;
-          const anchorY = state.navPulse.anchorY;
-          state.navPulse = null;
-          return {
-            pulseMultiplier: 1,
-            anchorX,
-            anchorY,
-            totalScale: state.camera.scale
-          };
-        }
-
-        const eased = Math.sin(progress * Math.PI);
-        const pulseMultiplier = 1 + state.navPulse.amplitude * eased;
-        return {
-          pulseMultiplier,
-          anchorX: state.navPulse.anchorX,
-          anchorY: state.navPulse.anchorY,
-          totalScale: state.camera.scale * pulseMultiplier
-        };
-      }
-
-      function worldToScreen(worldX, worldY, scene = getSceneTransform()) {
-        const baseX = (worldX - state.camera.x) * state.camera.scale + state.width * 0.5;
-        const baseY = (worldY - state.camera.y) * state.camera.scale + state.height * 0.5;
-
-        return {
-          x: scene.anchorX + (baseX - scene.anchorX) * scene.pulseMultiplier,
-          y: scene.anchorY + (baseY - scene.anchorY) * scene.pulseMultiplier
-        };
-      }
-
-      function screenToWorld(screenX, screenY, scene = getSceneTransform()) {
-        const baseX = scene.anchorX + (screenX - scene.anchorX) / scene.pulseMultiplier;
-        const baseY = scene.anchorY + (screenY - scene.anchorY) / scene.pulseMultiplier;
-
-        return {
-          x: state.camera.x + (baseX - state.width * 0.5) / state.camera.scale,
-          y: state.camera.y + (baseY - state.height * 0.5) / state.camera.scale
-        };
-      }
-
-      function updateExplodeButton() {
-        const hasGraph = state.allNodes.length > 0;
-        const hasDeeperLayer = getCurrentLayerParents().some((parent) => {
-          const children = state.childrenByParent.get(parent.id);
-          return Array.isArray(children) && children.length > 0;
-        });
-
-        const label = state.explodeMode ? "Collapse Layers" : "Explode Layers";
-        explodeToggle.setAttribute("title", label);
-        explodeToggle.setAttribute("aria-label", label);
-        explodeToggle.classList.toggle("is-active", state.explodeMode);
-        explodeToggle.setAttribute("aria-pressed", String(state.explodeMode));
-        explodeToggle.disabled = state.loading || state.error !== null || hasGraph === false || (
-          state.explodeMode === false && hasDeeperLayer === false
-        );
-      }
-
-      function updateRefreshButton() {
-        refreshButton.disabled = state.loading;
-        refreshButton.setAttribute("title", state.loading ? "Refreshing..." : "Refresh Graph");
-        refreshButton.setAttribute("aria-label", state.loading ? "Refreshing..." : "Refresh Graph");
-      }
-
-      function updateMessagePanel() {
-        messagePanel.classList.toggle("is-visible", uiState.messagePanelOpen);
-        messagePanel.setAttribute("aria-hidden", String(!uiState.messagePanelOpen));
-        messagePanelStatus.textContent = uiState.messageStatus;
-        submitMessageButton.disabled = uiState.messageSubmitInFlight || messageInput.value.trim().length === 0;
-        submitMessageButton.textContent = uiState.messageSubmitInFlight ? "Sending..." : "Send to /message";
-        openMessagePanelButton.classList.toggle("is-active", uiState.messagePanelOpen);
-        openMessagePanelButton.setAttribute("aria-pressed", String(uiState.messagePanelOpen));
-        openMessagePanelButton.setAttribute("title", uiState.messagePanelOpen ? "Close Input Message" : "Input Message");
-        openMessagePanelButton.setAttribute("aria-label", uiState.messagePanelOpen ? "Close Input Message" : "Input Message");
-      }
-
-      function openMessagePanel() {
-        uiState.messagePanelOpen = true;
-        updateMessagePanel();
-        window.setTimeout(() => {
-          if (uiState.messagePanelOpen) {
-            messageInput.focus();
-          }
-        }, 0);
-      }
-
-      function closeMessagePanel() {
-        uiState.messagePanelOpen = false;
-        if (!uiState.messageSubmitInFlight) {
-          uiState.messageStatus = "Ready.";
-        }
-        updateMessagePanel();
-      }
-
-      async function submitMessageInput(event) {
-        event.preventDefault();
-
-        const input = messageInput.value.trim();
-        if (!input || uiState.messageSubmitInFlight) {
-          updateMessagePanel();
-          return;
-        }
-
-        uiState.messageSubmitInFlight = true;
-        uiState.messageStatus = `POST ${MESSAGE_ENDPOINT}`;
-        updateMessagePanel();
-
-        try {
-          const response = await fetch(MESSAGE_ENDPOINT, {
-            method: "POST",
-            cache: "no-store",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ input })
-          });
-
-          const responseText = await response.text();
-          if (!response.ok) {
-            throw new Error(responseText || `HTTP ${response.status}`);
-          }
-
-          uiState.messageStatus = "Message accepted by server. Refreshing graph.";
-          await loadGraph();
-          closeMessagePanel();
-        } catch (error) {
-          console.error(error);
-          uiState.messageStatus = buildResearchTransportMessage(error);
-        } finally {
-          uiState.messageSubmitInFlight = false;
-          updateMessagePanel();
-        }
-      }
-
-      function recomputeVisibleGraph(options = {}) {
-        const currentLayerParents = getCurrentLayerParents();
-        state.currentLayerParents = currentLayerParents;
-
+      function recomputeVisibleGraph() {
+        const parents = getCurrentLayerParents();
         let visibleNodes;
         let visibleGroups;
-
-        if (state.explodeMode) {
-          visibleGroups = buildExplodedGroups(currentLayerParents);
+        if (graphState.explodeMode) {
+          visibleGroups = buildExplodedGroups(parents);
           visibleNodes = visibleGroups.flatMap((group) => group.members);
         } else {
           visibleGroups = [];
-          visibleNodes = currentLayerParents.slice();
-          for (const node of visibleNodes) {
-            node.layoutGroupId = null;
-          }
+          visibleNodes = parents.slice();
+          for (const node of visibleNodes) node.layoutGroupId = null;
         }
-
         const visibleIds = new Set(visibleNodes.map((node) => node.id));
-        const visibleEdges = state.allEdges.filter((edge) => (
-          visibleIds.has(edge.source.id) && visibleIds.has(edge.target.id)
-        ));
-
-        state.visibleGroups = visibleGroups;
-        state.visibleNodes = visibleNodes;
-        state.visibleEdges = visibleEdges;
-
-        for (const node of state.visibleNodes) {
-          node.pinned = false;
-          node.pinX = node.x;
-          node.pinY = node.y;
-        }
-
-        if (state.hoveredNode && !visibleIds.has(state.hoveredNode.id)) {
-          state.hoveredNode = null;
-        }
-
-        if (state.hoveredGroup && !state.visibleGroups.some((group) => group.id === state.hoveredGroup.id)) {
-          state.hoveredGroup = null;
-        }
-
-        if (state.hoveredEdge && !state.visibleEdges.includes(state.hoveredEdge)) {
-          state.hoveredEdge = null;
-        }
-
-        if (state.selectedNode && !visibleIds.has(state.selectedNode.id)) {
-          state.selectedNode = null;
-        }
-
-        if (state.selectedEdge && !state.visibleEdges.includes(state.selectedEdge)) {
-          state.selectedEdge = null;
-        }
-
-        if (state.explodeMode) {
-          seedExplodedLayout(state.visibleGroups);
-          refreshGroupGeometry();
-        } else {
-          seedCompactLayout(state.visibleNodes);
-        }
-
-        clearNodeKinematics(state.visibleNodes);
-        setCameraForCurrentView();
+        graphState.visibleGroups = visibleGroups;
+        graphState.visibleNodes = visibleNodes;
+        graphState.visibleEdges = graphState.allEdges.filter((edge) => visibleIds.has(edge.source.id) && visibleIds.has(edge.target.id));
+        graphState.hoveredNode = null;
+        graphState.hoveredGroup = null;
+        graphState.selectedNode = null;
+        for (const node of visibleNodes) node.pinned = false;
+        if (graphState.explodeMode) seedExplodedLayout(visibleGroups);
+        else seedCompactLayout(visibleNodes);
+        graphState.camera.x = 0;
+        graphState.camera.y = 0;
+        graphState.camera.scale = graphState.explodeMode ? 0.72 : 0.96;
         updateExplodeButton();
         updateFocusNodeBadge();
+      }
 
-        if (options.pulseAnchor) {
-          startPulse(
-            options.pulseAnchor.x,
-            options.pulseAnchor.y,
-            options.pulseAnchor.amplitude,
-            options.pulseAnchor.duration
-          );
+      function updateFocusNodeBadge() {
+        const activeNode = graphState.selectedNode || getFocusNode();
+        if (!activeNode) {
+          focusNodeBadge.classList.remove("is-visible");
+          focusNodeLabel.textContent = "";
+          return;
         }
+        focusNodeBadge.classList.add("is-visible");
+        focusNodeBadge.style.color = activeNode.color;
+        focusNodeRing.style.borderColor = activeNode.color;
+        focusNodeLabel.textContent = activeNode.name;
+      }
+
+      function updateExplodeButton() {
+        const hasGraph = graphState.allNodes.length > 0;
+        const hasDeeperLayer = getCurrentLayerParents().some((parent) => (graphState.childrenByParent.get(parent.id) || []).length > 0);
+        const label = graphState.explodeMode ? "Collapse Layers" : "Explode Layers";
+        explodeToggle.setAttribute("title", label);
+        explodeToggle.setAttribute("aria-label", label);
+        explodeToggle.classList.toggle("is-active", graphState.explodeMode);
+        explodeToggle.disabled = graphState.loading || graphState.error !== null || !hasGraph || (!graphState.explodeMode && !hasDeeperLayer);
+      }
+
+      function updateRefreshButton() {
+        refreshButton.disabled = graphState.loading;
+        refreshButton.setAttribute("title", graphState.loading ? "Refreshing..." : "Refresh Graph");
+      }
+
+      function worldToScreen(x, y) {
+        return {
+          x: (x - graphState.camera.x) * graphState.camera.scale + graphState.width * 0.5,
+          y: (y - graphState.camera.y) * graphState.camera.scale + graphState.height * 0.5
+        };
+      }
+
+      function screenToWorld(x, y) {
+        return {
+          x: graphState.camera.x + (x - graphState.width * 0.5) / Math.max(graphState.camera.scale, 0.001),
+          y: graphState.camera.y + (y - graphState.height * 0.5) / Math.max(graphState.camera.scale, 0.001)
+        };
+      }
+
+      function pickNode(screenX, screenY) {
+        const world = screenToWorld(screenX, screenY);
+        const padding = 8 / Math.max(graphState.camera.scale, 0.001);
+        for (let index = graphState.visibleNodes.length - 1; index >= 0; index -= 1) {
+          const node = graphState.visibleNodes[index];
+          const radius = node.radius + padding;
+          if (Math.hypot(world.x - node.x, world.y - node.y) <= radius) return node;
+        }
+        return null;
+      }
+
+      function pickGroup(screenX, screenY) {
+        if (graphState.visibleGroups.length === 0) return null;
+        const world = screenToWorld(screenX, screenY);
+        for (let index = graphState.visibleGroups.length - 1; index >= 0; index -= 1) {
+          const group = graphState.visibleGroups[index];
+          if (Math.hypot(world.x - group.centerX, world.y - group.centerY) <= group.radius) return group;
+        }
+        return null;
+      }
+
+      function updateCursor() {
+        if (graphState.pointer.dragging) canvas.style.cursor = "grabbing";
+        else if (graphState.hoveredNode) canvas.style.cursor = graphState.hoveredNode.directChildCount > 0 ? "pointer" : "grab";
+        else if (graphState.hoveredGroup) canvas.style.cursor = "grab";
+        else canvas.style.cursor = "grab";
+      }
+
+      function updateHover(x, y) {
+        graphState.hoveredNode = pickNode(x, y);
+        graphState.hoveredGroup = graphState.hoveredNode ? null : pickGroup(x, y);
+        updateCursor();
       }
 
       function stepLayout(delta) {
-        const nodes = state.visibleNodes;
-        if (nodes.length === 0) {
-          return;
-        }
-
-        const exploded = state.explodeMode && state.visibleGroups.length > 0;
+        const nodes = graphState.visibleNodes;
+        if (nodes.length === 0) return;
+        const exploded = graphState.explodeMode && graphState.visibleGroups.length > 0;
         const repulsionBase = exploded ? 2400 : nodes.length > 24 ? 2500 : 2200;
 
         for (let i = 0; i < nodes.length; i += 1) {
           const a = nodes[i];
-
           for (let j = i + 1; j < nodes.length; j += 1) {
             const b = nodes[j];
             let dx = b.x - a.x;
             let dy = b.y - a.y;
-
             if (dx === 0 && dy === 0) {
-              const angle = (a.seed + b.seed) * Math.PI * 2;
-              dx = Math.cos(angle) * 0.01;
-              dy = Math.sin(angle) * 0.01;
+              dx = Math.cos((a.seed + b.seed) * Math.PI * 2) * 0.01;
+              dy = Math.sin((a.seed + b.seed) * Math.PI * 2) * 0.01;
             }
-
             const sameGroup = exploded && a.layoutGroupId !== null && a.layoutGroupId === b.layoutGroupId;
-            const distanceSquared = Math.max(dx * dx + dy * dy, 0.01);
-            const distance = Math.sqrt(distanceSquared);
-            const nx = dx / distance;
-            const ny = dy / distance;
+            const d2 = Math.max(dx * dx + dy * dy, 0.01);
+            const d = Math.sqrt(d2);
+            const nx = dx / d;
+            const ny = dy / d;
             const repulsion = repulsionBase * (sameGroup ? 0.76 : exploded ? 1.45 : 1);
-
-            a.vx -= nx * (repulsion / distanceSquared) * delta;
-            a.vy -= ny * (repulsion / distanceSquared) * delta;
-            b.vx += nx * (repulsion / distanceSquared) * delta;
-            b.vy += ny * (repulsion / distanceSquared) * delta;
-
+            a.vx -= nx * (repulsion / d2) * delta;
+            a.vy -= ny * (repulsion / d2) * delta;
+            b.vx += nx * (repulsion / d2) * delta;
+            b.vy += ny * (repulsion / d2) * delta;
             const minDistance = a.radius + b.radius + (sameGroup ? 10 : exploded ? 18 : 12);
-            if (distance < minDistance) {
-              const push = (minDistance - distance) * 0.18;
+            if (d < minDistance) {
+              const push = (minDistance - d) * 0.18;
               a.x -= nx * push;
               a.y -= ny * push;
               b.x += nx * push;
               b.y += ny * push;
             }
-
-            if (state.hoveredNode && (a === state.hoveredNode || b === state.hoveredNode)) {
-              const hoveredNode = state.hoveredNode;
-              const otherNode = hoveredNode === a ? b : a;
-              const attraction = clamp(distance * 0.0008 * delta, 0, 0.12);
-              const towardHoveredX = hoveredNode.x - otherNode.x;
-              const towardHoveredY = hoveredNode.y - otherNode.y;
-              const towardDistance = Math.max(Math.sqrt(towardHoveredX * towardHoveredX + towardHoveredY * towardHoveredY), 0.01);
-              const tx = towardHoveredX / towardDistance;
-              const ty = towardHoveredY / towardDistance;
-
-              otherNode.vx += tx * attraction;
-              otherNode.vy += ty * attraction;
-              hoveredNode.vx -= tx * attraction * 0.12;
-              hoveredNode.vy -= ty * attraction * 0.12;
-            }
           }
         }
 
-        for (const edge of state.visibleEdges) {
+        for (const edge of graphState.visibleEdges) {
           const dx = edge.target.x - edge.source.x;
           const dy = edge.target.y - edge.source.y;
-          const distance = Math.max(Math.sqrt(dx * dx + dy * dy), 0.01);
-          const nx = dx / distance;
-          const ny = dy / distance;
+          const d = Math.max(Math.hypot(dx, dy), 0.01);
+          const nx = dx / d;
+          const ny = dy / d;
           const sameGroup = edge.source.layoutGroupId !== null && edge.source.layoutGroupId === edge.target.layoutGroupId;
-          const desired = clamp(
-            edge.source.radius + edge.target.radius + 18 + edge.activation * 7,
-            sameGroup ? 52 : 66,
-            sameGroup ? 130 : 180
-          );
-          const springWeight = exploded && !sameGroup ? 0.0016 : 0.0036;
-          const spring = (distance - desired) * springWeight * edge.weight * delta;
-
+          const desired = clamp(edge.source.radius + edge.target.radius + 18 + edge.activation * 7, sameGroup ? 52 : 66, sameGroup ? 130 : 180);
+          const spring = (d - desired) * (exploded && !sameGroup ? 0.0016 : 0.0036) * edge.weight * delta;
           edge.source.vx += nx * spring;
           edge.source.vy += ny * spring;
           edge.target.vx -= nx * spring;
@@ -2341,23 +2546,10 @@
         }
 
         if (exploded) {
-          for (const group of state.visibleGroups) {
+          for (const group of graphState.visibleGroups) {
             for (const node of group.members) {
-              const dx = group.anchorX - node.x;
-              const dy = group.anchorY - node.y;
-              const distance = Math.max(Math.sqrt(dx * dx + dy * dy), 0.01);
-              const nx = dx / distance;
-              const ny = dy / distance;
-              const limit = Math.max(24, group.targetRadius - node.radius - 16);
-
-              node.vx += dx * 0.0065 * delta;
-              node.vy += dy * 0.0065 * delta;
-
-              if (distance > limit) {
-                const inward = (distance - limit) * 0.015 * delta;
-                node.vx += nx * inward;
-                node.vy += ny * inward;
-              }
+              node.vx += (group.anchorX - node.x) * 0.0065 * delta;
+              node.vy += (group.anchorY - node.y) * 0.0065 * delta;
             }
           }
         } else {
@@ -2372,184 +2564,66 @@
             node.vx += (node.pinX - node.x) * 0.18 * delta;
             node.vy += (node.pinY - node.y) * 0.18 * delta;
           }
-
           node.vx *= exploded ? 0.9 : 0.87;
           node.vy *= exploded ? 0.9 : 0.87;
           node.x += node.vx * delta;
           node.y += node.vy * delta;
         }
-
-        if (exploded) {
-          refreshGroupGeometry();
-        }
+        if (exploded) refreshGroupGeometry();
       }
 
-      function pickNode(screenX, screenY) {
-        const scene = getSceneTransform();
-        const world = screenToWorld(screenX, screenY, scene);
-        const worldPadding = 8 / Math.max(scene.totalScale, 0.001);
-
-        for (let index = state.visibleNodes.length - 1; index >= 0; index -= 1) {
-          const node = state.visibleNodes[index];
-          const dx = world.x - node.x;
-          const dy = world.y - node.y;
-          const radius = node.radius + worldPadding;
-          if (dx * dx + dy * dy <= radius * radius) {
-            return node;
-          }
-        }
-
-        return null;
-      }
-
-      function distancePointToSegmentSquared(pointX, pointY, startX, startY, endX, endY) {
-        const dx = endX - startX;
-        const dy = endY - startY;
-
-        if (dx === 0 && dy === 0) {
-          const px = pointX - startX;
-          const py = pointY - startY;
-          return px * px + py * py;
-        }
-
-        const t = clamp(((pointX - startX) * dx + (pointY - startY) * dy) / (dx * dx + dy * dy), 0, 1);
-        const closestX = startX + dx * t;
-        const closestY = startY + dy * t;
-        const offsetX = pointX - closestX;
-        const offsetY = pointY - closestY;
-        return offsetX * offsetX + offsetY * offsetY;
-      }
-
-      function pickEdge(screenX, screenY) {
-        const scene = getSceneTransform();
-
-        for (let index = state.visibleEdges.length - 1; index >= 0; index -= 1) {
-          const edge = state.visibleEdges[index];
-          const source = worldToScreen(edge.source.x, edge.source.y, scene);
-          const target = worldToScreen(edge.target.x, edge.target.y, scene);
-          const lineWidth = clamp((0.9 + edge.weight * 0.7) * scene.totalScale * 0.7, 0.8, 3.2);
-          const threshold = Math.max(6, lineWidth + 5);
-          const distanceSquared = distancePointToSegmentSquared(
-            screenX,
-            screenY,
-            source.x,
-            source.y,
-            target.x,
-            target.y
-          );
-
-          if (distanceSquared <= threshold * threshold) {
-            return edge;
-          }
-        }
-
-        return null;
-      }
-
-      function pickGroup(screenX, screenY) {
-        if (state.visibleGroups.length === 0) {
-          return null;
-        }
-
-        const scene = getSceneTransform();
-        const world = screenToWorld(screenX, screenY, scene);
-
-        for (let index = state.visibleGroups.length - 1; index >= 0; index -= 1) {
-          const group = state.visibleGroups[index];
-          const dx = world.x - group.centerX;
-          const dy = world.y - group.centerY;
-          if (dx * dx + dy * dy <= group.radius * group.radius) {
-            return group;
-          }
-        }
-
-        return null;
-      }
-
-      function updateCursor() {
-        if (state.pointer.dragging) {
-          canvas.style.cursor = "grabbing";
-          return;
-        }
-
-        if (state.hoveredNode) {
-          canvas.style.cursor = nodeHasChildren(state.hoveredNode) ? "pointer" : "grab";
-          return;
-        }
-
-        if (state.hoveredEdge) {
-          canvas.style.cursor = "pointer";
-          return;
-        }
-
-        if (state.hoveredGroup) {
-          canvas.style.cursor = "grab";
-          return;
-        }
-
-        canvas.style.cursor = "grab";
-      }
-
-      function updateHover(screenX, screenY) {
-        state.hoveredNode = pickNode(screenX, screenY);
-        state.hoveredEdge = state.hoveredNode ? null : pickEdge(screenX, screenY);
-        state.hoveredGroup = state.hoveredNode || state.hoveredEdge ? null : pickGroup(screenX, screenY);
-        updateCursor();
-      }
-
-      function measurePanel(lines, font, lineHeight) {
+      function renderMessage(title, detail) {
         ctx.save();
-        ctx.font = font;
-        let width = 0;
-
-        for (const line of lines) {
-          width = Math.max(width, ctx.measureText(line).width);
-        }
-
-        ctx.restore();
-        return {
-          width: width + 20,
-          height: lines.length * lineHeight + 14
-        };
-      }
-
-      function drawPanel(x, y, lines, accent) {
-        const font = "12px system-ui, sans-serif";
-        const lineHeight = 18;
-        const size = measurePanel(lines, font, lineHeight);
-
-        ctx.save();
-        ctx.fillStyle = "rgba(0, 0, 0, 0.82)";
-        ctx.strokeStyle = accent || "rgba(255, 255, 255, 0.12)";
-        ctx.lineWidth = 1;
-        ctx.fillRect(x, y, size.width, size.height);
-        ctx.strokeRect(x + 0.5, y + 0.5, size.width - 1, size.height - 1);
-        ctx.font = font;
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, graphState.width, graphState.height);
+        ctx.textAlign = "center";
         ctx.fillStyle = "#fff";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "top";
-
-        for (let index = 0; index < lines.length; index += 1) {
-          ctx.fillText(lines[index], x + 10, y + 8 + index * lineHeight);
+        ctx.font = "650 18px system-ui, sans-serif";
+        ctx.fillText(title, graphState.width * 0.5, graphState.height * 0.5 - 8);
+        if (detail) {
+          ctx.font = "500 12px system-ui, sans-serif";
+          ctx.fillStyle = "rgba(255,255,255,.72)";
+          ctx.fillText(detail, graphState.width * 0.5, graphState.height * 0.5 + 20);
         }
-
         ctx.restore();
-        return size;
+      }
+
+      function drawGraphGroups() {
+        for (const group of graphState.visibleGroups) {
+          const pos = worldToScreen(group.centerX, group.centerY);
+          const radius = group.radius * graphState.camera.scale;
+          ctx.save();
+          ctx.globalAlpha = graphState.hoveredGroup && graphState.hoveredGroup.id === group.id ? 0.14 : 0.08;
+          ctx.fillStyle = group.color;
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          ctx.save();
+          ctx.strokeStyle = group.color;
+          ctx.lineWidth = graphState.hoveredGroup && graphState.hoveredGroup.id === group.id ? 2 : 1.2;
+          ctx.setLineDash([8, 8]);
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+          drawLabelPill(pos.x, pos.y - radius - 18, group.parent.name, group.color);
+        }
       }
 
       function drawLabelPill(centerX, centerY, text, accent) {
         ctx.save();
-        ctx.font = "600 12px system-ui, sans-serif";
+        ctx.font = "650 12px system-ui, sans-serif";
         const width = ctx.measureText(text).width + 18;
         const height = 26;
         const x = centerX - width * 0.5;
         const y = centerY - height * 0.5;
-        ctx.fillStyle = "rgba(0, 0, 0, 0.78)";
-        ctx.strokeStyle = accent;
-        ctx.lineWidth = 1;
+        ctx.fillStyle = "rgba(0,0,0,.78)";
         ctx.beginPath();
         ctx.roundRect(x, y, width, height, 13);
         ctx.fill();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 1;
         ctx.stroke();
         ctx.fillStyle = "#fff";
         ctx.textAlign = "center";
@@ -2558,954 +2632,362 @@
         ctx.restore();
       }
 
-      function drawGroups(scene) {
-        for (const group of state.visibleGroups) {
-          const position = worldToScreen(group.centerX, group.centerY, scene);
-          const radius = group.radius * scene.totalScale;
-          const hovered = state.hoveredGroup && state.hoveredGroup.id === group.id;
-
-          ctx.save();
-          ctx.globalAlpha = hovered ? 0.14 : 0.09;
-          ctx.fillStyle = group.color;
-          ctx.beginPath();
-          ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-
-          ctx.save();
-          ctx.strokeStyle = group.color;
-          ctx.lineWidth = hovered ? 2 : 1.4;
-          ctx.setLineDash([8, 8]);
-          ctx.beginPath();
-          ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.restore();
-
-          drawLabelPill(position.x, position.y - radius - 18, group.parent.name, group.color);
-        }
-      }
-
-      function drawEdges(scene) {
+      function drawGraphEdges() {
         ctx.save();
         ctx.lineCap = "round";
-
-        for (const edge of state.visibleEdges) {
-          const source = worldToScreen(edge.source.x, edge.source.y, scene);
-          const target = worldToScreen(edge.target.x, edge.target.y, scene);
+        for (const edge of graphState.visibleEdges) {
+          const source = worldToScreen(edge.source.x, edge.source.y);
+          const target = worldToScreen(edge.target.x, edge.target.y);
           const sameGroup = edge.source.layoutGroupId !== null && edge.source.layoutGroupId === edge.target.layoutGroupId;
-          const hovered = state.hoveredEdge === edge;
-          const selected = state.selectedEdge === edge;
-          const alpha = clamp(
-            (0.06 + edge.activation * 0.028) * (sameGroup ? 1 : state.explodeMode ? 0.5 : 1) + (hovered ? 0.16 : 0) + (selected ? 0.22 : 0),
-            0.04,
-            0.5
-          );
-          ctx.strokeStyle = selected
-            ? edge.source.color
-            : hovered
-              ? "rgba(255, 255, 255, 0.92)"
-              : `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
-          ctx.lineWidth = clamp((0.9 + edge.weight * 0.7) * scene.totalScale * 0.7 + (hovered ? 1.2 : 0) + (selected ? 1.8 : 0), 0.8, 5.2);
+          const alpha = clamp((0.06 + edge.activation * 0.028) * (sameGroup ? 1 : graphState.explodeMode ? 0.5 : 1), 0.04, 0.42);
+          ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+          ctx.lineWidth = clamp((0.9 + edge.weight * 0.7) * graphState.camera.scale * 0.7, 0.8, 3.2);
           ctx.beginPath();
           ctx.moveTo(source.x, source.y);
           ctx.lineTo(target.x, target.y);
           ctx.stroke();
         }
-
         ctx.restore();
       }
 
-      function drawNodes(scene) {
-        const orderedNodes = state.visibleNodes.slice().sort((a, b) => {
-          const aPinned = state.selectedNode && a.id === state.selectedNode.id ? 1 : 0;
-          const bPinned = state.selectedNode && b.id === state.selectedNode.id ? 1 : 0;
-          const aHover = state.hoveredNode && a.id === state.hoveredNode.id ? 1 : 0;
-          const bHover = state.hoveredNode && b.id === state.hoveredNode.id ? 1 : 0;
-          return aPinned + aHover - (bPinned + bHover);
+      function drawGraphNodes() {
+        const ordered = graphState.visibleNodes.slice().sort((a, b) => {
+          const ap = graphState.selectedNode && graphState.selectedNode.id === a.id ? 1 : 0;
+          const bp = graphState.selectedNode && graphState.selectedNode.id === b.id ? 1 : 0;
+          const ah = graphState.hoveredNode && graphState.hoveredNode.id === a.id ? 1 : 0;
+          const bh = graphState.hoveredNode && graphState.hoveredNode.id === b.id ? 1 : 0;
+          return ap + ah - (bp + bh);
         });
 
         ctx.save();
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
-
-        for (const node of orderedNodes) {
-          const hovered = state.hoveredNode && node.id === state.hoveredNode.id;
-          const selected = state.selectedNode && node.id === state.selectedNode.id;
-          const position = worldToScreen(node.x, node.y, scene);
-          const hoverScale = hovered ? 1.1 : selected ? 1.04 : 1;
-          const radius = node.radius * scene.totalScale * hoverScale;
-
+        for (const node of ordered) {
+          const hovered = graphState.hoveredNode && graphState.hoveredNode.id === node.id;
+          const selected = graphState.selectedNode && graphState.selectedNode.id === node.id;
+          const pos = worldToScreen(node.x, node.y);
+          const radius = node.radius * graphState.camera.scale * (hovered ? 1.1 : selected ? 1.04 : 1);
           if (hovered || selected) {
             ctx.beginPath();
-            ctx.arc(position.x, position.y, radius + 7, 0, Math.PI * 2);
-            ctx.strokeStyle = hovered && !selected ? "rgba(255, 255, 255, 0.16)" : node.color;
-            ctx.lineWidth = hovered && !selected ? 2 : 1.5;
+            ctx.arc(pos.x, pos.y, radius + 7, 0, Math.PI * 2);
+            ctx.strokeStyle = selected ? node.color : "rgba(255,255,255,.16)";
+            ctx.lineWidth = selected ? 1.5 : 2;
             ctx.stroke();
           }
-
           ctx.beginPath();
-          ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
+          ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
           ctx.fillStyle = "#000";
           ctx.fill();
           ctx.strokeStyle = node.color;
           ctx.lineWidth = selected ? 4 : hovered ? 3.2 : 2.3;
           ctx.stroke();
-
           ctx.fillStyle = "#fff";
-          ctx.font = `500 ${clamp(11 * scene.totalScale + 2, 11, 14)}px system-ui, sans-serif`;
-          ctx.fillText(node.name, position.x, position.y + radius + 7);
+          ctx.font = `500 ${clamp(11 * graphState.camera.scale + 2, 11, 14)}px system-ui, sans-serif`;
+          ctx.fillText(node.name, pos.x, pos.y + radius + 7);
         }
-
         ctx.restore();
       }
 
-      function drawTooltip(node, scene) {
-        if (!node) {
-          return;
-        }
-
-        const position = worldToScreen(node.x, node.y, scene);
-        const radius = node.radius * scene.totalScale;
-        const lines = [
-          `${node.name} (#${node.id})`,
-          `activation ${node.activation.toFixed(2)}`,
-          `weight ${node.weight.toFixed(2)}`
-        ];
-
-        if (node.hasParent === true && Number.isFinite(node.parentId)) {
-          const parent = state.nodeById.get(node.parentId);
-          lines.push(`parent ${parent ? parent.name : node.parentId}`);
-        }
-
-        if (node.directChildCount > 0) {
-          lines.push(`children ${node.directChildCount}`);
-        }
-
-        const font = "12px system-ui, sans-serif";
-        const lineHeight = 18;
-        const size = measurePanel(lines, font, lineHeight);
-        const x = clamp(position.x + radius + 14, 12, state.width - size.width - 12);
-        const y = clamp(position.y - size.height * 0.5, 12, state.height - size.height - 12);
-        drawPanel(x, y, lines, node.color);
-      }
-
-      function drawEdgeTooltip(edge, scene) {
-        if (!edge) {
-          return;
-        }
-
-        const source = worldToScreen(edge.source.x, edge.source.y, scene);
-        const target = worldToScreen(edge.target.x, edge.target.y, scene);
-        const centerX = (source.x + target.x) * 0.5;
-        const centerY = (source.y + target.y) * 0.5;
-        const lines = [
-          `${edge.source.name} -> ${edge.target.name}`,
-          `weight ${edge.weight.toFixed(2)}`,
-          `activation ${edge.activation.toFixed(2)}`
-        ];
-
-        const font = "12px system-ui, sans-serif";
-        const lineHeight = 18;
-        const size = measurePanel(lines, font, lineHeight);
-        const x = clamp(centerX + 16, 12, state.width - size.width - 12);
-        const y = clamp(centerY - size.height * 0.5, 12, state.height - size.height - 12);
-        drawPanel(x, y, lines, edge.source.color);
-      }
-
-      function renderMessage(title, detail) {
-        const detailFont = "12px system-ui, sans-serif";
-        const detailLines = normalizeMessageLines(detail).flatMap((line) => (
-          wrapTextLine(line, detailFont, Math.max(220, state.width - 64))
-        ));
-        const titleY = detailLines.length > 0
-          ? state.height * 0.5 - 16 - ((detailLines.length - 1) * 8)
-          : state.height * 0.5;
-
+      function drawGraphTooltip(node) {
+        if (!node) return;
+        const pos = worldToScreen(node.x, node.y);
+        const radius = node.radius * graphState.camera.scale;
+        const lines = [`${node.name} (#${node.id})`, `activation ${node.activation.toFixed(2)}`, `weight ${node.weight.toFixed(2)}`];
+        if (node.directChildCount > 0) lines.push(`children ${node.directChildCount}`);
         ctx.save();
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, state.width, state.height);
-        ctx.textAlign = "center";
+        ctx.font = "12px system-ui, sans-serif";
+        const width = Math.max(...lines.map((line) => ctx.measureText(line).width)) + 20;
+        const height = lines.length * 18 + 14;
+        const x = clamp(pos.x + radius + 14, 12, graphState.width - width - 12);
+        const y = clamp(pos.y - height * 0.5, 12, graphState.height - height - 12);
+        ctx.fillStyle = "rgba(0,0,0,.82)";
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = node.color;
+        ctx.strokeRect(x + 0.5, y + 0.5, width - 1, height - 1);
         ctx.fillStyle = "#fff";
-        ctx.font = "600 18px system-ui, sans-serif";
-        ctx.fillText(title, state.width * 0.5, titleY);
-        if (detailLines.length > 0) {
-          ctx.font = detailFont;
-          ctx.fillStyle = "rgba(255, 255, 255, 0.82)";
-          detailLines.forEach((line, index) => {
-            ctx.fillText(line, state.width * 0.5, titleY + 28 + index * 18);
-          });
-        }
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        lines.forEach((line, index) => ctx.fillText(line, x + 10, y + 8 + index * 18));
         ctx.restore();
       }
 
-      function render() {
-        ctx.clearRect(0, 0, state.width, state.height);
+      function renderGraph() {
+        ctx.clearRect(0, 0, graphState.width, graphState.height);
         ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, state.width, state.height);
+        ctx.fillRect(0, 0, graphState.width, graphState.height);
 
-        if (state.loading) {
+        if (graphState.loading) {
           renderMessage("Loading graph", `Fetching ${GRAPH_ENDPOINT}`);
           return;
         }
-
-        if (state.error) {
-          renderMessage(state.error.title, state.error.details);
+        if (graphState.error) {
+          renderMessage(graphState.error.title, graphState.error.detail);
           return;
         }
-
-        const scene = getSceneTransform();
-        if (state.visibleGroups.length > 0) {
-          drawGroups(scene);
-        }
-        drawEdges(scene);
-        drawNodes(scene);
-        if (state.selectedEdge || state.hoveredEdge) {
-          drawEdgeTooltip(state.selectedEdge || state.hoveredEdge, scene);
-        } else {
-          drawTooltip(state.selectedNode || state.hoveredNode || null, scene);
-        }
-
-        if (state.visibleNodes.length === 0) {
-          const message = state.explodeMode
-            ? "This layer has no deeper children"
-            : getFocusNode()
-              ? "This node has no direct children"
-              : "No root nodes found";
-          renderMessage(message, "Click empty background to return");
-        }
+        if (graphState.visibleGroups.length > 0) drawGraphGroups();
+        drawGraphEdges();
+        drawGraphNodes();
+        drawGraphTooltip(graphState.selectedNode || graphState.hoveredNode);
+        if (graphState.visibleNodes.length === 0) renderMessage(getFocusNode() ? "This node has no direct children" : "No root nodes found", "Click empty background to return");
       }
 
-      function navigateToNode(node, screenX, screenY) {
-        state.focusPath = state.focusPath.concat(node);
-        state.explodeMode = false;
-        state.selectedNode = null;
-        state.selectedEdge = null;
-        state.hoveredGroup = null;
-        recomputeVisibleGraph({
-          pulseAnchor: {
-            x: screenX,
-            y: screenY,
-            amplitude: 0.28,
-            duration: 280
-          }
-        });
+      function nodeHasChildren(node) {
+        return Boolean(node && node.directChildCount > 0);
       }
 
       function stepBackOneLevel() {
-        if (state.explodeMode) {
-          state.explodeMode = false;
-          state.selectedNode = null;
-          state.selectedEdge = null;
-          state.hoveredGroup = null;
-          recomputeVisibleGraph({
-            pulseAnchor: {
-              x: state.width * 0.5,
-              y: state.height * 0.5,
-              amplitude: 0.14,
-              duration: 200
-            }
-          });
+        if (graphState.explodeMode) {
+          graphState.explodeMode = false;
+          recomputeVisibleGraph();
           return true;
         }
-
-        if (state.focusPath.length > 0) {
-          state.focusPath = state.focusPath.slice(0, -1);
-          state.selectedNode = null;
-          state.selectedEdge = null;
-          state.hoveredGroup = null;
-          recomputeVisibleGraph({
-            pulseAnchor: {
-              x: state.width * 0.5,
-              y: state.height * 0.5,
-              amplitude: 0.16,
-              duration: 220
-            }
-          });
+        if (graphState.focusPath.length > 0) {
+          graphState.focusPath = graphState.focusPath.slice(0, -1);
+          recomputeVisibleGraph();
           return true;
         }
-
         return false;
       }
 
-      function handleCanvasClick(screenX, screenY) {
-        const hitNode = pickNode(screenX, screenY);
-        const hitEdge = hitNode ? null : pickEdge(screenX, screenY);
-
-        if (!hitNode && !hitEdge) {
+      function handleCanvasClick(x, y) {
+        const hit = pickNode(x, y);
+        if (!hit) {
           if (!stepBackOneLevel()) {
-            state.selectedNode = null;
-            state.selectedEdge = null;
+            graphState.selectedNode = null;
             updateFocusNodeBadge();
           }
-          updateCursor();
           return;
         }
-
-        if (hitNode && nodeHasChildren(hitNode)) {
-          navigateToNode(hitNode, screenX, screenY);
-          updateCursor();
-          return;
-        }
-
-        if (hitEdge) {
-          state.selectedNode = null;
-          state.selectedEdge = hitEdge;
+        if (nodeHasChildren(hit)) {
+          graphState.focusPath = graphState.focusPath.concat(hit);
+          graphState.explodeMode = false;
+          recomputeVisibleGraph();
+        } else {
+          graphState.selectedNode = hit;
           updateFocusNodeBadge();
-          updateCursor();
-          return;
-        }
-
-        if (hitNode) {
-          state.selectedNode = hitNode;
-          state.selectedEdge = null;
-          updateFocusNodeBadge();
-          updateCursor();
         }
       }
 
       function onPointerDown(event) {
-        if (event.button !== 0) {
-          return;
-        }
-
+        if (event.button !== 0) return;
         const rect = canvas.getBoundingClientRect();
-        const screenX = event.clientX - rect.left;
-        const screenY = event.clientY - rect.top;
-        const targetNode = pickNode(screenX, screenY);
-        const targetGroup = targetNode ? null : pickGroup(screenX, screenY);
-
-        state.pointer.isDown = true;
-        state.pointer.dragging = false;
-        state.pointer.pointerId = event.pointerId;
-        state.pointer.mode = targetNode ? "node" : targetGroup ? "group" : "camera";
-        state.pointer.targetNode = targetNode;
-        state.pointer.targetGroup = targetGroup;
-        state.pointer.startX = screenX;
-        state.pointer.startY = screenY;
-        state.pointer.lastX = screenX;
-        state.pointer.lastY = screenY;
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const targetNode = pickNode(x, y);
+        const targetGroup = targetNode ? null : pickGroup(x, y);
+        graphState.pointer.isDown = true;
+        graphState.pointer.dragging = false;
+        graphState.pointer.pointerId = event.pointerId;
+        graphState.pointer.mode = targetNode ? "node" : targetGroup ? "group" : "camera";
+        graphState.pointer.targetNode = targetNode;
+        graphState.pointer.targetGroup = targetGroup;
+        graphState.pointer.startX = x;
+        graphState.pointer.startY = y;
+        graphState.pointer.lastX = x;
+        graphState.pointer.lastY = y;
         canvas.setPointerCapture(event.pointerId);
-        updateHover(screenX, screenY);
+        updateHover(x, y);
       }
 
       function onPointerMove(event) {
         const rect = canvas.getBoundingClientRect();
-        const screenX = event.clientX - rect.left;
-        const screenY = event.clientY - rect.top;
-
-        if (state.pointer.isDown) {
-          const moveDistance = Math.hypot(screenX - state.pointer.startX, screenY - state.pointer.startY);
-          if (!state.pointer.dragging && moveDistance > 4) {
-            state.pointer.dragging = true;
-          }
-
-          if (state.pointer.dragging) {
-            const scene = getSceneTransform();
-            const previousWorld = screenToWorld(state.pointer.lastX, state.pointer.lastY, scene);
-            const currentWorld = screenToWorld(screenX, screenY, scene);
-            const deltaWorldX = currentWorld.x - previousWorld.x;
-            const deltaWorldY = currentWorld.y - previousWorld.y;
-
-            if (state.pointer.mode === "node" && state.pointer.targetNode) {
-              const node = state.pointer.targetNode;
-              node.x += deltaWorldX;
-              node.y += deltaWorldY;
-              node.pinX = node.x;
-              node.pinY = node.y;
-              node.pinned = true;
-              node.vx = 0;
-              node.vy = 0;
-            } else if (state.pointer.mode === "group" && state.pointer.targetGroup) {
-              const group = state.pointer.targetGroup;
-              group.anchorX += deltaWorldX;
-              group.anchorY += deltaWorldY;
-              group.centerX += deltaWorldX;
-              group.centerY += deltaWorldY;
-
-              for (const node of group.members) {
-                node.x += deltaWorldX;
-                node.y += deltaWorldY;
-                if (node.pinned) {
-                  node.pinX += deltaWorldX;
-                  node.pinY += deltaWorldY;
-                }
-                node.vx = 0;
-                node.vy = 0;
-              }
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        if (graphState.pointer.isDown) {
+          const moveDistance = Math.hypot(x - graphState.pointer.startX, y - graphState.pointer.startY);
+          if (!graphState.pointer.dragging && moveDistance > 4) graphState.pointer.dragging = true;
+          if (graphState.pointer.dragging) {
+            const prev = screenToWorld(graphState.pointer.lastX, graphState.pointer.lastY);
+            const curr = screenToWorld(x, y);
+            const dx = curr.x - prev.x;
+            const dy = curr.y - prev.y;
+            if (graphState.pointer.mode === "node" && graphState.pointer.targetNode) {
+              const node = graphState.pointer.targetNode;
+              node.x += dx; node.y += dy; node.pinX = node.x; node.pinY = node.y; node.pinned = true; node.vx = 0; node.vy = 0;
+            } else if (graphState.pointer.mode === "group" && graphState.pointer.targetGroup) {
+              const group = graphState.pointer.targetGroup;
+              group.anchorX += dx; group.anchorY += dy; group.centerX += dx; group.centerY += dy;
+              for (const node of group.members) { node.x += dx; node.y += dy; node.vx = 0; node.vy = 0; }
             } else {
-              const dx = screenX - state.pointer.lastX;
-              const dy = screenY - state.pointer.lastY;
-              state.camera.x -= dx / Math.max(state.camera.scale, 0.001);
-              state.camera.y -= dy / Math.max(state.camera.scale, 0.001);
+              graphState.camera.x -= (x - graphState.pointer.lastX) / Math.max(graphState.camera.scale, 0.001);
+              graphState.camera.y -= (y - graphState.pointer.lastY) / Math.max(graphState.camera.scale, 0.001);
             }
-
-            state.hoveredNode = null;
-            state.hoveredEdge = null;
-            state.hoveredGroup = null;
+            graphState.hoveredNode = null;
+            graphState.hoveredGroup = null;
             updateCursor();
-          } else {
-            updateHover(screenX, screenY);
-          }
-        } else {
-          updateHover(screenX, screenY);
-        }
-
-        state.pointer.lastX = screenX;
-        state.pointer.lastY = screenY;
+          } else updateHover(x, y);
+        } else updateHover(x, y);
+        graphState.pointer.lastX = x;
+        graphState.pointer.lastY = y;
       }
 
       function endPointer(event) {
         const rect = canvas.getBoundingClientRect();
-        const screenX = event.clientX - rect.left;
-        const screenY = event.clientY - rect.top;
-        const wasDragging = state.pointer.dragging;
-
-        state.pointer.isDown = false;
-        state.pointer.dragging = false;
-
-        if (state.pointer.pointerId !== null) {
-          canvas.releasePointerCapture(state.pointer.pointerId);
-          state.pointer.pointerId = null;
-        }
-
-        state.pointer.mode = "camera";
-        state.pointer.targetNode = null;
-        state.pointer.targetGroup = null;
-
-        if (!wasDragging) {
-          handleCanvasClick(screenX, screenY);
-        }
-
-        updateHover(screenX, screenY);
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const wasDragging = graphState.pointer.dragging;
+        graphState.pointer.isDown = false;
+        graphState.pointer.dragging = false;
+        if (graphState.pointer.pointerId !== null) canvas.releasePointerCapture(graphState.pointer.pointerId);
+        graphState.pointer.pointerId = null;
+        graphState.pointer.mode = "camera";
+        graphState.pointer.targetNode = null;
+        graphState.pointer.targetGroup = null;
+        if (!wasDragging) handleCanvasClick(x, y);
+        updateHover(x, y);
       }
 
       function onPointerCancel() {
-        state.pointer.isDown = false;
-        state.pointer.dragging = false;
-        state.pointer.pointerId = null;
-        state.pointer.mode = "camera";
-        state.pointer.targetNode = null;
-        state.pointer.targetGroup = null;
-        state.hoveredNode = null;
-        state.hoveredEdge = null;
-        state.hoveredGroup = null;
+        graphState.pointer.isDown = false;
+        graphState.pointer.dragging = false;
+        graphState.pointer.pointerId = null;
+        graphState.pointer.mode = "camera";
+        graphState.pointer.targetNode = null;
+        graphState.pointer.targetGroup = null;
+        graphState.hoveredNode = null;
+        graphState.hoveredGroup = null;
         updateCursor();
       }
 
       function onWheel(event) {
         event.preventDefault();
-        state.camera.x += event.deltaX / Math.max(state.camera.scale, 0.001);
-        state.camera.y += event.deltaY / Math.max(state.camera.scale, 0.001);
+        graphState.camera.x += event.deltaX / Math.max(graphState.camera.scale, 0.001);
+        graphState.camera.y += event.deltaY / Math.max(graphState.camera.scale, 0.001);
       }
 
       function onPointerLeave() {
-        if (!state.pointer.isDown) {
-          state.hoveredNode = null;
-          state.hoveredEdge = null;
-          state.hoveredGroup = null;
+        if (!graphState.pointer.isDown) {
+          graphState.hoveredNode = null;
+          graphState.hoveredGroup = null;
           updateCursor();
         }
       }
 
-      async function startDeepSearch(event) {
-        event.preventDefault();
-
-        const { taskName, minRounds } = readResearchForm();
-        const id = ensurePreparedResearchId();
-
-        if (taskName.length === 0) {
-          researchState.connectionState = researchState.eventSource ? researchState.connectionState : "disconnected";
-          researchState.runStateLabel = "Idle";
-          researchState.statusDetail = "Task Name is required for /research/start.";
-          updateResearchPanel();
-          researchTaskInput.focus();
-          return;
-        }
-
-        researchState.startInFlight = true;
-        researchState.runStateLabel = "Starting";
-        researchState.activeResearchId = id;
-        researchState.statusDetail = "Preparing deep search.";
-        resetResearchLog(id);
-        updateResearchPanel();
-        renderTimeline();
-        setActiveView("deep-search");
-
-        try {
-          await connectResearchStream(id, true);
-
-          researchState.statusDetail = `POST ${RESEARCH_START_ENDPOINT}`;
-          updateResearchPanel();
-
-          const response = await fetch(RESEARCH_START_ENDPOINT, {
-            method: "POST",
-            cache: "no-store",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              id,
-              taskName,
-              minRounds
-            })
-          });
-
-          const responseText = await response.text();
-          if (!response.ok) {
-            throw new Error(responseText || `HTTP ${response.status}`);
-          }
-
-          if (researchState.runStateLabel === "Starting" || researchState.runStateLabel === "Running") {
-            researchState.runStateLabel = "Completed";
-          }
-
-          researchState.statusDetail = responseText.trim().length > 0
-            ? "Deep search completed and HTTP response returned."
-            : "Deep search completed.";
-          researchState.preparedResearchId = "";
-          updateResearchPanel();
-          loadGraph();
-        } catch (error) {
-          console.error(error);
-          researchState.connectionState = researchState.eventSource ? researchState.connectionState : "error";
-          researchState.runStateLabel = "Error";
-          researchState.statusDetail = buildResearchTransportMessage(error);
-          updateResearchPanel();
-        } finally {
-          researchState.startInFlight = false;
-          updateResearchPanel();
-        }
-      }
-
       async function loadGraph() {
-        const requestSerial = state.requestSerial + 1;
-        state.requestSerial = requestSerial;
-        state.loading = true;
-        state.error = null;
+        const requestSerial = graphState.requestSerial + 1;
+        graphState.requestSerial = requestSerial;
+        graphState.loading = true;
+        graphState.error = null;
         updateRefreshButton();
         updateExplodeButton();
 
         try {
           const response = await fetch(GRAPH_ENDPOINT, { cache: "no-store" });
-          if (!response.ok) {
-            throw new Error(`Server responded with HTTP ${response.status}`);
-          }
-
+          if (!response.ok) throw new Error(`Server responded with HTTP ${response.status}`);
           const raw = await response.json();
-          if (!raw || !Array.isArray(raw.nodes) || !Array.isArray(raw.connections)) {
-            throw new Error("Invalid graph payload from server");
-          }
-
-          if (requestSerial !== state.requestSerial) {
-            return;
-          }
+          if (!raw || !Array.isArray(raw.nodes) || !Array.isArray(raw.connections)) throw new Error("Invalid graph payload from server");
+          if (requestSerial !== graphState.requestSerial) return;
 
           const parsed = parseNodes(raw.nodes);
-          const nextNodeById = parsed.nodeById;
-          const previousFocusPath = state.focusPath.slice();
-          const previousSelectedNode = state.selectedNode;
-
-          state.allNodes = parsed.nodes;
-          state.nodeById = nextNodeById;
-          state.roots = state.allNodes.filter((node) => node.hasParent === false);
-          state.childrenByParent = buildChildrenByParent(state.allNodes);
-          annotateHierarchy(state.allNodes);
-          assignColors(state.allNodes, state.nodeById);
-          state.allEdges = buildEdges(raw.connections, state.nodeById);
-          state.focusPath = remapFocusPath(previousFocusPath, nextNodeById);
-          state.selectedNode = remapNode(previousSelectedNode, nextNodeById);
-          state.selectedEdge = null;
-          state.hoveredNode = null;
-          state.hoveredEdge = null;
-          state.hoveredGroup = null;
-
-          state.loading = false;
-          state.error = null;
+          graphState.allNodes = parsed.nodes;
+          graphState.nodeById = parsed.nodeById;
+          graphState.roots = graphState.allNodes.filter((node) => node.hasParent === false);
+          graphState.childrenByParent = buildChildrenByParent(graphState.allNodes);
+          annotateChildren(graphState.allNodes);
+          assignColors(graphState.allNodes, graphState.nodeById);
+          graphState.allEdges = buildEdges(raw.connections, graphState.nodeById);
+          graphState.focusPath = [];
+          graphState.selectedNode = null;
+          graphState.loading = false;
+          graphState.error = null;
           updateRefreshButton();
           recomputeVisibleGraph();
           updateCursor();
         } catch (error) {
-          if (requestSerial !== state.requestSerial) {
-            return;
-          }
-
+          if (requestSerial !== graphState.requestSerial) return;
           console.error(error);
-          state.loading = false;
-          state.error = buildGraphLoadError(error);
+          graphState.loading = false;
+          graphState.error = {
+            title: error instanceof TypeError ? "Graph server unavailable" : "Failed to load graph",
+            detail: error instanceof TypeError ? SERVER_OFFLINE_HINT : error.message
+          };
           updateRefreshButton();
           updateExplodeButton();
           updateCursor();
         }
       }
 
-      function getTimelinePositions() {
-        const events = researchState.events;
-        const width = timelineState.width;
-        const height = timelineState.height;
-        const topPadding = 132;
-        const bottomPadding = 96;
-        const leftPadding = 76;
-        const rightPadding = 80;
-        const usableWidth = Math.max(220, width - leftPadding - rightPadding);
-        const baselineY = Math.round(height * 0.56);
-        const amplitude = Math.min(96, Math.max(34, height * 0.12));
-
-        if (events.length === 0) {
-          return [];
-        }
-
-        if (events.length === 1) {
-          const event = events[0];
-          const meta = getResearchEventMeta(event.type);
-          return [{
-            entry: event,
-            x: leftPadding + usableWidth * 0.5 + timelineState.cameraX,
-            y: baselineY,
-            radius: isRoundStartEvent(event.type) ? 4 : 16,
-            meta,
-            isRoundMarker: isRoundStartEvent(event.type)
-          }];
-        }
-
-        const stepX = Math.max(112, usableWidth / 5);
-        const totalWidth = Math.max(usableWidth, (events.length - 1) * stepX);
-
-        return events.map((entry, index) => {
-          const progress = events.length === 1 ? 0.5 : index / (events.length - 1);
-          const x = leftPadding + progress * totalWidth + timelineState.cameraX;
-          const wave = Math.sin(progress * Math.PI * Math.max(1, Math.min(events.length - 1, 5)));
-          const offsetY = (index % 2 === 0 ? -1 : 1) * amplitude * (0.34 + Math.abs(wave) * 0.66);
-          const y = clamp(baselineY + offsetY, topPadding, height - bottomPadding);
-          const meta = getResearchEventMeta(entry.type);
-          const roundMarker = isRoundStartEvent(entry.type);
-
-          return {
-            entry,
-            x,
-            y,
-            radius: roundMarker
-              ? 4
-              : clamp(12 + Math.min(18, Math.sqrt(Math.max(0, entry.data.length)) * 0.6), 12, 22),
-            meta,
-            isRoundMarker: roundMarker
-          };
-        });
+      function updateMessagePanel() {
+        messagePanel.classList.toggle("is-visible", uiState.messagePanelOpen);
+        messagePanel.setAttribute("aria-hidden", String(!uiState.messagePanelOpen));
+        messagePanelStatus.textContent = uiState.messageStatus;
+        submitMessageButton.disabled = uiState.messageSubmitInFlight || messageInput.value.trim().length === 0;
+        submitMessageButton.textContent = uiState.messageSubmitInFlight ? "Sending..." : "Send";
+        openMessagePanelButton.classList.toggle("is-active", uiState.messagePanelOpen);
       }
 
-      function pickTimelineNode(x, y) {
-        for (let index = timelineState.positions.length - 1; index >= 0; index -= 1) {
-          const item = timelineState.positions[index];
-          const hitPadding = item.isRoundMarker ? 8 : 6;
-          const dx = x - item.x;
-          const dy = y - item.y;
-          const radius = item.radius + hitPadding;
-          if (dx * dx + dy * dy <= radius * radius) {
-            return item;
-          }
-        }
-        return null;
+      function openMessagePanel() {
+        uiState.messagePanelOpen = true;
+        updateMessagePanel();
+        window.setTimeout(() => { if (uiState.messagePanelOpen) messageInput.focus(); }, 0);
       }
 
-      function updateTimelineTooltip() {
-        const item = timelineState.hoveredNode;
-        if (!item) {
-          timelineTooltip.classList.remove("is-visible");
-          timelineTooltip.setAttribute("aria-hidden", "true");
-          return;
-        }
-
-        timelineTooltipTitle.textContent = `${item.entry.sequence}. ${item.meta.label}`;
-        timelineTooltipTime.textContent = item.entry.elapsedLabel;
-        timelineTooltipRole.textContent = "Click to inspect";
-        timelineTooltipPayload.textContent = item.entry.receivedClock;
-
-        const tooltipWidth = 260;
-        const left = clamp(timelineState.mouseX + 18, 12, timelineState.width - tooltipWidth - 12);
-        const top = clamp(timelineState.mouseY + 18, 12, timelineState.height - 120);
-        timelineTooltip.style.left = `${left}px`;
-        timelineTooltip.style.top = `${top}px`;
-        timelineTooltip.style.width = `${tooltipWidth}px`;
-        timelineTooltip.classList.add("is-visible");
-        timelineTooltip.setAttribute("aria-hidden", "false");
+      function closeMessagePanel() {
+        uiState.messagePanelOpen = false;
+        if (!uiState.messageSubmitInFlight) uiState.messageStatus = "Ready.";
+        updateMessagePanel();
       }
 
-      function openTimelineInspector(item) {
-        if (!item) {
-          return;
+      async function submitMessageInput(event) {
+        event.preventDefault();
+        const input = messageInput.value.trim();
+        if (!input || uiState.messageSubmitInFlight) return;
+        uiState.messageSubmitInFlight = true;
+        uiState.messageStatus = `POST ${MESSAGE_ENDPOINT}`;
+        updateMessagePanel();
+        try {
+          const response = await fetch(MESSAGE_ENDPOINT, {
+            method: "POST",
+            cache: "no-store",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input })
+          });
+          const responseText = await response.text();
+          if (!response.ok) throw new Error(responseText || `HTTP ${response.status}`);
+          uiState.messageStatus = "Message accepted. Refreshing graph.";
+          await loadGraph();
+          closeMessagePanel();
+        } catch (error) {
+          console.error(error);
+          uiState.messageStatus = buildTransportMessage(error);
+        } finally {
+          uiState.messageSubmitInFlight = false;
+          updateMessagePanel();
         }
-
-        const payload = formatResearchPayload(item.entry.data) || "(empty)";
-        timelineState.selectedNode = item;
-        timelineInspectorTitle.textContent = `${item.entry.sequence}. ${item.meta.label}`;
-        timelineInspectorMeta.textContent = `${item.entry.receivedClock} · ${item.entry.elapsedLabel} · type=${item.entry.type}`;
-        timelineInspectorRole.textContent = item.meta.role;
-        timelineInspectorBody.textContent = payload;
-        timelineInspector.classList.add("is-visible");
-        timelineInspector.setAttribute("aria-hidden", "false");
-      }
-
-      function closeTimelineInspector() {
-        timelineState.selectedNode = null;
-        timelineInspector.classList.remove("is-visible");
-        timelineInspector.setAttribute("aria-hidden", "true");
-      }
-
-      function renderTimelineEmpty() {
-        timelineCtx.clearRect(0, 0, timelineState.width, timelineState.height);
-        timelineCtx.fillStyle = "#030508";
-        timelineCtx.fillRect(0, 0, timelineState.width, timelineState.height);
-
-        timelineCtx.save();
-        timelineCtx.fillStyle = "rgba(255,255,255,0.94)";
-        timelineCtx.font = "700 24px system-ui, sans-serif";
-        timelineCtx.textAlign = "center";
-        timelineCtx.textBaseline = "middle";
-        timelineCtx.fillText("No deep-search events", timelineState.width * 0.5, timelineState.height * 0.48);
-        timelineCtx.fillStyle = "rgba(255,255,255,0.64)";
-        timelineCtx.font = "500 13px system-ui, sans-serif";
-        timelineCtx.fillText("Start a run to populate the timeline view.", timelineState.width * 0.5, timelineState.height * 0.48 + 30);
-        timelineCtx.restore();
-      }
-
-      function renderTimeline() {
-        resizeTimelineCanvas();
-        timelineCtx.clearRect(0, 0, timelineState.width, timelineState.height);
-        timelineCtx.fillStyle = "#030508";
-        timelineCtx.fillRect(0, 0, timelineState.width, timelineState.height);
-
-        if (researchState.events.length === 0) {
-          timelineState.positions = [];
-          timelineState.hoveredNode = null;
-          closeTimelineInspector();
-          updateTimelineTooltip();
-          renderTimelineEmpty();
-          return;
-        }
-
-        timelineState.positions = getTimelinePositions();
-
-        const baselineY = Math.round(timelineState.height * 0.56);
-        timelineCtx.save();
-        timelineCtx.strokeStyle = "rgba(255,255,255,0.08)";
-        timelineCtx.lineWidth = 1;
-        timelineCtx.setLineDash([6, 10]);
-        timelineCtx.beginPath();
-        timelineCtx.moveTo(48, baselineY);
-        timelineCtx.lineTo(timelineState.width - 48, baselineY);
-        timelineCtx.stroke();
-        timelineCtx.restore();
-
-        if (timelineState.positions.length > 1) {
-          timelineCtx.save();
-          timelineCtx.strokeStyle = "rgba(125, 211, 252, 0.32)";
-          timelineCtx.lineWidth = 1.5;
-          timelineCtx.setLineDash([3, 8]);
-          timelineCtx.beginPath();
-          timelineCtx.moveTo(timelineState.positions[0].x, timelineState.positions[0].y);
-          for (let index = 1; index < timelineState.positions.length; index += 1) {
-            const prev = timelineState.positions[index - 1];
-            const curr = timelineState.positions[index];
-            const cpx = (prev.x + curr.x) * 0.5;
-            timelineCtx.bezierCurveTo(cpx, prev.y, cpx, curr.y, curr.x, curr.y);
-          }
-          timelineCtx.stroke();
-          timelineCtx.restore();
-        }
-
-        timelineCtx.save();
-        timelineCtx.textAlign = "center";
-        timelineCtx.textBaseline = "bottom";
-
-        for (const item of timelineState.positions) {
-          const hovered = timelineState.hoveredNode && timelineState.hoveredNode.entry.sequence === item.entry.sequence;
-          const selected = timelineState.selectedNode && timelineState.selectedNode.entry.sequence === item.entry.sequence;
-          const radius = item.isRoundMarker
-            ? (hovered ? item.radius + 2 : selected ? item.radius + 1 : item.radius)
-            : (hovered ? item.radius + 3 : selected ? item.radius + 2 : item.radius);
-
-          if (!item.isRoundMarker) {
-            timelineCtx.save();
-            timelineCtx.beginPath();
-            timelineCtx.arc(item.x, item.y, radius + 10, 0, Math.PI * 2);
-            timelineCtx.fillStyle = selected ? "rgba(255,255,255,0.1)" : hovered ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)";
-            timelineCtx.fill();
-            timelineCtx.restore();
-          }
-
-          timelineCtx.beginPath();
-          timelineCtx.arc(item.x, item.y, radius, 0, Math.PI * 2);
-          timelineCtx.fillStyle = "#05070a";
-          timelineCtx.fill();
-          timelineCtx.strokeStyle = item.meta.accent;
-          timelineCtx.lineWidth = item.isRoundMarker
-            ? (selected ? 2.5 : hovered ? 2.2 : 1.8)
-            : (selected ? 4.5 : hovered ? 4 : 2.5);
-          timelineCtx.stroke();
-
-          if (!item.isRoundMarker) {
-            timelineCtx.fillStyle = "#fff";
-            timelineCtx.font = "700 10px system-ui, sans-serif";
-            timelineCtx.textBaseline = "middle";
-            timelineCtx.fillText(String(item.entry.sequence), item.x, item.y + 0.5);
-
-            timelineCtx.textBaseline = "bottom";
-            timelineCtx.font = hovered || selected ? "700 12px system-ui, sans-serif" : "600 11px system-ui, sans-serif";
-            timelineCtx.fillStyle = hovered || selected ? "#fff" : "rgba(255,255,255,0.72)";
-            const labelY = item.y - radius - 12;
-            timelineCtx.fillText(item.meta.label, item.x, labelY);
-
-            timelineCtx.textBaseline = "top";
-            timelineCtx.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
-            timelineCtx.fillStyle = "rgba(255,255,255,0.5)";
-            timelineCtx.fillText(item.entry.elapsedLabel, item.x, item.y + radius + 10);
-          }
-        }
-
-        timelineCtx.restore();
-        updateTimelineTooltip();
-      }
-
-      function handleTimelinePointerDown(event) {
-        const rect = timelineCanvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        timelineState.isPointerDown = true;
-        timelineState.isDragging = false;
-        timelineState.pointerId = event.pointerId;
-        timelineState.pointerStartX = x;
-        timelineState.pointerLastX = x;
-        timelineState.dragDistance = 0;
-        timelineState.movedDuringPointer = false;
-        timelineCanvas.setPointerCapture(event.pointerId);
-        timelineState.mouseX = x;
-        timelineState.mouseY = y;
-      }
-
-      function handleTimelinePointerMove(event) {
-        const rect = timelineCanvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        timelineState.mouseX = x;
-        timelineState.mouseY = y;
-
-        if (timelineState.isPointerDown) {
-          const deltaX = x - timelineState.pointerLastX;
-          timelineState.dragDistance += Math.abs(deltaX);
-          if (!timelineState.isDragging && Math.abs(x - timelineState.pointerStartX) > 4) {
-            timelineState.isDragging = true;
-          }
-
-          if (timelineState.isDragging) {
-            timelineState.cameraX += deltaX;
-            timelineState.movedDuringPointer = true;
-            timelineState.hoveredNode = null;
-            timelineCanvas.style.cursor = "grabbing";
-            renderTimeline();
-          }
-        } else {
-          timelineState.hoveredNode = pickTimelineNode(x, y);
-          timelineCanvas.style.cursor = timelineState.hoveredNode ? "pointer" : "grab";
-          renderTimeline();
-        }
-
-        timelineState.pointerLastX = x;
-      }
-
-      function handleTimelinePointerUp(event) {
-        const rect = timelineCanvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        const wasDragging = timelineState.isDragging;
-
-        if (timelineState.pointerId !== null) {
-          timelineCanvas.releasePointerCapture(timelineState.pointerId);
-        }
-
-        timelineState.isPointerDown = false;
-        timelineState.isDragging = false;
-        timelineState.pointerId = null;
-        timelineState.pointerLastX = x;
-        timelineState.mouseX = x;
-        timelineState.mouseY = y;
-
-        if (!wasDragging) {
-          const hit = pickTimelineNode(x, y);
-          timelineState.hoveredNode = hit;
-          if (hit) {
-            openTimelineInspector(hit);
-          }
-        }
-
-        timelineCanvas.style.cursor = timelineState.hoveredNode ? "pointer" : "grab";
-        renderTimeline();
-      }
-
-      function handleTimelinePointerLeave() {
-        if (!timelineState.isPointerDown) {
-          timelineState.hoveredNode = null;
-          timelineCanvas.style.cursor = "grab";
-          updateTimelineTooltip();
-          renderTimeline();
-        }
-      }
-
-      function handleTimelinePointerCancel() {
-        timelineState.isPointerDown = false;
-        timelineState.isDragging = false;
-        timelineState.pointerId = null;
-        timelineState.hoveredNode = null;
-        timelineCanvas.style.cursor = "grab";
-        updateTimelineTooltip();
-        renderTimeline();
       }
 
       function frame(now) {
-        const delta = clamp((now - state.lastFrame) / 16.6667, 0.5, 1.8);
-        state.lastFrame = now;
+        const delta = clamp((now - graphState.lastFrame) / 16.6667, 0.5, 1.8);
+        graphState.lastFrame = now;
         stepLayout(delta);
-        render();
+        renderGraph();
         requestAnimationFrame(frame);
       }
 
-      refreshButton.addEventListener("click", () => {
-        loadGraph();
-      });
-
-      researchForm.addEventListener("submit", startDeepSearch);
-      messageForm.addEventListener("submit", submitMessageInput);
-      messageInput.addEventListener("input", updateMessagePanel);
-      researchTaskInput.addEventListener("input", updateResearchPanel);
-      researchMinRoundsInput.addEventListener("input", updateResearchPanel);
-
+      refreshButton.addEventListener("click", loadGraph);
       explodeToggle.addEventListener("click", () => {
-        state.explodeMode = !state.explodeMode;
-        state.selectedNode = null;
-        state.selectedEdge = null;
-        state.hoveredNode = null;
-        state.hoveredEdge = null;
-        recomputeVisibleGraph({
-          pulseAnchor: {
-            x: state.width - 120,
-            y: 44,
-            amplitude: 0.16,
-            duration: 220
-          }
-        });
+        graphState.explodeMode = !graphState.explodeMode;
+        recomputeVisibleGraph();
         updateCursor();
       });
 
-      openMessagePanelButton.addEventListener("click", () => {
-        if (uiState.messagePanelOpen) {
-          closeMessagePanel();
-        } else {
-          openMessagePanel();
-        }
-      });
-
+      openMessagePanelButton.addEventListener("click", () => uiState.messagePanelOpen ? closeMessagePanel() : openMessagePanel());
       closeMessagePanelButton.addEventListener("click", closeMessagePanel);
+      messageForm.addEventListener("submit", submitMessageInput);
+      messageInput.addEventListener("input", updateMessagePanel);
+
+      researchForm.addEventListener("submit", startDeepSearch);
+      researchTaskInput.addEventListener("input", updateResearchPanel);
+      researchMinRoundsInput.addEventListener("input", updateResearchPanel);
+      newResearchSessionButton.addEventListener("click", newResearchSession);
+
+      goalForm.addEventListener("submit", createGoal);
+      goalTitleInput.addEventListener("input", updateGoalPanel);
+      goalExtraInfoInput.addEventListener("input", updateGoalPanel);
 
       graphViewToggle.addEventListener("click", () => setActiveView("graph"));
       deepSearchViewToggle.addEventListener("click", () => setActiveView("deep-search"));
+      goalViewToggle.addEventListener("click", () => setActiveView("goal"));
 
       canvas.addEventListener("pointerdown", onPointerDown);
       canvas.addEventListener("pointermove", onPointerMove);
@@ -3514,48 +2996,37 @@
       canvas.addEventListener("pointerleave", onPointerLeave);
       canvas.addEventListener("wheel", onWheel, { passive: false });
 
-      timelineCanvas.addEventListener("pointerdown", handleTimelinePointerDown);
-      timelineCanvas.addEventListener("pointermove", handleTimelinePointerMove);
-      timelineCanvas.addEventListener("pointerup", handleTimelinePointerUp);
-      timelineCanvas.addEventListener("pointercancel", handleTimelinePointerCancel);
-      timelineCanvas.addEventListener("pointerleave", handleTimelinePointerLeave);
-      timelineInspectorClose.addEventListener("click", closeTimelineInspector);
-
       window.addEventListener("resize", () => {
         resizeCanvas();
-        resizeTimelineCanvas();
-        renderTimeline();
+        researchTimeline.render();
+        goalTimeline.render();
       });
 
       window.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          if (uiState.messagePanelOpen) {
-            closeMessagePanel();
-            return;
-          }
-
-          if (!stepBackOneLevel()) {
-            state.selectedNode = null;
-            state.selectedEdge = null;
-            state.hoveredNode = null;
-            state.hoveredEdge = null;
-            state.hoveredGroup = null;
-            updateFocusNodeBadge();
-          }
-          updateCursor();
+        if (event.key !== "Escape") return;
+        if (uiState.messagePanelOpen) { closeMessagePanel(); return; }
+        if (researchTimeline.inspector.classList.contains("is-visible")) { researchTimeline.closeInspector(); return; }
+        if (goalTimeline.inspector.classList.contains("is-visible")) { goalTimeline.closeInspector(); return; }
+        if (!stepBackOneLevel()) {
+          graphState.selectedNode = null;
+          graphState.hoveredNode = null;
+          graphState.hoveredGroup = null;
+          updateFocusNodeBadge();
         }
+        updateCursor();
       });
 
       resizeCanvas();
-      resizeTimelineCanvas();
       ensurePreparedResearchId();
+      loadLocalState();
       updateViewSwitcher();
       updateResearchPanel();
+      updateGoalPanel();
       updateRefreshButton();
       updateExplodeButton();
       updateMessagePanel();
-      renderTimeline();
-      timelineCanvas.style.cursor = "grab";
+      researchTimeline.render();
+      goalTimeline.render();
       loadGraph();
       requestAnimationFrame(frame);
     })();
