@@ -220,7 +220,7 @@ target_include_directories(goal PUBLIC
 	${CMAKE_SOURCE_DIR}/c/ne/goal
 	${CMAKE_SOURCE_DIR}/c/ne/search
 )
-target_link_libraries(goal PUBLIC util openai jsonp node deepsearchsession )
+target_link_libraries(goal PUBLIC util openai jsonp node deepsearchsession globals)
 
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 target_include_directories(change PRIVATE

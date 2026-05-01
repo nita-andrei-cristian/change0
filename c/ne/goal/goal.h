@@ -39,7 +39,7 @@ enum GOAL_STATUS {
 Goal* GetGoalFromID(size_t ID);
 void free_goal(Goal *g);
 void free_goals();
-Goal* CreateUserGoal(String *input1, String *input2);
+Goal* CreateUserGoal(String *input1, String *input2, char goalId[32]);
 
 /*
  * Placeholder Mapping
@@ -64,18 +64,31 @@ Goal* CreateUserGoal(String *input1, String *input2);
 "Account for realistic human cognitive, physical, and time limitations. "\
 "The new goal must fit within the remaining total time. "\
 "Return JSON only, with this exact structure: "\
-"{\"title\":\"string\",\"extrainfo\":\"string\"} "
+"{\"title\":\"string\",\"extrainfo\":\"string\", \"estimated_time\" : any number} "\
+"I mention that estimated_time doesn't actually do anything so just enter a positive integer because it's auto handled by the system.\n"
 
 #define OPENAI_GOAL_EXTRACT_SCHEMA_JSON \
 "{" \
   "\"type\":\"object\"," \
   "\"additionalProperties\":false," \
-  "\"required\":[\"title\",\"reason\"]," \
+  "\"required\":[\"title\",\"reason\",\"extrainfo\",\"estimated_time\"]," \
   "\"properties\":{" \
-    "\"title\":{\"type\":\"string\"}," \
-    "\"extrainfo\":{\"type\":\"string\"}," \
-    "\"estimated_time\":{\"type\":\"integer\",\"minimum\":0}" \
+    "\"title\":{" \
+      "\"type\":\"string\"" \
+    "}," \
+    "\"reason\":{" \
+      "\"type\":\"string\"" \
+    "}," \
+    "\"extrainfo\":{" \
+      "\"type\":[\"string\",\"null\"]" \
+    "}," \
+    "\"estimated_time\":{" \
+      "\"type\":[\"integer\",\"null\"]," \
+      "\"minimum\":0" \
+    "}" \
   "}" \
 "}"
+
+typedef _Bool (*goal_emit_like_func)(const char* id, const char *type, const char *buffer, size_t buffer_len);
 
 #endif

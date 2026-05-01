@@ -4,11 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "globals.h"
 #include "node.h"
 #include "json.h"
 #include "config.h"
 #include "openai.h"
 #include "deep-search-session.h"
+
+static goal_emit_like_func goal_emit = NULL;
 
 #define INITIAL_GOAL_INDEX 1 // must be > 0
 #define FindGoal(x) (GOAL_CONTAINER[(x) - INITIAL_GOAL_INDEX])
@@ -142,7 +145,8 @@ static void call_title_extra(String *input, String *out)
 
     req.model = AI_OPENAI_MODEL_GPT_5_4_NANO;
     req.schema_name = "goal_extraction";
-    req.use_temperature = 0;
+
+    printf("Calling extracter... \n\n");
 
     String *result = ai_openai_call_gpt_request(&req);
     cassert(result, "OpenAI goal extraction call failed.\n");
@@ -161,10 +165,12 @@ static void extract_goal(String* text, String* title, String* extrainfo, time_t 
 	InitString(title, 256); InitString(extrainfo, 1024);
 	InitString(&json_extract_result, 2048);
 
+	printf("Extracing goal... \n\n");
+
 	call_title_extra(text, &json_extract_result);
 
 	json_value* doc = json_parse(c_str(&json_extract_result), json_extract_result.cap);
-	change_assert(doc && doc->type == json_object, "Goalis not an object or is not a json\n\n\n%s", c_str(text));
+	change_assert(doc && doc->type == json_object, "Goal is not an object or is not a json\n\n\n%s", c_str(text));
 
 	for (size_t i = 0; i < doc->u.object.length; i++){
 		json_object_entry candidate = doc->u.object.values[i];
@@ -354,7 +360,6 @@ void shorten_goal(Goal *g, time_t now){
 
 	req.model = AI_OPENAI_MODEL_GPT_5_4_MINI;
 	req.schema_name = "shorten_goal";
-	req.use_temperature = 0;
 
 	String *out = ai_openai_call_gpt_request(&req);
 
@@ -463,7 +468,7 @@ static void create_goal_task(String* input1, String* input2, Task *task){
 
 } 
 
-static void personalize_goal(String* input1, String *input2, String* out){
+static void personalize_goal(String* input1, String *input2, String* out, char* goalId){
 	InitString(out, 2048);
 
 	// Init params
@@ -475,16 +480,30 @@ static void personalize_goal(String* input1, String *input2, String* out){
 	
 	// customize goal
 	start_ds_session(&task, search_id, out);
+
+	goal_emit(goalId, "deep-search-final-recomandation", c_str(out), out->len);
 }
-//
+
+static void lazy_load(){
+    if (goal_emit == NULL){
+        goal_emit = (goal_emit_like_func)ReadGlobalPointer(FSTRING_SIZE_PARAMS("goal_emit"));
+	change_assert(goal_emit, "Can't load goal_emit");
+    }
+}
+
 // those are mapped to input1 -> title input2 -> extrainfo
-Goal* CreateUserGoal(String *input1, String *input2)
+Goal* CreateUserGoal(String *input1, String *input2, char goalId[32])
 {
+	lazy_load();
+
 	String title, extra_info, deep_search_result;
 	time_t estimated_time = 0;
 
-	personalize_goal(input1, input2, &deep_search_result);
+	personalize_goal(input1, input2, &deep_search_result, goalId);
 	extract_goal(&deep_search_result, &title, &extra_info, &estimated_time);
+
+	goal_emit(goalId, "title", title.p, title.len);
+	goal_emit(goalId, "extra-info", extra_info.p, extra_info.len);
 
 	printf("Goal created:\ntime [%ld]\nextra_info [%s]\ntitle [%s]\n\n", estimated_time, extra_info.p, title.p);
 	

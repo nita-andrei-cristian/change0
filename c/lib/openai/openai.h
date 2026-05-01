@@ -63,8 +63,6 @@ typedef struct {
 
     const char *schema_name;
 
-    double temperature;
-    int use_temperature;
 } ai_gpt_request;
 
 const char *ai_openai_model_name(ai_openai_model model);

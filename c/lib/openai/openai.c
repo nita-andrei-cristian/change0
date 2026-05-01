@@ -553,10 +553,34 @@ String *ai_openai_call_gpt_request(ai_gpt_request *req) {
     cassert(req->schema.p, "Error: request schema is NULL.\n");
 
     const char *model = ai_openai_model_name(req->model);
+    cassert(model, "Error: ai_openai_model_name returned NULL.\n");
 
     const char *schema_name = req->schema_name
         ? req->schema_name
         : "openai_structured_response";
+
+    size_t schema_name_len = strlen(schema_name);
+    cassert(
+        schema_name_len > 0 && schema_name_len <= 64,
+        "Error: OpenAI schema_name must be 1-64 characters.\n"
+    );
+
+    for (size_t i = 0; i < schema_name_len; i++) {
+        char c = schema_name[i];
+
+        int ok =
+            (c >= 'a' && c <= 'z') ||
+            (c >= 'A' && c <= 'Z') ||
+            (c >= '0' && c <= '9') ||
+            c == '_' ||
+            c == '-';
+
+        cassert(ok, "Error: OpenAI schema_name may only contain letters, digits, underscores, and dashes.\n");
+    }
+
+    json_value *schema_root = json_parse(c_str(&req->schema), req->schema.len);
+    cassert(schema_root, "Error: request schema is not valid JSON.\n");
+    json_value_free(schema_root);
 
     char *escaped_prompt = json_escape_dup(c_str(&req->prompt));
     cassert(escaped_prompt, "Error: Failed to escape prompt.\n");
@@ -574,53 +598,26 @@ String *ai_openai_call_gpt_request(ai_gpt_request *req) {
     char *json_body = malloc(body_cap);
     cassert(json_body, "Error: Failed to allocate OpenAI JSON body.\n");
 
-    int body_size;
-
-    if (req->use_temperature) {
-        body_size = snprintf(
-            json_body,
-            body_cap,
-            "{"
-                "\"model\":\"%s\","
-                "\"input\":\"%s\","
-                "\"temperature\":%.6f,"
-                "\"text\":{"
-                    "\"format\":{"
-                        "\"type\":\"json_schema\","
-                        "\"strict\":true,"
-                        "\"name\":\"%s\","
-                        "\"schema\":%s"
-                    "}"
+    int body_size = snprintf(
+        json_body,
+        body_cap,
+        "{"
+            "\"model\":\"%s\","
+            "\"input\":\"%s\","
+            "\"text\":{"
+                "\"format\":{"
+                    "\"type\":\"json_schema\","
+                    "\"name\":\"%s\","
+                    "\"strict\":true,"
+                    "\"schema\":%s"
                 "}"
-            "}",
-            model,
-            escaped_prompt,
-            req->temperature,
-            escaped_schema_name,
-            c_str(&req->schema)
-        );
-    } else {
-        body_size = snprintf(
-            json_body,
-            body_cap,
-            "{"
-                "\"model\":\"%s\","
-                "\"input\":\"%s\","
-                "\"text\":{"
-                    "\"format\":{"
-                        "\"type\":\"json_schema\","
-                        "\"strict\":true,"
-                        "\"name\":\"%s\","
-                        "\"schema\":%s"
-                    "}"
-                "}"
-            "}",
-            model,
-            escaped_prompt,
-            escaped_schema_name,
-            c_str(&req->schema)
-        );
-    }
+            "}"
+        "}",
+        model,
+        escaped_prompt,
+        escaped_schema_name,
+        c_str(&req->schema)
+    );
 
     free(escaped_prompt);
     free(escaped_schema_name);
@@ -631,12 +628,31 @@ String *ai_openai_call_gpt_request(ai_gpt_request *req) {
     );
 
     ai_openai_response created = {0};
-
     ai_openai_status st = ai_openai_create_response(json_body, &created);
+
+    if (st != AI_OPENAI_OK) {
+        fprintf(stderr, "OpenAI request failed: %s\n", ai_openai_strerror(st));
+        fprintf(stderr, "OpenAI request body:\n%s\n", json_body);
+
+        if (created.body.p) {
+            fprintf(
+                stderr,
+                "OpenAI response body:\n%.*s\n",
+                (int)created.body.len,
+                c_str(&created.body)
+            );
+        } else {
+            fprintf(stderr, "OpenAI response body: <empty>\n");
+        }
+
+        ai_openai_response_free(&created);
+        free(json_body);
+
+        cassert(0, "Error: OpenAI request failed.\n");
+    }
 
     free(json_body);
 
-    cassert(st == AI_OPENAI_OK, (char *)ai_openai_strerror(st));
     cassert(created.body.p, "Error: OpenAI returned empty body.\n");
 
     json_value *root = json_parse(c_str(&created.body), created.body.len);
