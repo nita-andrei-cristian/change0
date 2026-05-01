@@ -15,6 +15,7 @@
 #include <pthread.h>
 #include <ctype.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,7 +27,8 @@
 #define MAX_HEADER_SIZE     (256 * 1024)
 
 #define MAX_SSE_CLIENTS     64
-#define MAX_RESEARCH_ID_LEN 63
+#define MAX_STREAM_ID_LEN   63
+#define GOAL_ID_LEN         32
 
 static _Bool started = 0;
 static int server_fd = -1;
@@ -48,7 +50,14 @@ typedef struct {
 	int fd;
 	_Bool alive;
 	pthread_mutex_t write_lock;
-	char research_id[MAX_RESEARCH_ID_LEN + 1];
+
+	/*
+	 * Generic stream filter.
+	 *
+	 * Deep-search clients use research ids here.
+	 * Goal clients use goal-id here.
+	 */
+	char stream_id[MAX_STREAM_ID_LEN + 1];
 } ClientConnection;
 
 static ClientConnection sse_clients[MAX_SSE_CLIENTS];
@@ -92,10 +101,15 @@ static int send_all(int fd, const void* data, size_t len) {
 	size_t sent_total = 0;
 
 	while (sent_total < len) {
+#ifdef MSG_NOSIGNAL
+		ssize_t sent_now = send(fd, p + sent_total, len - sent_total, MSG_NOSIGNAL);
+#else
 		ssize_t sent_now = send(fd, p + sent_total, len - sent_total, 0);
+#endif
 
 		if (sent_now < 0) {
 			if (errno == EINTR) continue;
+			if (errno == EPIPE || errno == ECONNRESET) return -1;
 			return -1;
 		}
 
@@ -377,7 +391,7 @@ static int query_get_param(const char* query, const char* key, char* out, size_t
 	return 0;
 }
 
-/* ========================= JSON ESCAPE FOR SSE ========================= */
+/* ========================= JSON ESCAPE FOR SSE / RESPONSES ========================= */
 
 static char* json_escape_dup_n(const char* src, size_t len) {
 	size_t i;
@@ -425,6 +439,24 @@ static char* json_escape_dup_n(const char* src, size_t len) {
 	return out;
 }
 
+/* ========================= VALIDATION ========================= */
+
+static int validate_goal_id_32(const char* goal_id) {
+	size_t len = goal_id ? strlen(goal_id) : 0;
+
+	if (len != GOAL_ID_LEN) {
+		change_assert(
+			len == GOAL_ID_LEN,
+			"goal-id must be exactly %d chars, got %zu",
+			GOAL_ID_LEN,
+			len
+		);
+		return 0;
+	}
+
+	return 1;
+}
+
 /* ========================= SSE REGISTRY ========================= */
 
 static void init_sse_clients(void) {
@@ -434,7 +466,7 @@ static void init_sse_clients(void) {
 	for (i = 0; i < MAX_SSE_CLIENTS; i++) {
 		sse_clients[i].fd = -1;
 		sse_clients[i].alive = 0;
-		sse_clients[i].research_id[0] = '\0';
+		sse_clients[i].stream_id[0] = '\0';
 	}
 	pthread_mutex_unlock(&sse_clients_lock);
 }
@@ -447,12 +479,12 @@ static void remove_sse_client_locked(int idx) {
 		close(sse_clients[idx].fd);
 		sse_clients[idx].fd = -1;
 		sse_clients[idx].alive = 0;
-		sse_clients[idx].research_id[0] = '\0';
+		sse_clients[idx].stream_id[0] = '\0';
 		pthread_mutex_destroy(&sse_clients[idx].write_lock);
 	}
 }
 
-static int add_sse_client(int fd, const char* research_id) {
+static int add_sse_client(int fd, const char* stream_id) {
 	int i;
 
 	pthread_mutex_lock(&sse_clients_lock);
@@ -461,10 +493,10 @@ static int add_sse_client(int fd, const char* research_id) {
 		if (!sse_clients[i].alive) {
 			sse_clients[i].fd = fd;
 			sse_clients[i].alive = 1;
-			sse_clients[i].research_id[0] = '\0';
-			if (research_id) {
-				strncpy(sse_clients[i].research_id, research_id, MAX_RESEARCH_ID_LEN);
-				sse_clients[i].research_id[MAX_RESEARCH_ID_LEN] = '\0';
+			sse_clients[i].stream_id[0] = '\0';
+			if (stream_id) {
+				strncpy(sse_clients[i].stream_id, stream_id, MAX_STREAM_ID_LEN);
+				sse_clients[i].stream_id[MAX_STREAM_ID_LEN] = '\0';
 			}
 			pthread_mutex_init(&sse_clients[i].write_lock, NULL);
 			pthread_mutex_unlock(&sse_clients_lock);
@@ -503,7 +535,8 @@ static void prune_dead_sse_clients(void) {
  * stream_id is used in two ways:
  *   1. It is serialized into the outgoing JSON as the `id` field.
  *   2. It is used as the optional client filter. Clients connected with
- *      /research/events?id=<stream_id> only receive matching stream ids.
+ *      /research/events?id=<stream_id> or /goal/events?goal-id=<stream_id>
+ *      only receive matching stream ids.
  *
  * Domain emitters such as ds_emit_event() and goal_emit_event() should stay
  * thin wrappers around this function so all SSE formatting, escaping,
@@ -556,7 +589,7 @@ void server_emit_event(const char* stream_id, const char* type, const char* buff
 			if (sse_clients[i].alive) {
 				int send_failed = 0;
 
-				if (sse_clients[i].research_id[0] != '\0' && strcmp(sse_clients[i].research_id, stream_id) != 0) {
+				if (sse_clients[i].stream_id[0] != '\0' && strcmp(sse_clients[i].stream_id, stream_id) != 0) {
 					continue;
 				}
 
@@ -714,7 +747,7 @@ static int json_get_int_field(const char* json, const char* key, int* out_value)
 static void handle_get_goal_events(int client_fd, const char* full_path) {
 	char path_only[256];
 	const char* query = NULL;
-	char goal_id[MAX_RESEARCH_ID_LEN + 1];
+	char goal_id[256];
 	static const char* header =
 		"HTTP/1.1 200 OK\r\n"
 		"Content-Type: text/event-stream\r\n"
@@ -726,7 +759,19 @@ static void handle_get_goal_events(int client_fd, const char* full_path) {
 	split_path_and_query(full_path, path_only, sizeof(path_only), &query);
 	goal_id[0] = '\0';
 
-	query_get_param(query, "id", goal_id, sizeof(goal_id));
+	if (!query_get_param(query, "goal-id", goal_id, sizeof(goal_id))) {
+		query_get_param(query, "id", goal_id, sizeof(goal_id));
+	}
+
+	if (goal_id[0] != '\0' && !validate_goal_id_32(goal_id)) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"invalid_goal_id_length\"}"
+		);
+		return;
+	}
 
 	if (send_all(client_fd, header, strlen(header)) != 0) {
 		close(client_fd);
@@ -734,12 +779,6 @@ static void handle_get_goal_events(int client_fd, const char* full_path) {
 	}
 
 	if (!add_sse_client(client_fd, goal_id[0] ? goal_id : NULL)) {
-		send_json_response(
-			client_fd,
-			503,
-			"Service Unavailable",
-			"{\"ok\":false,\"error\":\"too_many_sse_clients\"}"
-		);
 		close(client_fd);
 		return;
 	}
@@ -750,16 +789,19 @@ static void handle_get_goal_events(int client_fd, const char* full_path) {
 }
 
 static void handle_post_goal_create(int client_fd, const HttpRequest* req) {
+	char goal_id[256];
 	char title[256];
 	char extra_info[2048];
-	char stream_id[MAX_RESEARCH_ID_LEN + 1];
+	char response_body[256];
+	char* esc_goal_id = NULL;
+	int response_len;
 	String title_s;
 	String extra_info_s;
 	Goal* goal = NULL;
 
+	goal_id[0] = '\0';
 	title[0] = '\0';
 	extra_info[0] = '\0';
-	stream_id[0] = '\0';
 
 	if (!req->body) {
 		send_json_response(
@@ -767,6 +809,38 @@ static void handle_post_goal_create(int client_fd, const HttpRequest* req) {
 			400,
 			"Bad Request",
 			"{\"ok\":false,\"error\":\"missing_body\"}"
+		);
+		return;
+	}
+
+	/*
+	 * Required goal identifier.
+	 *
+	 * Primary key: "goal-id"
+	 * Compatibility fallbacks: "goalId", then "id"
+	 *
+	 * The goal-id must be exactly 32 characters. The length check is kept
+	 * explicit through change_assert(...) because invalid ids indicate a
+	 * caller-side protocol bug, not a server-generated id.
+	 */
+	if (!json_get_string_field(req->body, "goal-id", goal_id, sizeof(goal_id)) &&
+	    !json_get_string_field(req->body, "goalId", goal_id, sizeof(goal_id)) &&
+	    !json_get_string_field(req->body, "id", goal_id, sizeof(goal_id))) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_goal_id\"}"
+		);
+		return;
+	}
+
+	if (!validate_goal_id_32(goal_id)) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"invalid_goal_id_length\"}"
 		);
 		return;
 	}
@@ -792,17 +866,8 @@ static void handle_post_goal_create(int client_fd, const HttpRequest* req) {
 		return;
 	}
 
-	/*
-	 * Optional stream id. If omitted, use title as the stream id.
-	 * This keeps the public API simple while still allowing clients to
-	 * subscribe with /goal/events?id=<id> when they provide one.
-	 */
-	if (!json_get_string_field(req->body, "id", stream_id, sizeof(stream_id))) {
-		snprintf(stream_id, sizeof(stream_id), "%s", title);
-	}
-
-	printf("goal/create id=%s title=%s extraInfo=%s\n",
-	       stream_id,
+	printf("goal/create goal-id=%s title=%s extraInfo=%s\n",
+	       goal_id,
 	       title,
 	       extra_info);
 
@@ -813,20 +878,19 @@ static void handle_post_goal_create(int client_fd, const HttpRequest* req) {
 	CatString(&extra_info_s, extra_info, strlen(extra_info));
 
 	goal_emit_event(
-		stream_id,
+		goal_id,
 		"goal_create_started",
-		"goal create started",
-		strlen("goal create started")
+		FSTRING_SIZE_PARAMS("goal create started")
 	);
 
-	goal = CreateUserGoal(&title_s, &extra_info_s);
+	goal = CreateUserGoal(&title_s, &extra_info_s, goal_id);
 
 	FreeString(&extra_info_s);
 	FreeString(&title_s);
 
 	if (!goal) {
 		goal_emit_event(
-			stream_id,
+			goal_id,
 			"goal_create_failed",
 			"goal create failed",
 			strlen("goal create failed")
@@ -842,22 +906,43 @@ static void handle_post_goal_create(int client_fd, const HttpRequest* req) {
 	}
 
 	goal_emit_event(
-		stream_id,
+		goal_id,
 		"goal_created",
 		"goal created",
 		strlen("goal created")
 	);
 
-	send_json_response(
+	esc_goal_id = json_escape_dup_n(goal_id, strlen(goal_id));
+	response_len = snprintf(
+		response_body,
+		sizeof(response_body),
+		"{\"ok\":true,\"goal-id\":\"%s\"}",
+		esc_goal_id
+	);
+	free(esc_goal_id);
+
+	if (response_len < 0 || (size_t)response_len >= sizeof(response_body)) {
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"response_too_large\"}"
+		);
+		return;
+	}
+
+	send_response(
 		client_fd,
 		200,
 		"OK",
-		"{\"ok\":true}"
+		"application/json",
+		response_body,
+		(size_t)response_len
 	);
 }
 
 static void handle_post_research_start(int client_fd, const HttpRequest* req) {
-	char research_id[MAX_RESEARCH_ID_LEN + 1];
+	char research_id[MAX_STREAM_ID_LEN + 1];
 	char task_name[256];
 	int min_rounds = 0;
 	String out;
@@ -946,6 +1031,8 @@ static void handle_post_research_start(int client_fd, const HttpRequest* req) {
 
 static void handle_post_message(int client_fd, const HttpRequest* req) {
 	char input[1024];
+	size_t input_size;
+	String inputS;
 
 	input[0] = '\0';
 
@@ -971,9 +1058,9 @@ static void handle_post_message(int client_fd, const HttpRequest* req) {
 
 	printf("message input=%s\n", input);
 
-	size_t input_size = strlen(input);
+	input_size = strlen(input);
 
-	String inputS; InitString(&inputS, input_size + 1);
+	InitString(&inputS, input_size + 1);
 	CatString(&inputS, input, input_size);
 
 	DecomposeInputIntoGraph(&inputS);
@@ -991,7 +1078,7 @@ static void handle_post_message(int client_fd, const HttpRequest* req) {
 static void handle_get_research_events(int client_fd, const char* full_path) {
 	char path_only[256];
 	const char* query = NULL;
-	char research_id[MAX_RESEARCH_ID_LEN + 1];
+	char research_id[MAX_STREAM_ID_LEN + 1];
 	static const char* header =
 		"HTTP/1.1 200 OK\r\n"
 		"Content-Type: text/event-stream\r\n"
@@ -1011,12 +1098,6 @@ static void handle_get_research_events(int client_fd, const char* full_path) {
 	}
 
 	if (!add_sse_client(client_fd, research_id[0] ? research_id : NULL)) {
-		send_json_response(
-			client_fd,
-			503,
-			"Service Unavailable",
-			"{\"ok\":false,\"error\":\"too_many_sse_clients\"}"
-		);
 		close(client_fd);
 		return;
 	}
@@ -1056,16 +1137,6 @@ static int handle_request(int client_fd, const HttpRequest* req) {
 		return 0;
 	}
 
-	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/goal/create") == 0) {
-		handle_post_goal_create(client_fd, req);
-		return 0;
-	}
-
-	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/goal/events") == 0) {
-		handle_get_goal_events(client_fd, req->path);
-		return 1;
-	}
-
 	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/graph") == 0) {
 		handle_get_graph(client_fd);
 		return 0;
@@ -1076,14 +1147,24 @@ static int handle_request(int client_fd, const HttpRequest* req) {
 		return 0;
 	}
 
-	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/message") == 0) {
-		handle_post_message(client_fd, req);
-		return 0;
-	}
-
 	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/research/events") == 0) {
 		handle_get_research_events(client_fd, req->path);
 		return 1;
+	}
+
+	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/goal/create") == 0) {
+		handle_post_goal_create(client_fd, req);
+		return 0;
+	}
+
+	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/goal/events") == 0) {
+		handle_get_goal_events(client_fd, req->path);
+		return 1;
+	}
+
+	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/message") == 0) {
+		handle_post_message(client_fd, req);
+		return 0;
 	}
 
 	handle_not_found(client_fd);
@@ -1154,6 +1235,13 @@ void start_server(int port) {
 	struct sockaddr_in addr;
 	int opt = 1;
 	int rc;
+
+	/*
+	 * Critical for SSE:
+	 * browsers routinely close/reconnect EventSource sockets.
+	 * Without this, send() to a closed socket can terminate the process.
+	 */
+	signal(SIGPIPE, SIG_IGN);
 
 	pthread_mutex_lock(&server_lock);
 
@@ -1257,4 +1345,3 @@ void stop_server(void) {
 	}
 	pthread_mutex_unlock(&sse_clients_lock);
 }
-

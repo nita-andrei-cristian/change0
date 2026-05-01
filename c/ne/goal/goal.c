@@ -502,8 +502,15 @@ Goal* CreateUserGoal(String *input1, String *input2, char goalId[32])
 	personalize_goal(input1, input2, &deep_search_result, goalId);
 	extract_goal(&deep_search_result, &title, &extra_info, &estimated_time);
 
+	// emit info to client
 	goal_emit(goalId, "title", title.p, title.len);
 	goal_emit(goalId, "extra-info", extra_info.p, extra_info.len);
+
+	char total_time_buff[16] = {0};
+	size_t len = snprintf(total_time_buff, 16, "%zu", extra_info.len);
+	change_assert(len < 16, "Compiler is retarded\n");
+
+	goal_emit(goalId, "time", total_time_buff, len);
 
 	printf("Goal created:\ntime [%ld]\nextra_info [%s]\ntitle [%s]\n\n", estimated_time, extra_info.p, title.p);
 	

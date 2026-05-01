@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -7,14 +8,14 @@
   <style>
     :root {
       color-scheme: dark;
-      --bg: #050505;
+      --bg: #030303;
       --panel: #080808;
-      --panel-2: #0c0c0c;
+      --panel-2: #0d0d0d;
       --text: #f5f7fb;
-      --muted: rgba(255,255,255,.58);
-      --soft: rgba(255,255,255,.045);
-      --soft-2: rgba(255,255,255,.075);
-      --line: rgba(255,255,255,.05);
+      --muted: rgba(255,255,255,.56);
+      --soft: rgba(255,255,255,.055);
+      --soft-2: rgba(255,255,255,.09);
+      --line: rgba(255,255,255,.075);
       --accent: #7dd3fc;
       --accent-strong: #38bdf8;
       --success: #34d399;
@@ -42,6 +43,12 @@
     input,
     textarea { font: inherit; }
 
+    code {
+      color: rgba(255,255,255,.78);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .95em;
+    }
+
     .app {
       position: relative;
       width: 100vw;
@@ -58,7 +65,7 @@
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 160ms ease, visibility 160ms ease;
+      transition: opacity 140ms ease, visibility 140ms ease;
     }
 
     .view.is-active {
@@ -74,7 +81,7 @@
 
     .work-view {
       display: grid;
-      grid-template-columns: minmax(310px, 400px) minmax(0, 1fr);
+      grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
       width: 100%;
       height: 100%;
       background: var(--bg);
@@ -91,28 +98,31 @@
     }
 
     .sidebar__top {
-      padding: 22px 20px 18px;
+      min-height: 0;
+      padding: 20px;
       overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
 
     .sidebar__title {
       margin: 0;
       color: var(--text);
-      font: 750 24px/1.08 system-ui, sans-serif;
+      font: 740 22px/1.08 system-ui, sans-serif;
       letter-spacing: -0.035em;
     }
 
     .sidebar__subtitle,
     .sidebar__hint {
-      margin: 9px 0 0;
+      margin: -5px 0 0;
       color: var(--muted);
       font: 500 13px/1.45 system-ui, sans-serif;
     }
 
     .form-grid {
-      margin-top: 18px;
       display: grid;
-      gap: 12px;
+      gap: 11px;
     }
 
     .field {
@@ -121,8 +131,8 @@
     }
 
     .field__label {
-      color: rgba(255,255,255,.82);
-      font: 700 11px/1.2 system-ui, sans-serif;
+      color: rgba(255,255,255,.76);
+      font: 720 10px/1.2 system-ui, sans-serif;
       letter-spacing: .08em;
       text-transform: uppercase;
     }
@@ -131,25 +141,25 @@
     .field textarea {
       width: 100%;
       border: 0;
-      border-radius: 14px;
-      padding: 12px 14px;
+      border-radius: 12px;
+      padding: 11px 12px;
       color: var(--text);
       background: var(--soft);
       outline: 1px solid transparent;
       resize: vertical;
       font: 500 14px/1.42 system-ui, sans-serif;
-      transition: background 140ms ease, outline-color 140ms ease;
+      transition: background 120ms ease, outline-color 120ms ease;
     }
 
     .field input:focus,
     .field textarea:focus {
-      background: rgba(255,255,255,.065);
-      outline-color: rgba(125,211,252,.26);
+      background: rgba(255,255,255,.075);
+      outline-color: rgba(125,211,252,.25);
     }
 
     .field textarea {
-      min-height: 92px;
-      max-height: 240px;
+      min-height: 88px;
+      max-height: 220px;
     }
 
     .button-row {
@@ -163,20 +173,20 @@
       appearance: none;
       border: 0;
       border-radius: 999px;
-      min-height: 42px;
-      padding: 0 16px;
-      background: rgba(255,255,255,.07);
+      min-height: 40px;
+      padding: 0 14px;
+      background: rgba(255,255,255,.075);
       color: #fff;
       cursor: pointer;
-      font: 750 11px/1 system-ui, sans-serif;
+      font: 740 10px/1 system-ui, sans-serif;
       letter-spacing: .08em;
       text-transform: uppercase;
-      transition: transform 160ms ease, background 140ms ease, opacity 140ms ease;
+      transition: transform 140ms ease, background 120ms ease, opacity 120ms ease;
     }
 
     .sidebar-button:hover:not(:disabled) {
       transform: translateY(-1px);
-      background: rgba(255,255,255,.105);
+      background: rgba(255,255,255,.12);
     }
 
     .sidebar-button:disabled {
@@ -186,12 +196,16 @@
     }
 
     .sidebar-button.is-wide { width: 100%; }
-    .sidebar-button.is-secondary { min-height: 36px; background: rgba(255,255,255,.045); }
+    .sidebar-button.is-secondary { min-height: 36px; background: rgba(255,255,255,.052); }
+    .sidebar-button.is-danger { min-height: 36px; background: rgba(251,113,133,.11); color: #fecdd3; }
+    .sidebar-button.is-danger:hover:not(:disabled) { background: rgba(251,113,133,.18); }
 
     .status-block {
-      margin-top: 14px;
       display: grid;
       gap: 8px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.035);
     }
 
     .status-line {
@@ -204,13 +218,13 @@
 
     .status-detail {
       margin: 0;
-      color: rgba(255,255,255,.46);
+      color: rgba(255,255,255,.48);
       font: 500 12px/1.42 system-ui, sans-serif;
     }
 
     .status-inline {
       color: rgba(255,255,255,.82);
-      font: 700 11px/1 system-ui, sans-serif;
+      font: 720 10px/1 system-ui, sans-serif;
       letter-spacing: .06em;
       text-transform: uppercase;
     }
@@ -220,7 +234,7 @@
       align-items: center;
       gap: 8px;
       color: #fff;
-      font: 750 11px/1 system-ui, sans-serif;
+      font: 740 10px/1 system-ui, sans-serif;
       letter-spacing: .05em;
       text-transform: uppercase;
     }
@@ -246,14 +260,34 @@
     .status-chip.is-reconnecting,
     .status-chip.is-error { color: var(--warning); }
 
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 2px;
+    }
+
+    .history-title {
+      margin: 0;
+      color: rgba(255,255,255,.78);
+      font: 740 10px/1.2 system-ui, sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
     .session-list {
-      margin-top: 18px;
       display: grid;
       gap: 6px;
-      max-height: 34vh;
-      overflow: auto;
-      padding-right: 2px;
+      max-height: min(320px, 32vh);
+      min-height: 44px;
+      overflow-y: auto;
+      padding-right: 3px;
+      scrollbar-width: thin;
     }
+
+    .session-list::-webkit-scrollbar { width: 8px; }
+    .session-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 999px; }
 
     .session-empty {
       padding: 10px 2px;
@@ -267,17 +301,17 @@
       width: 100%;
       text-align: left;
       cursor: pointer;
-      border-radius: 14px;
+      border-radius: 13px;
       padding: 10px 11px;
       background: transparent;
       color: #fff;
       display: grid;
       gap: 5px;
-      transition: background 140ms ease, transform 140ms ease;
+      transition: background 120ms ease, transform 120ms ease;
     }
 
     .session-item:hover {
-      background: rgba(255,255,255,.045);
+      background: rgba(255,255,255,.052);
       transform: translateY(-1px);
     }
 
@@ -307,9 +341,7 @@
       min-width: 0;
       min-height: 0;
       overflow: hidden;
-      background:
-        radial-gradient(circle at top right, rgba(56,189,248,.055), transparent 24%),
-        #030508;
+      background: #030508;
     }
 
     .timeline-header {
@@ -323,13 +355,13 @@
       justify-content: space-between;
       gap: 16px;
       padding: 22px 24px 18px;
-      background: linear-gradient(180deg, rgba(0,0,0,.62), rgba(0,0,0,0));
+      background: linear-gradient(180deg, rgba(0,0,0,.68), rgba(0,0,0,0));
       pointer-events: none;
     }
 
     .timeline-header__title {
       margin: 0;
-      font: 750 22px/1.1 system-ui, sans-serif;
+      font: 740 21px/1.1 system-ui, sans-serif;
       letter-spacing: -.032em;
     }
 
@@ -348,11 +380,15 @@
     }
 
     .timeline-chip {
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       padding: 8px 10px;
       border-radius: 999px;
-      background: rgba(255,255,255,.045);
+      background: rgba(255,255,255,.055);
       color: #fff;
-      font: 750 10px/1 system-ui, sans-serif;
+      font: 740 10px/1 system-ui, sans-serif;
       letter-spacing: .08em;
       text-transform: uppercase;
       pointer-events: auto;
@@ -398,7 +434,7 @@
     }
 
     .timeline-tooltip__title {
-      font: 750 13px/1.3 system-ui, sans-serif;
+      font: 740 13px/1.3 system-ui, sans-serif;
       color: #fff;
     }
 
@@ -456,7 +492,7 @@
     .timeline-inspector__title {
       margin: 0;
       color: #fff;
-      font: 750 16px/1.25 system-ui, sans-serif;
+      font: 740 16px/1.25 system-ui, sans-serif;
     }
 
     .timeline-inspector__meta {
@@ -473,17 +509,17 @@
       border-radius: 999px;
       min-height: 38px;
       padding: 0 14px;
-      background: rgba(255,255,255,.055);
+      background: rgba(255,255,255,.06);
       color: #fff;
       cursor: pointer;
-      font: 750 11px/1 system-ui, sans-serif;
+      font: 740 10px/1 system-ui, sans-serif;
       letter-spacing: .06em;
       text-transform: uppercase;
     }
 
     .timeline-inspector__close:hover,
     .message-panel__close:hover,
-    .message-panel__submit:hover:not(:disabled) { background: rgba(255,255,255,.095); }
+    .message-panel__submit:hover:not(:disabled) { background: rgba(255,255,255,.1); }
     .message-panel__submit:disabled { opacity: .45; cursor: default; }
 
     .timeline-inspector__role {
@@ -518,7 +554,7 @@
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+      transition: opacity 140ms ease, transform 140ms ease, visibility 140ms ease;
     }
 
     .message-panel.is-visible {
@@ -539,7 +575,7 @@
     .message-panel__title {
       margin: 0;
       color: #fff;
-      font: 750 16px/1.25 system-ui, sans-serif;
+      font: 740 16px/1.25 system-ui, sans-serif;
     }
 
     .message-panel__subtitle {
@@ -626,7 +662,7 @@
       padding: 0;
       border-radius: 999px;
       cursor: pointer;
-      transition: transform 160ms ease, background 140ms ease, opacity 140ms ease;
+      transition: transform 140ms ease, background 120ms ease, opacity 120ms ease;
     }
 
     .view-switcher button:hover:not(:disabled),
@@ -669,7 +705,7 @@
       gap: 12px;
       color: #fff;
       opacity: 0;
-      transition: opacity 160ms ease, transform 160ms ease;
+      transition: opacity 140ms ease, transform 140ms ease;
       text-shadow: 0 2px 12px rgba(0,0,0,.5);
     }
 
@@ -709,6 +745,10 @@
 
       .sidebar {
         box-shadow: inset 0 -1px 0 var(--line);
+      }
+
+      .session-list {
+        max-height: 170px;
       }
     }
 
@@ -794,14 +834,15 @@
     <section id="deep-search-view" class="view work-view" aria-label="Deep search view">
       <aside class="sidebar">
         <div class="sidebar__top">
-          <h1 class="sidebar__title">Deep Search Hub</h1>
-          <p class="sidebar__subtitle">Local saved sessions. Open an old timeline or start a clean run.</p>
-
-          <div class="button-row" style="margin-top:16px">
-            <button id="new-research-session" class="sidebar-button is-secondary" type="button">New Deep Search</button>
+          <div>
+            <h1 class="sidebar__title">Deep Search</h1>
+            <p class="sidebar__subtitle">Saved local timelines for research runs.</p>
           </div>
 
-          <div id="research-session-list" class="session-list" aria-label="Saved deep-search sessions"></div>
+          <div class="button-row">
+            <button id="new-research-session" class="sidebar-button is-secondary" type="button">New Search</button>
+            <button id="clear-research-history" class="sidebar-button is-danger" type="button">Clear History</button>
+          </div>
 
           <form id="research-form" class="form-grid">
             <label class="field" for="research-task">
@@ -831,6 +872,11 @@
             </div>
             <p id="research-status-detail" class="status-detail">Ready.</p>
           </div>
+
+          <div class="history-header">
+            <p class="history-title">History</p>
+          </div>
+          <div id="research-session-list" class="session-list" aria-label="Saved deep-search sessions"></div>
         </div>
       </aside>
 
@@ -873,8 +919,10 @@
     <section id="goal-view" class="view work-view" aria-label="Goal view">
       <aside class="sidebar">
         <div class="sidebar__top">
-          <h1 class="sidebar__title">Goals Hub</h1>
-          <p class="sidebar__subtitle">Local goals. Each goal keeps its own timeline from <code>goal_emit</code>.</p>
+          <div>
+            <h1 class="sidebar__title">Goals</h1>
+            <p class="sidebar__subtitle">Saved local timelines from <code>goal_emit</code>.</p>
+          </div>
 
           <form id="goal-form" class="form-grid">
             <label class="field" for="goal-title">
@@ -889,6 +937,10 @@
 
             <button id="create-goal" class="sidebar-button is-wide" type="submit">Create Goal</button>
           </form>
+
+          <div class="button-row">
+            <button id="clear-goal-history" class="sidebar-button is-danger" type="button">Clear History</button>
+          </div>
 
           <div class="status-block">
             <div class="status-line">
@@ -905,6 +957,9 @@
             <p id="goal-status-detail" class="status-detail">Ready.</p>
           </div>
 
+          <div class="history-header">
+            <p class="history-title">Goal Emit History</p>
+          </div>
           <div id="goal-list" class="session-list" aria-label="Saved goals"></div>
         </div>
       </aside>
@@ -1012,6 +1067,7 @@
       const researchMinRoundsInput = document.getElementById("research-min-rounds");
       const startResearchButton = document.getElementById("start-research");
       const newResearchSessionButton = document.getElementById("new-research-session");
+      const clearResearchHistoryButton = document.getElementById("clear-research-history");
       const researchSessionList = document.getElementById("research-session-list");
       const researchConnectionState = document.getElementById("research-connection-state");
       const researchConnectionText = document.getElementById("research-connection-text");
@@ -1023,6 +1079,7 @@
       const goalTitleInput = document.getElementById("goal-title");
       const goalExtraInfoInput = document.getElementById("goal-extra-info");
       const createGoalButton = document.getElementById("create-goal");
+      const clearGoalHistoryButton = document.getElementById("clear-goal-history");
       const goalList = document.getElementById("goal-list");
       const goalConnectionState = document.getElementById("goal-connection-state");
       const goalConnectionText = document.getElementById("goal-connection-text");
@@ -1041,8 +1098,8 @@
       const SERVER_OFFLINE_HINT = "Open CHANGE terminal client and select Start Server (run ./build.sh)";
 
       const STORAGE_KEYS = {
-        researchSessions: "graph-viewer.research-sessions.v2",
-        goals: "graph-viewer.goals.v2"
+        researchSessions: "graph-viewer.research-sessions.v3",
+        goals: "graph-viewer.goals.v3"
       };
 
       const WARNING_SVG = `
@@ -1175,6 +1232,21 @@
         return sanitizeId(`${prefix}-${timePart}-${Math.random().toString(36).slice(2)}`);
       }
 
+      function generateRandom32() {
+        if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+          const bytes = new Uint8Array(16);
+          window.crypto.getRandomValues(bytes);
+          return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+        }
+
+        const alphabet = "0123456789abcdef";
+        let output = "";
+        for (let index = 0; index < 32; index += 1) {
+          output += alphabet[Math.floor(Math.random() * alphabet.length)];
+        }
+        return output;
+      }
+
       function ensurePreparedResearchId(forceNew = false) {
         if (forceNew || !researchState.preparedId) researchState.preparedId = generateId("rs");
         return researchState.preparedId;
@@ -1198,6 +1270,12 @@
         } catch (error) {
           console.warn(`Failed to save ${key}`, error);
         }
+      }
+
+      function truncateText(value, max = 30) {
+        const text = String(value || "").trim();
+        if (text.length <= max) return text;
+        return `${text.slice(0, Math.max(0, max - 1))}…`;
       }
 
       function formatClock(date) {
@@ -1446,7 +1524,7 @@
           c.fillRect(0, 0, this.width, this.height);
           c.save();
           c.fillStyle = "rgba(255,255,255,.94)";
-          c.font = "750 24px system-ui, sans-serif";
+          c.font = "740 24px system-ui, sans-serif";
           c.textAlign = "center";
           c.textBaseline = "middle";
           c.fillText(this.emptyTitle, this.width * 0.5, this.height * 0.48);
@@ -1529,12 +1607,12 @@
 
             if (!item.isSmall) {
               c.fillStyle = "#fff";
-              c.font = "750 10px system-ui, sans-serif";
+              c.font = "740 10px system-ui, sans-serif";
               c.textBaseline = "middle";
               c.fillText(String(item.entry.sequence), item.x, item.y + 0.5);
 
               c.textBaseline = "bottom";
-              c.font = hovered || selected ? "750 12px system-ui, sans-serif" : "650 11px system-ui, sans-serif";
+              c.font = hovered || selected ? "740 12px system-ui, sans-serif" : "650 11px system-ui, sans-serif";
               c.fillStyle = hovered || selected ? "#fff" : "rgba(255,255,255,.72)";
               c.fillText(item.meta.label, item.x, item.y - radius - 12);
 
@@ -1689,9 +1767,9 @@
         return { id, taskName, minRounds, status: "Starting", createdAt: now, updatedAt: now, events: [] };
       }
 
-      function makeGoal({ id, title, extraInfo }) {
+      function makeGoal({ id, goalId, title, extraInfo }) {
         const now = Date.now();
-        return { id, title, extraInfo, status: "Creating", createdAt: now, updatedAt: now, events: [] };
+        return { id, goalId: goalId || id, title, extraInfo, status: "Creating", createdAt: now, updatedAt: now, events: [] };
       }
 
       function moveToTop(list, id) {
@@ -1709,9 +1787,12 @@
 
         for (const session of researchState.sessions) {
           if (!Array.isArray(session.events)) session.events = [];
+          if (!session.taskName) session.taskName = "Untitled deep search";
         }
         for (const goal of goalState.goals) {
           if (!Array.isArray(goal.events)) goal.events = [];
+          if (!goal.goalId || String(goal.goalId).length !== 32) goal.goalId = generateRandom32();
+          if (!goal.title) goal.title = "Untitled goal";
         }
 
         if (researchState.sessions.length > 0) activateResearchSession(researchState.sessions[0].id, false);
@@ -1730,7 +1811,7 @@
 
       function renderResearchSessionList() {
         if (researchState.sessions.length === 0) {
-          researchSessionList.innerHTML = `<div class="session-empty">No saved deep-search sessions yet.</div>`;
+          researchSessionList.innerHTML = `<div class="session-empty">No saved deep-search sessions.</div>`;
           return;
         }
         researchSessionList.innerHTML = "";
@@ -1744,7 +1825,7 @@
           title.textContent = session.taskName || "Untitled deep search";
           const meta = document.createElement("div");
           meta.className = "session-item__meta";
-          meta.textContent = `${session.events.length} events · ${formatLocalTime(session.createdAt)} · ${session.id}`;
+          meta.textContent = `${session.events.length} events · ${formatLocalTime(session.createdAt)}`;
           const status = document.createElement("div");
           status.className = "session-item__status";
           status.textContent = session.status || "Saved";
@@ -1756,7 +1837,7 @@
 
       function renderGoalList() {
         if (goalState.goals.length === 0) {
-          goalList.innerHTML = `<div class="session-empty">No saved goals yet.</div>`;
+          goalList.innerHTML = `<div class="session-empty">No saved goals.</div>`;
           return;
         }
         goalList.innerHTML = "";
@@ -1770,7 +1851,7 @@
           title.textContent = goal.title || "Untitled goal";
           const meta = document.createElement("div");
           meta.className = "session-item__meta";
-          meta.textContent = `${goal.events.length} events · ${formatLocalTime(goal.createdAt)} · ${goal.id}`;
+          meta.textContent = `${goal.events.length} events · ${formatLocalTime(goal.createdAt)}`;
           const status = document.createElement("div");
           status.className = "session-item__status";
           status.textContent = goal.status || "Saved";
@@ -1787,7 +1868,7 @@
         researchTaskInput.value = session.taskName || "";
         researchMinRoundsInput.value = String(session.minRounds || 2);
         researchState.runStateLabel = session.status || "Saved";
-        researchState.statusDetail = `Opened saved session ${session.id}.`;
+        researchState.statusDetail = "Opened saved session.";
         researchTimeline.setEvents(session.events);
         renderResearchSessionList();
         updateResearchPanel();
@@ -1801,7 +1882,7 @@
         goalTitleInput.value = goal.title || "";
         goalExtraInfoInput.value = goal.extraInfo || "";
         goalState.runStateLabel = goal.status || "Saved";
-        goalState.statusDetail = `Opened saved goal ${goal.id}.`;
+        goalState.statusDetail = "Opened saved goal.";
         goalTimeline.setEvents(goal.events);
         renderGoalList();
         updateGoalPanel();
@@ -1810,14 +1891,16 @@
 
       function updateResearchPanel() {
         updateConnectionIndicator(researchConnectionState, researchConnectionIcon, researchConnectionText, researchState.connectionState);
+        const session = findResearchSession(researchState.activeId);
         const events = getActiveResearchEvents();
         const hasTask = researchTaskInput.value.trim().length > 0;
         researchRunState.textContent = researchState.runStateLabel;
         researchStatusDetail.textContent = researchState.statusDetail;
         startResearchButton.disabled = researchState.startInFlight || !hasTask;
         startResearchButton.textContent = researchState.startInFlight ? "Running..." : "Start Deep Search";
+        clearResearchHistoryButton.disabled = researchState.startInFlight || researchState.sessions.length === 0;
         document.getElementById("timeline-total-chip").textContent = `${events.length} ${events.length === 1 ? "Event" : "Events"}`;
-        document.getElementById("timeline-session-chip").textContent = researchState.activeId ? `Session ${researchState.activeId}` : "No Session";
+        document.getElementById("timeline-session-chip").textContent = session ? truncateText(session.taskName || "Active Session", 28) : "No Session";
         document.getElementById("timeline-header-subtitle").textContent = events.length > 0
           ? "Chronological nodes are connected in order of arrival. Hover and click to inspect raw payloads."
           : "Start or open a deep-search session to populate the timeline.";
@@ -1832,8 +1915,9 @@
         goalStatusDetail.textContent = goalState.statusDetail;
         createGoalButton.disabled = goalState.createInFlight || goalTitleInput.value.trim().length === 0;
         createGoalButton.textContent = goalState.createInFlight ? "Creating..." : "Create Goal";
+        clearGoalHistoryButton.disabled = goalState.createInFlight || goalState.goals.length === 0;
         document.getElementById("goal-timeline-total-chip").textContent = `${events.length} ${events.length === 1 ? "Event" : "Events"}`;
-        document.getElementById("goal-timeline-session-chip").textContent = activeGoal ? `Goal ${activeGoal.id}` : "No Goal";
+        document.getElementById("goal-timeline-session-chip").textContent = activeGoal ? truncateText(activeGoal.title || "Active Goal", 28) : "No Goal";
         document.getElementById("goal-timeline-header-subtitle").textContent = activeGoal
           ? `Timeline for: ${activeGoal.title}`
           : "Create or open a goal to inspect goal_emit messages.";
@@ -1877,6 +1961,35 @@
         updateResearchPanel();
         setActiveView("deep-search");
         researchTaskInput.focus();
+      }
+
+      function clearResearchHistory() {
+        closeResearchStream();
+        researchState.sessions = [];
+        researchState.activeId = "";
+        researchState.preparedId = generateId("rs");
+        researchState.firstServerEventPerf = null;
+        researchState.connectionState = "disconnected";
+        researchState.runStateLabel = "Idle";
+        researchState.statusDetail = "Deep-search history cleared.";
+        saveResearchSessions();
+        researchTimeline.closeInspector();
+        researchTimeline.setEvents([]);
+        updateResearchPanel();
+      }
+
+      function clearGoalHistory() {
+        closeGoalStream();
+        goalState.goals = [];
+        goalState.activeId = "";
+        goalState.firstServerEventPerf = null;
+        goalState.connectionState = "disconnected";
+        goalState.runStateLabel = "Idle";
+        goalState.statusDetail = "Goal emit history cleared.";
+        saveGoals();
+        goalTimeline.closeInspector();
+        goalTimeline.setEvents([]);
+        updateGoalPanel();
       }
 
       function buildResearchEventsUrl(id) {
@@ -2010,7 +2123,7 @@
         const id = typeof payload.id === "string" && payload.id.length > 0 ? payload.id : researchState.connectedId || "default";
         let session = findResearchSession(id);
         if (!session) {
-          session = makeResearchSession({ id, taskName: `Recovered session ${id}`, minRounds: 1 });
+          session = makeResearchSession({ id, taskName: "Recovered session", minRounds: 1 });
           session.status = "Recovered";
           researchState.sessions.unshift(session);
         }
@@ -2046,7 +2159,7 @@
         const id = typeof payload.id === "string" && payload.id.length > 0 ? payload.id : goalState.connectedId || "default";
         let goal = findGoal(id);
         if (!goal) {
-          goal = makeGoal({ id, title: `Recovered goal ${id}`, extraInfo: "" });
+          goal = makeGoal({ id, goalId: id.length === 32 ? id : generateRandom32(), title: "Recovered goal", extraInfo: "" });
           goal.status = "Recovered";
           goalState.goals.unshift(goal);
         }
@@ -2056,7 +2169,7 @@
         goal.events.push({
           sequence: goal.events.length + 1,
           type,
-          goalId: id,
+          goalId: goal.goalId,
           data,
           receivedClock: formatClock(receivedDate),
           elapsedLabel: formatElapsedMs(elapsedMs),
@@ -2161,8 +2274,9 @@
           return;
         }
 
-        const id = generateId("goal");
-        const goal = makeGoal({ id, title, extraInfo });
+        const goalId = generateRandom32();
+        const id = goalId;
+        const goal = makeGoal({ id, goalId, title, extraInfo });
         goalState.goals.unshift(goal);
         goalState.activeId = id;
         goalState.firstServerEventPerf = null;
@@ -2184,7 +2298,7 @@
             method: "POST",
             cache: "no-store",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, title, extraInfo })
+            body: JSON.stringify({ id, goalId, title, extraInfo })
           });
 
           const responseText = await response.text();
@@ -2980,10 +3094,12 @@
       researchTaskInput.addEventListener("input", updateResearchPanel);
       researchMinRoundsInput.addEventListener("input", updateResearchPanel);
       newResearchSessionButton.addEventListener("click", newResearchSession);
+      clearResearchHistoryButton.addEventListener("click", clearResearchHistory);
 
       goalForm.addEventListener("submit", createGoal);
       goalTitleInput.addEventListener("input", updateGoalPanel);
       goalExtraInfoInput.addEventListener("input", updateGoalPanel);
+      clearGoalHistoryButton.addEventListener("click", clearGoalHistory);
 
       graphViewToggle.addEventListener("click", () => setActiveView("graph"));
       deepSearchViewToggle.addEventListener("click", () => setActiveView("deep-search"));
