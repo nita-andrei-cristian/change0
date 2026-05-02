@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <time.h>
 #include "util.h"
+#include <stdint.h>
+#include <inttypes.h>
 
 typedef struct GoalType {
 	String title;
@@ -59,7 +61,7 @@ Goal* CreateUserGoal(String *input1, String *input2, char goalId[32]);
 "This rewrite was triggered because the current goal appears too ambitious, inefficient, overdue, or unrealistic for the available time. "\
 "Important: do not treat this as creating a new goal. Treat it as resizing the current goal so it fits better into the existing goal tree. "\
 "User action history: [%s]. These are previous goals with timing and efficiency information. Use them to infer realistic scope, but do not copy them unless directly relevant. "\
-"Initial timeframe for the current goal: [%zu] seconds. Remaining total time: [%zu] seconds. "\
+"Initial timeframe for the current goal: [%zu] seconds. Remaining total time: [%" PRId64 "] seconds. "\
 "The new goal should keep the same time context. Do not solve the problem by merely making a tiny task or by changing the goal into a different activity. "\
 "Instead, lower the ambition inside the same remaining time by reducing one or more of: amount of work, depth of detail, quality threshold, number of substeps, or completion criteria. "\
 "Parallel goals at the same hierarchy level: [%s]. The new goal must not overlap with, duplicate, conflict with, or take responsibility from these goals. "\
@@ -94,6 +96,39 @@ Goal* CreateUserGoal(String *input1, String *input2, char goalId[32]);
     "\"estimated_time\":{" \
       "\"type\":[\"integer\",\"null\"]," \
       "\"minimum\":0" \
+    "}" \
+  "}" \
+"}"
+
+#define OPENAI_GOAL_DECOMPOSITION_SCHEMA_JSON \
+"{" \
+  "\"type\":\"object\"," \
+  "\"additionalProperties\":false," \
+  "\"required\":[\"subgoals\"]," \
+  "\"properties\":{" \
+    "\"subgoals\":{" \
+      "\"type\":\"array\"," \
+      "\"minItems\":2," \
+      "\"maxItems\":9," \
+      "\"items\":{" \
+        "\"type\":\"object\"," \
+        "\"additionalProperties\":false," \
+        "\"required\":[\"title\",\"extrainfo\",\"estimated_time\"]," \
+        "\"properties\":{" \
+          "\"title\":{" \
+            "\"type\":\"string\"," \
+            "\"minLength\":3" \
+          "}," \
+          "\"extrainfo\":{" \
+            "\"type\":\"string\"," \
+            "\"minLength\":10" \
+          "}," \
+          "\"estimated_time\":{" \
+            "\"type\":\"integer\"," \
+            "\"minimum\":1" \
+          "}" \
+        "}" \
+      "}" \
     "}" \
   "}" \
 "}"

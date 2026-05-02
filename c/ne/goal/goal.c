@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <unistd.h>
 #include "globals.h"
 #include "node.h"
 #include "json.h"
@@ -18,6 +19,22 @@ static goal_emit_like_func goal_emit = NULL;
 			     
 static Goal *GOAL_CONTAINER[1024];
 static size_t GOAL_CONTAINER_COUNT = INITIAL_GOAL_INDEX;
+
+// AI generated function
+static void create_subgoal_id(Goal *parent, size_t child_index, char out[32])
+{
+	memset(out, 0, 32);
+
+	int n = snprintf(
+		out,
+		32,
+		"g%zu-%zu",
+		parent->globalIndex,
+		child_index + 1
+	);
+
+	change_assert(n > 0 && n < 32, "Failed to create subgoal id.\n");
+}
 
 static inline Goal *FindGoal(size_t id)
 {
@@ -364,7 +381,7 @@ static void set_shorten_goal_prompt(Goal* g, String* prompt, time_t now){
 
 	time_t estimated_end_date = g->start_date + old_required_time;
 
-	time_t remaining_time = estimated_end_date - now;
+	int64_t remaining_time = estimated_end_date - now;
 	time_t initial_timeframe = g->required_time;
 
 	char* title = c_str(&g->title);
@@ -493,7 +510,7 @@ void shorten_goal(Goal *g, time_t now){
 	
 	change_assert(new_title.len > 1 && new_extra_info.len > 1, "Goal title or extra info is broken. title : [%s], info : [%s]\n", new_title.p, new_extra_info.p);
 
-	CatTemplateString(&g->extra_info, "\n user failed to finish goal [%s] so was shortened to [%s] in date [%s]\n", g->title, new_title, ctime(&now));
+	CatTemplateString(&g->extra_info, "\n user failed to finish goal [%s] so was shortened to [%s] in date [%s]\n", g->title.p, new_title.p, ctime(&now));
 
 	CopyString(&g->title, &new_title);
 	CopyString(&g->extra_info, &new_extra_info);
@@ -649,6 +666,75 @@ Goal* CreateUserGoal(String *input1, String *input2, char goalId[32])
 	return create_goal(goalId, &title, &extra_info, estimated_time, 0, 1);
 }
 
+// AI generated function
+static json_value *json_object_get(json_value *obj, const char *name)
+{
+	change_assert(obj && obj->type == json_object, "Expected JSON object.\n");
+
+	for (size_t i = 0; i < obj->u.object.length; i++) {
+		json_object_entry entry = obj->u.object.values[i];
+
+		if (strcmp(entry.name, name) == 0)
+			return entry.value;
+	}
+
+	return NULL;
+}
+
+// AI generated function
+static void parse_decomposition_subgoal(
+	json_value *item,
+	String *title,
+	String *extrainfo,
+	size_t *estimated_time
+) {
+	change_assert(item && item->type == json_object, "Subgoal item is not an object.\n");
+
+	json_value *title_json = json_object_get(item, "title");
+	json_value *extrainfo_json = json_object_get(item, "extrainfo");
+	json_value *estimated_time_json = json_object_get(item, "estimated_time");
+
+	change_assert(title_json && title_json->type == json_string, "Subgoal title missing or invalid.\n");
+	change_assert(extrainfo_json && extrainfo_json->type == json_string, "Subgoal extrainfo missing or invalid.\n");
+	change_assert(estimated_time_json && estimated_time_json->type == json_integer, "Subgoal estimated_time missing or invalid.\n");
+
+	change_assert(title_json->u.string.length >= 3, "Subgoal title is too short.\n");
+	change_assert(extrainfo_json->u.string.length >= 10, "Subgoal extrainfo is too short.\n");
+	change_assert(estimated_time_json->u.integer > 0, "Subgoal estimated_time must be positive.\n");
+
+	InitString(title, title_json->u.string.length + 64);
+	CatString(title, title_json->u.string.ptr, title_json->u.string.length);
+
+	InitString(extrainfo, extrainfo_json->u.string.length + 256);
+	CatString(extrainfo, extrainfo_json->u.string.ptr, extrainfo_json->u.string.length);
+
+	*estimated_time = (size_t)estimated_time_json->u.integer;
+}
+
+// AI generated function
+static String *call_decompose_goal_ai(String *prompt)
+{
+	ai_gpt_request req = {0};
+
+	req.prompt = *prompt;
+
+	InitString(&req.schema, sizeof(OPENAI_GOAL_DECOMPOSITION_SCHEMA_JSON) + 1);
+	CatString(&req.schema, FSTRING_SIZE_PARAMS(OPENAI_GOAL_DECOMPOSITION_SCHEMA_JSON));
+
+	req.model = AI_OPENAI_MODEL_GPT_5_4_MINI;
+	req.schema_name = "goal_decomposition";
+
+	printf("Calling goal decomposition...\n\n");
+
+	String *result = ai_openai_call_gpt_request(&req);
+	cassert(result, "OpenAI goal decomposition call failed.\n");
+
+	FreeString(&req.schema);
+
+	return result;
+}
+
+// AI assisted function
 _Bool DecomposeGoal(Goal *g){
 	
 	if (g->subgoals_len != 0){
@@ -665,8 +751,67 @@ _Bool DecomposeGoal(Goal *g){
 
 	set_decompose_goal_prompt(g, &prompt, time(NULL));
 
-	change_assert(0, "TODO: Continue here");
+	String *out = call_decompose_goal_ai(&prompt);
+	cassert(out, "Goal decomposition returned NULL.\n");
 
+	json_value *doc = json_parse(c_str(out), out->len);
+	change_assert(doc && doc->type == json_object, "Goal decomposition result is not a JSON object:\n%s\n", c_str(out));
+
+	json_value *subgoals_json = json_object_get(doc, "subgoals");
+	change_assert(subgoals_json && subgoals_json->type == json_array, "Goal decomposition JSON has no subgoals array.\n");
+
+	size_t subgoal_count = subgoals_json->u.array.length;
+
+	change_assert(subgoal_count >= 2, "Goal decomposition must create at least 2 subgoals.\n");
+	change_assert(subgoal_count <= 9, "Goal decomposition created too many subgoals: [%zu].\n", subgoal_count);
+	change_assert(GOAL_CONTAINER_COUNT + subgoal_count <= 1024, "Not enough room in GOAL_CONTAINER for decomposition.\n");
+
+	size_t *subgoal_indexes = malloc(sizeof(size_t) * subgoal_count);
+	cassert(subgoal_indexes, "Could not allocate subgoal index array.\n");
+
+	Goal *previous = NULL;
+
+	for (size_t i = 0; i < subgoal_count; i++) {
+		json_value *item = subgoals_json->u.array.values[i];
+
+		String title;
+		String extrainfo;
+		size_t estimated_time = 0;
+
+		parse_decomposition_subgoal(item, &title, &extrainfo, &estimated_time);
+
+		char child_goal_id[32];
+		create_subgoal_id(g, i, child_goal_id);
+
+		Goal *child = create_goal(
+			child_goal_id,
+			&title,
+			&extrainfo,
+			estimated_time,
+			g->globalIndex,
+			g->depth + 1
+		);
+
+		subgoal_indexes[i] = child->globalIndex;
+
+		if (previous)
+			link_goals(previous, child);
+
+		previous = child;
+
+		FreeString(&title);
+		FreeString(&extrainfo);
+	}
+
+	g->subgoals = subgoal_indexes;
+	g->subgoals_len = subgoal_count;
+	g->required_time = calc_required_time(g);
+
+	json_value_free(doc);
+	FreeString(&prompt);
+	FreeString(out);
+
+	printf("Goal decomposed into [%zu] subgoals.\n", subgoal_count);
 
 	return 1;
 }
