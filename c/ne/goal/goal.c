@@ -417,7 +417,7 @@ static void set_decompose_goal_prompt(Goal* g, String* prompt, time_t now){
 	Task task = {0};
 	task.minDepth = 2;
 	InitString(&task.name, 2048);
-	CatTemplateString(&task.name, GOAL_DECOMPOSITION_PERSONAL_CONTEXT_PROMPT, g->title, g->extra_info, goal_parent_chain.p);
+	CatTemplateString(&task.name, GOAL_DECOMPOSITION_PERSONAL_CONTEXT_PROMPT, g->title.p, g->extra_info.p, goal_parent_chain.p);
 
 	start_ds_session(&task, g->id, &personalization_context);
 

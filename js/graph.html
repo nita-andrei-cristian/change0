@@ -170,19 +170,24 @@
       border-radius: 999px;
       min-height: 38px;
       padding: 0 14px;
-      background: rgba(255,255,255,.07);
-      color: #fff;
+      background: rgba(255,255,255,.95);
+      color: #05070a;
       cursor: pointer;
       font: 740 10px/1 system-ui, sans-serif;
       letter-spacing: .08em;
       text-transform: uppercase;
-      transition: background 120ms ease, opacity 120ms ease;
+      transition: background 120ms ease, color 120ms ease, opacity 120ms ease;
     }
 
     .sidebar-button:hover:not(:disabled),
-    .plain-button:hover:not(:disabled),
+    .plain-button:hover:not(:disabled) {
+      background: #fff;
+      color: #000;
+    }
+
     .plain-button.is-active {
-      background: rgba(255,255,255,.12);
+      background: #fff;
+      color: #000;
     }
 
     .sidebar-button:disabled,
@@ -192,7 +197,15 @@
     }
 
     .sidebar-button.is-wide { width: 100%; }
-    .sidebar-button.is-secondary { background: rgba(255,255,255,.052); }
+    .sidebar-button.is-secondary {
+      background: rgba(255,255,255,.08);
+      color: #fff;
+    }
+
+    .sidebar-button.is-secondary:hover:not(:disabled) {
+      background: rgba(255,255,255,.16);
+      color: #fff;
+    }
     .sidebar-button.is-danger { background: rgba(251,113,133,.11); color: #fecdd3; }
     .sidebar-button.is-danger:hover:not(:disabled) { background: rgba(251,113,133,.18); }
 
@@ -388,6 +401,10 @@
       letter-spacing: .08em;
       text-transform: uppercase;
       pointer-events: auto;
+    }
+
+    .goal-chip {
+      pointer-events: none;
     }
 
     .timeline-canvas,
@@ -626,7 +643,7 @@
 
     .goal-mode-switcher {
       right: 24px;
-      bottom: 24px;
+      bottom: 86px;
     }
 
     .view-switcher {
@@ -1956,7 +1973,7 @@
           this.positions = [];
           this.hovered = null;
           this.camera = { x: 0, y: 0, scale: 0.88 };
-          this.pointer = { down: false, dragging: false, lastX: 0, lastY: 0, id: null };
+          this.pointer = { down: false, dragging: false, startX: 0, startY: 0, lastX: 0, lastY: 0, id: null, handledClick: false };
           this.canvas.style.cursor = "grab";
           this.bind();
         }
@@ -1967,6 +1984,7 @@
           this.canvas.addEventListener("pointerup", (event) => this.onPointerUp(event));
           this.canvas.addEventListener("pointercancel", () => this.onPointerCancel());
           this.canvas.addEventListener("pointerleave", () => this.onPointerLeave());
+          this.canvas.addEventListener("click", (event) => this.onClick(event));
           this.canvas.addEventListener("wheel", (event) => this.onWheel(event), { passive: false });
         }
 
@@ -2121,10 +2139,29 @@
         }
 
         pick(screenX, screenY) {
-          const world = this.screenToWorld(screenX, screenY);
+          if (this.positions.length === 0 && goalState.serverGoals.length > 0) this.recompute();
+
           for (let i = this.positions.length - 1; i >= 0; i -= 1) {
             const pos = this.positions[i];
-            if (Math.hypot(world.x - pos.x, world.y - pos.y) <= pos.radius + 10) return pos.goal;
+            const screen = this.worldToScreen(pos.x, pos.y);
+            const scaledRadius = pos.radius * this.camera.scale;
+
+            if (Math.hypot(screenX - screen.x, screenY - screen.y) <= scaledRadius + 16) return pos.goal;
+
+            const titleWidth = Math.min(240, Math.max(72, String(pos.goal.title || "").length * 6.6));
+            const labelLeft = screen.x - titleWidth * 0.5;
+            const labelRight = screen.x + titleWidth * 0.5;
+            const labelTop = screen.y + scaledRadius + 6;
+            const labelBottom = screen.y + scaledRadius + 40;
+
+            if (
+              screenX >= labelLeft &&
+              screenX <= labelRight &&
+              screenY >= labelTop &&
+              screenY <= labelBottom
+            ) {
+              return pos.goal;
+            }
           }
           return null;
         }
@@ -2227,10 +2264,15 @@
         }
 
         onPointerDown(event) {
+          if (event.button !== 0) return;
+
           const rect = this.canvas.getBoundingClientRect();
           this.pointer.down = true;
           this.pointer.dragging = false;
           this.pointer.id = event.pointerId;
+          this.pointer.handledClick = false;
+          this.pointer.startX = event.clientX - rect.left;
+          this.pointer.startY = event.clientY - rect.top;
           this.pointer.lastX = event.clientX - rect.left;
           this.pointer.lastY = event.clientY - rect.top;
           this.canvas.setPointerCapture(event.pointerId);
@@ -2244,7 +2286,7 @@
           if (this.pointer.down) {
             const dx = x - this.pointer.lastX;
             const dy = y - this.pointer.lastY;
-            if (Math.hypot(dx, dy) > 2) this.pointer.dragging = true;
+            if (Math.hypot(x - this.pointer.startX, y - this.pointer.startY) > 6) this.pointer.dragging = true;
 
             if (this.pointer.dragging) {
               this.camera.x -= dx / Math.max(this.camera.scale, 0.001);
@@ -2274,13 +2316,32 @@
           this.pointer.id = null;
 
           if (!wasDragging) {
-            const goal = this.pick(x, y);
-            if (goal) activateServerGoal(goal.globalIndex, true);
+            this.handleClickAt(x, y);
+            this.pointer.handledClick = true;
           }
 
           this.hovered = this.pick(x, y);
           this.canvas.style.cursor = this.hovered ? "pointer" : "grab";
           this.render();
+        }
+
+        onClick(event) {
+          if (event.button !== 0) return;
+
+          if (this.pointer.handledClick) {
+            this.pointer.handledClick = false;
+            return;
+          }
+
+          const rect = this.canvas.getBoundingClientRect();
+          this.handleClickAt(event.clientX - rect.left, event.clientY - rect.top);
+          this.render();
+        }
+
+        handleClickAt(x, y) {
+          const goal = this.pick(x, y);
+          if (goal) handleGoalStructureClick(goal);
+          else if (goalState.focusedServerGoalIndex) clearGoalFocus();
         }
 
         onPointerCancel() {
@@ -2614,6 +2675,25 @@
           setGoalPanelMode("structure");
           setActiveView("goal");
         }
+      }
+
+      function goalHasChildren(goal) {
+        return Boolean(goal && Array.isArray(goal.subgoals) && goal.subgoals.length > 0);
+      }
+
+      function handleGoalStructureClick(goal) {
+        if (!goal) return;
+
+        activateServerGoal(goal.globalIndex, true);
+
+        if (!goalHasChildren(goal)) return;
+
+        goalState.focusedServerGoalIndex = goal.globalIndex;
+        goalState.explodeMode = false;
+        goalState.statusDetail = `Showing children of #${goal.globalIndex}.`;
+        goalStructureView.resetCamera();
+        goalStructureView.render();
+        updateGoalPanel();
       }
 
       async function loadGoalsFromServer(selectNewest = false) {
