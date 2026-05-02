@@ -1,5 +1,3 @@
-
-<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -10,17 +8,16 @@
       color-scheme: dark;
       --bg: #030303;
       --panel: #080808;
-      --panel-2: #0d0d0d;
+      --stage: #030508;
       --text: #f5f7fb;
-      --muted: rgba(255,255,255,.56);
+      --muted: rgba(255,255,255,.55);
       --soft: rgba(255,255,255,.055);
-      --soft-2: rgba(255,255,255,.09);
-      --line: rgba(255,255,255,.075);
+      --soft2: rgba(255,255,255,.1);
+      --line: rgba(255,255,255,.08);
       --accent: #7dd3fc;
-      --accent-strong: #38bdf8;
-      --success: #34d399;
-      --warning: #fbbf24;
-      --danger: #fb7185;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
     }
 
     * { box-sizing: border-box; }
@@ -32,9 +29,6 @@
       height: 100%;
       overflow: hidden;
       background: #000;
-    }
-
-    body {
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
@@ -44,7 +38,7 @@
     textarea { font: inherit; }
 
     code {
-      color: rgba(255,255,255,.78);
+      color: rgba(255,255,255,.72);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: .95em;
     }
@@ -65,7 +59,7 @@
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 140ms ease, visibility 140ms ease;
+      transition: opacity 120ms ease, visibility 120ms ease;
     }
 
     .view.is-active {
@@ -131,7 +125,7 @@
     }
 
     .field__label {
-      color: rgba(255,255,255,.76);
+      color: rgba(255,255,255,.72);
       font: 720 10px/1.2 system-ui, sans-serif;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -169,35 +163,37 @@
       align-items: center;
     }
 
-    .sidebar-button {
+    .sidebar-button,
+    .plain-button {
       appearance: none;
       border: 0;
       border-radius: 999px;
-      min-height: 40px;
+      min-height: 38px;
       padding: 0 14px;
-      background: rgba(255,255,255,.075);
+      background: rgba(255,255,255,.07);
       color: #fff;
       cursor: pointer;
       font: 740 10px/1 system-ui, sans-serif;
       letter-spacing: .08em;
       text-transform: uppercase;
-      transition: transform 140ms ease, background 120ms ease, opacity 120ms ease;
+      transition: background 120ms ease, opacity 120ms ease;
     }
 
-    .sidebar-button:hover:not(:disabled) {
-      transform: translateY(-1px);
+    .sidebar-button:hover:not(:disabled),
+    .plain-button:hover:not(:disabled),
+    .plain-button.is-active {
       background: rgba(255,255,255,.12);
     }
 
-    .sidebar-button:disabled {
+    .sidebar-button:disabled,
+    .plain-button:disabled {
       opacity: .42;
       cursor: default;
-      transform: none;
     }
 
     .sidebar-button.is-wide { width: 100%; }
-    .sidebar-button.is-secondary { min-height: 36px; background: rgba(255,255,255,.052); }
-    .sidebar-button.is-danger { min-height: 36px; background: rgba(251,113,133,.11); color: #fecdd3; }
+    .sidebar-button.is-secondary { background: rgba(255,255,255,.052); }
+    .sidebar-button.is-danger { background: rgba(251,113,133,.11); color: #fecdd3; }
     .sidebar-button.is-danger:hover:not(:disabled) { background: rgba(251,113,133,.18); }
 
     .status-block {
@@ -254,11 +250,11 @@
       stroke-linejoin: round;
     }
 
-    .status-chip.is-connected { color: var(--success); }
+    .status-chip.is-connected { color: var(--good); }
     .status-chip.is-disconnected,
     .status-chip.is-connecting,
     .status-chip.is-reconnecting,
-    .status-chip.is-error { color: var(--warning); }
+    .status-chip.is-error { color: var(--warn); }
 
     .history-header {
       display: flex;
@@ -307,17 +303,11 @@
       color: #fff;
       display: grid;
       gap: 5px;
-      transition: background 120ms ease, transform 120ms ease;
+      transition: background 120ms ease;
     }
 
-    .session-item:hover {
-      background: rgba(255,255,255,.052);
-      transform: translateY(-1px);
-    }
-
-    .session-item.is-active {
-      background: rgba(125,211,252,.09);
-    }
+    .session-item:hover { background: rgba(255,255,255,.052); }
+    .session-item.is-active { background: rgba(125,211,252,.09); }
 
     .session-item__title {
       overflow: hidden;
@@ -336,15 +326,17 @@
       font: 650 11px/1.3 system-ui, sans-serif;
     }
 
-    .timeline-stage {
+    .timeline-stage,
+    .goal-stage {
       position: relative;
       min-width: 0;
       min-height: 0;
       overflow: hidden;
-      background: #030508;
+      background: var(--stage);
     }
 
-    .timeline-header {
+    .timeline-header,
+    .goal-header {
       position: absolute;
       top: 0;
       left: 0;
@@ -359,27 +351,31 @@
       pointer-events: none;
     }
 
-    .timeline-header__title {
+    .timeline-header__title,
+    .goal-header__title {
       margin: 0;
       font: 740 21px/1.1 system-ui, sans-serif;
       letter-spacing: -.032em;
     }
 
-    .timeline-header__subtitle {
+    .timeline-header__subtitle,
+    .goal-header__subtitle {
       margin: 8px 0 0;
       max-width: 740px;
       color: var(--muted);
       font: 500 13px/1.5 system-ui, sans-serif;
     }
 
-    .timeline-summary {
+    .timeline-summary,
+    .goal-summary {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
 
-    .timeline-chip {
+    .timeline-chip,
+    .goal-chip {
       max-width: 260px;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -394,7 +390,8 @@
       pointer-events: auto;
     }
 
-    .timeline-canvas {
+    .timeline-canvas,
+    .goal-canvas {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -460,7 +457,8 @@
       font: 500 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
     }
 
-    .timeline-inspector {
+    .timeline-inspector,
+    .goal-inspector {
       position: absolute;
       top: 24px;
       right: 24px;
@@ -480,7 +478,13 @@
       grid-template-rows: auto auto minmax(0, 1fr);
     }
 
-    .timeline-inspector__header {
+    .goal-inspector.is-visible {
+      display: grid;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+    }
+
+    .timeline-inspector__header,
+    .goal-inspector__header {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
@@ -489,13 +493,15 @@
       box-shadow: inset 0 -1px 0 var(--line);
     }
 
-    .timeline-inspector__title {
+    .timeline-inspector__title,
+    .goal-inspector__title {
       margin: 0;
       color: #fff;
       font: 740 16px/1.25 system-ui, sans-serif;
     }
 
-    .timeline-inspector__meta {
+    .timeline-inspector__meta,
+    .goal-inspector__meta {
       margin: 6px 0 0;
       color: rgba(255,255,255,.62);
       font: 600 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -503,7 +509,8 @@
 
     .timeline-inspector__close,
     .message-panel__close,
-    .message-panel__submit {
+    .message-panel__submit,
+    .goal-inspector__close {
       appearance: none;
       border: 0;
       border-radius: 999px;
@@ -519,7 +526,9 @@
 
     .timeline-inspector__close:hover,
     .message-panel__close:hover,
-    .message-panel__submit:hover:not(:disabled) { background: rgba(255,255,255,.1); }
+    .message-panel__submit:hover:not(:disabled),
+    .goal-inspector__close:hover { background: rgba(255,255,255,.1); }
+
     .message-panel__submit:disabled { opacity: .45; cursor: default; }
 
     .timeline-inspector__role {
@@ -529,7 +538,8 @@
       font: 500 13px/1.5 system-ui, sans-serif;
     }
 
-    .timeline-inspector__body {
+    .timeline-inspector__body,
+    .goal-inspector__body {
       margin: 0;
       padding: 14px 18px 18px;
       overflow: auto;
@@ -537,6 +547,142 @@
       word-break: break-word;
       color: rgba(255,255,255,.9);
       font: 500 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .goal-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 14px 18px 0;
+    }
+
+    .goal-stat {
+      min-width: 0;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.045);
+    }
+
+    .goal-stat__label {
+      color: rgba(255,255,255,.48);
+      font: 740 9px/1.2 system-ui, sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .goal-stat__value {
+      margin-top: 5px;
+      color: #fff;
+      font: 720 13px/1.25 system-ui, sans-serif;
+      word-break: break-word;
+    }
+
+    .goal-inspector__actions {
+      display: flex;
+      gap: 8px;
+      padding: 14px 18px 0;
+      flex-wrap: wrap;
+    }
+
+    .goal-panel {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 120ms ease, visibility 120ms ease;
+    }
+
+    .goal-panel.is-active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .goal-toolbar,
+    .goal-mode-switcher,
+    .view-switcher,
+    .graph-controls {
+      position: absolute;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: auto;
+      padding: 6px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
+      overflow: hidden;
+    }
+
+    .goal-toolbar {
+      left: 24px;
+      bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .goal-mode-switcher {
+      right: 24px;
+      bottom: 24px;
+    }
+
+    .view-switcher {
+      right: 18px;
+      bottom: 18px;
+    }
+
+    .graph-controls {
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 5;
+    }
+
+    .view-switcher button,
+    .graph-controls button {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      min-width: 42px;
+      min-height: 42px;
+      padding: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 120ms ease, opacity 120ms ease;
+    }
+
+    .view-switcher button:hover:not(:disabled),
+    .graph-controls button:hover:not(:disabled),
+    .view-switcher button.is-active,
+    .graph-controls button.is-active {
+      background: rgba(255,255,255,.085);
+    }
+
+    .view-switcher button:disabled,
+    .graph-controls button:disabled { opacity: .42; cursor: default; }
+
+    .view-switcher svg,
+    .graph-controls svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    .view-switcher svg *,
+    .graph-controls svg * {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .message-panel {
@@ -618,81 +764,6 @@
       font: 500 12px/1.45 system-ui, sans-serif;
     }
 
-    .view-switcher,
-    .graph-controls {
-      position: absolute;
-      z-index: 6;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: auto;
-      padding: 6px;
-      border-radius: 999px;
-      background: rgba(0,0,0,.72);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 10px 30px rgba(0,0,0,.22);
-      overflow: hidden;
-    }
-
-    .view-switcher {
-      right: 18px;
-      bottom: 18px;
-    }
-
-    .graph-controls {
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      z-index: 5;
-    }
-
-    .view-switcher button,
-    .graph-controls button {
-      appearance: none;
-      border: none;
-      background: transparent;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 42px;
-      min-width: 42px;
-      min-height: 42px;
-      padding: 0;
-      border-radius: 999px;
-      cursor: pointer;
-      transition: transform 140ms ease, background 120ms ease, opacity 120ms ease;
-    }
-
-    .view-switcher button:hover:not(:disabled),
-    .graph-controls button:hover:not(:disabled),
-    .view-switcher button.is-active,
-    .graph-controls button.is-active {
-      background: rgba(255,255,255,.085);
-    }
-
-    .view-switcher button.is-active,
-    .graph-controls button.is-active { transform: translateY(-1px); }
-    .view-switcher button:disabled,
-    .graph-controls button:disabled { opacity: .42; cursor: default; }
-
-    .view-switcher svg,
-    .graph-controls svg {
-      width: 18px;
-      height: 18px;
-      display: block;
-    }
-
-    .view-switcher svg *,
-    .graph-controls svg * {
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
     .focus-node {
       position: absolute;
       top: 18px;
@@ -768,12 +839,29 @@
         bottom: 12px;
       }
 
-      .timeline-header {
+      .timeline-header,
+      .goal-header {
         flex-direction: column;
         align-items: stretch;
       }
 
-      .timeline-summary { justify-content: flex-start; }
+      .timeline-summary,
+      .goal-summary { justify-content: flex-start; }
+
+      .goal-toolbar {
+        left: 12px;
+        right: 12px;
+        bottom: 72px;
+        width: fit-content;
+      }
+
+      .goal-mode-switcher {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        width: fit-content;
+      }
+
       .focus-node { top: 14px; }
     }
   </style>
@@ -814,13 +902,13 @@
         <div class="message-panel__header">
           <div>
             <h2 class="message-panel__title">Input Message</h2>
-            <p class="message-panel__subtitle">Send text to <code>/message</code>. Refresh happens after the server accepts it.</p>
+            <p class="message-panel__subtitle">Send text to <code>/message</code>.</p>
           </div>
           <button id="close-message-panel" class="message-panel__close" type="button">Close</button>
         </div>
 
         <form id="message-form" class="message-panel__form">
-          <textarea id="message-input" class="message-panel__textarea" placeholder="Write the input text that should be sent to the graph server..."></textarea>
+          <textarea id="message-input" class="message-panel__textarea" placeholder="Input text..."></textarea>
           <div class="message-panel__actions">
             <div id="message-panel-status" class="message-panel__status">Ready.</div>
             <button id="submit-message" class="message-panel__submit" type="submit">Send</button>
@@ -836,7 +924,7 @@
         <div class="sidebar__top">
           <div>
             <h1 class="sidebar__title">Deep Search</h1>
-            <p class="sidebar__subtitle">Saved local timelines for research runs.</p>
+            <p class="sidebar__subtitle">Research event timeline.</p>
           </div>
 
           <div class="button-row">
@@ -847,7 +935,7 @@
           <form id="research-form" class="form-grid">
             <label class="field" for="research-task">
               <span class="field__label">Task Name</span>
-              <textarea id="research-task" name="research-task" placeholder="Example: Analyze which nodes and connections support the hypothesis..."></textarea>
+              <textarea id="research-task" name="research-task" placeholder="Task..."></textarea>
             </label>
 
             <label class="field" for="research-min-rounds">
@@ -884,7 +972,7 @@
         <div class="timeline-header">
           <div>
             <h2 class="timeline-header__title">Deep Search Timeline</h2>
-            <p id="timeline-header-subtitle" class="timeline-header__subtitle">Start or open a session to inspect emitted events.</p>
+            <p id="timeline-header-subtitle" class="timeline-header__subtitle">Start or open a session.</p>
           </div>
           <div class="timeline-summary">
             <div class="timeline-chip" id="timeline-total-chip">0 Events</div>
@@ -921,25 +1009,26 @@
         <div class="sidebar__top">
           <div>
             <h1 class="sidebar__title">Goals</h1>
-            <p class="sidebar__subtitle">Saved local timelines from <code>goal_emit</code>.</p>
+            <p class="sidebar__subtitle">Server goal tree and creation timeline.</p>
           </div>
 
           <form id="goal-form" class="form-grid">
             <label class="field" for="goal-title">
               <span class="field__label">Goal Title</span>
-              <input id="goal-title" name="goal-title" type="text" placeholder="Example: Build a memory system">
+              <input id="goal-title" name="goal-title" type="text" placeholder="Goal title">
             </label>
 
             <label class="field" for="goal-extra-info">
               <span class="field__label">Extra Info</span>
-              <textarea id="goal-extra-info" name="goal-extra-info" placeholder="Context, constraints, notes, or desired outcome..."></textarea>
+              <textarea id="goal-extra-info" name="goal-extra-info" placeholder="Context..."></textarea>
             </label>
 
             <button id="create-goal" class="sidebar-button is-wide" type="submit">Create Goal</button>
           </form>
 
           <div class="button-row">
-            <button id="clear-goal-history" class="sidebar-button is-danger" type="button">Clear History</button>
+            <button id="refresh-goals-sidebar" class="sidebar-button is-secondary" type="button">Refresh Goals</button>
+            <button id="clear-goal-history" class="sidebar-button is-danger" type="button">Clear SSE</button>
           </div>
 
           <div class="status-block">
@@ -958,45 +1047,111 @@
           </div>
 
           <div class="history-header">
-            <p class="history-title">Goal Emit History</p>
+            <p class="history-title">Server Goals</p>
           </div>
-          <div id="goal-list" class="session-list" aria-label="Saved goals"></div>
+          <div id="goal-list" class="session-list" aria-label="Server goals"></div>
         </div>
       </aside>
 
-      <section class="timeline-stage">
-        <div class="timeline-header">
-          <div>
-            <h2 class="timeline-header__title">Goal Timeline</h2>
-            <p id="goal-timeline-header-subtitle" class="timeline-header__subtitle">Create or open a goal to inspect goal events.</p>
-          </div>
-          <div class="timeline-summary">
-            <div class="timeline-chip" id="goal-timeline-total-chip">0 Events</div>
-            <div class="timeline-chip" id="goal-timeline-session-chip">No Goal</div>
-          </div>
-        </div>
-
-        <canvas id="goal-timeline-canvas" class="timeline-canvas" aria-label="Goal timeline visualization"></canvas>
-        <div id="goal-timeline-tooltip" class="timeline-tooltip" aria-hidden="true">
-          <div class="timeline-tooltip__top">
-            <div id="goal-timeline-tooltip-title" class="timeline-tooltip__title"></div>
-            <div id="goal-timeline-tooltip-time" class="timeline-tooltip__time"></div>
-          </div>
-          <p id="goal-timeline-tooltip-role" class="timeline-tooltip__role"></p>
-          <pre id="goal-timeline-tooltip-payload" class="timeline-tooltip__payload"></pre>
-        </div>
-
-        <aside id="goal-timeline-inspector" class="timeline-inspector" aria-hidden="true">
-          <div class="timeline-inspector__header">
+      <section class="goal-stage">
+        <section id="goal-structure-panel" class="goal-panel is-active" aria-label="Goal structure">
+          <div class="goal-header">
             <div>
-              <h3 id="goal-timeline-inspector-title" class="timeline-inspector__title">Goal Event Inspector</h3>
-              <p id="goal-timeline-inspector-meta" class="timeline-inspector__meta"></p>
+              <h2 class="goal-header__title">Goal Structure</h2>
+              <p id="goal-structure-subtitle" class="goal-header__subtitle">Refresh, inspect, focus, decompose.</p>
             </div>
-            <button id="goal-timeline-inspector-close" class="timeline-inspector__close" type="button">Close</button>
+            <div class="goal-summary">
+              <div class="goal-chip" id="goal-structure-count-chip">0 Goals</div>
+              <div class="goal-chip" id="goal-structure-selected-chip">No Selection</div>
+              <div class="goal-chip" id="goal-structure-mode-chip">Tree</div>
+            </div>
           </div>
-          <p id="goal-timeline-inspector-role" class="timeline-inspector__role"></p>
-          <pre id="goal-timeline-inspector-body" class="timeline-inspector__body"></pre>
-        </aside>
+
+          <canvas id="goal-structure-canvas" class="goal-canvas" aria-label="Goal structure canvas"></canvas>
+
+          <div class="goal-toolbar">
+            <button id="refresh-goals" class="plain-button" type="button">Refresh</button>
+            <button id="decompose-selected-goal" class="plain-button" type="button">Decompose</button>
+            <button id="goal-explode-toggle" class="plain-button" type="button">Explode</button>
+            <button id="goal-clear-focus" class="plain-button" type="button">All</button>
+          </div>
+
+          <div class="goal-mode-switcher">
+            <button id="goal-structure-mode" class="plain-button is-active" type="button">Structure</button>
+            <button id="goal-timeline-mode" class="plain-button" type="button">Timeline</button>
+          </div>
+
+          <aside id="goal-inspector" class="goal-inspector" aria-hidden="true">
+            <div class="goal-inspector__header">
+              <div>
+                <h3 id="goal-inspector-title" class="goal-inspector__title">Goal Inspector</h3>
+                <p id="goal-inspector-meta" class="goal-inspector__meta"></p>
+              </div>
+              <button id="goal-inspector-close" class="goal-inspector__close" type="button">Close</button>
+            </div>
+
+            <div class="goal-stat-grid">
+              <div class="goal-stat">
+                <div class="goal-stat__label">Status</div>
+                <div id="goal-stat-status" class="goal-stat__value">—</div>
+              </div>
+              <div class="goal-stat">
+                <div class="goal-stat__label">Remaining</div>
+                <div id="goal-stat-remaining" class="goal-stat__value">—</div>
+              </div>
+              <div class="goal-stat">
+                <div class="goal-stat__label">Required</div>
+                <div id="goal-stat-required" class="goal-stat__value">—</div>
+              </div>
+              <div class="goal-stat">
+                <div class="goal-stat__label">Hierarchy</div>
+                <div id="goal-stat-hierarchy" class="goal-stat__value">—</div>
+              </div>
+            </div>
+
+            <div class="goal-inspector__actions">
+              <button id="goal-inspector-decompose" class="sidebar-button is-secondary" type="button">Decompose</button>
+              <button id="goal-inspector-focus" class="sidebar-button is-secondary" type="button">Focus</button>
+            </div>
+
+            <pre id="goal-inspector-body" class="goal-inspector__body"></pre>
+          </aside>
+        </section>
+
+        <section id="goal-timeline-panel" class="goal-panel" aria-label="Goal timeline">
+          <div class="timeline-header">
+            <div>
+              <h2 class="timeline-header__title">Goal Timeline</h2>
+              <p id="goal-timeline-header-subtitle" class="timeline-header__subtitle">Create or open a goal.</p>
+            </div>
+            <div class="timeline-summary">
+              <div class="timeline-chip" id="goal-timeline-total-chip">0 Events</div>
+              <div class="timeline-chip" id="goal-timeline-session-chip">No Goal</div>
+            </div>
+          </div>
+
+          <canvas id="goal-timeline-canvas" class="timeline-canvas" aria-label="Goal timeline visualization"></canvas>
+          <div id="goal-timeline-tooltip" class="timeline-tooltip" aria-hidden="true">
+            <div class="timeline-tooltip__top">
+              <div id="goal-timeline-tooltip-title" class="timeline-tooltip__title"></div>
+              <div id="goal-timeline-tooltip-time" class="timeline-tooltip__time"></div>
+            </div>
+            <p id="goal-timeline-tooltip-role" class="timeline-tooltip__role"></p>
+            <pre id="goal-timeline-tooltip-payload" class="timeline-tooltip__payload"></pre>
+          </div>
+
+          <aside id="goal-timeline-inspector" class="timeline-inspector" aria-hidden="true">
+            <div class="timeline-inspector__header">
+              <div>
+                <h3 id="goal-timeline-inspector-title" class="timeline-inspector__title">Goal Event Inspector</h3>
+                <p id="goal-timeline-inspector-meta" class="timeline-inspector__meta"></p>
+              </div>
+              <button id="goal-timeline-inspector-close" class="timeline-inspector__close" type="button">Close</button>
+            </div>
+            <p id="goal-timeline-inspector-role" class="timeline-inspector__role"></p>
+            <pre id="goal-timeline-inspector-body" class="timeline-inspector__body"></pre>
+          </aside>
+        </section>
       </section>
     </section>
 
@@ -1087,6 +1242,31 @@
       const goalRunState = document.getElementById("goal-run-state");
       const goalStatusDetail = document.getElementById("goal-status-detail");
 
+      const refreshGoalsButton = document.getElementById("refresh-goals");
+      const refreshGoalsSidebarButton = document.getElementById("refresh-goals-sidebar");
+      const decomposeSelectedGoalButton = document.getElementById("decompose-selected-goal");
+      const goalExplodeToggle = document.getElementById("goal-explode-toggle");
+      const goalClearFocusButton = document.getElementById("goal-clear-focus");
+      const goalStructureModeButton = document.getElementById("goal-structure-mode");
+      const goalTimelineModeButton = document.getElementById("goal-timeline-mode");
+      const goalStructurePanel = document.getElementById("goal-structure-panel");
+      const goalTimelinePanel = document.getElementById("goal-timeline-panel");
+      const goalStructureCanvas = document.getElementById("goal-structure-canvas");
+      const goalStructureCountChip = document.getElementById("goal-structure-count-chip");
+      const goalStructureSelectedChip = document.getElementById("goal-structure-selected-chip");
+      const goalStructureModeChip = document.getElementById("goal-structure-mode-chip");
+      const goalInspector = document.getElementById("goal-inspector");
+      const goalInspectorTitle = document.getElementById("goal-inspector-title");
+      const goalInspectorMeta = document.getElementById("goal-inspector-meta");
+      const goalInspectorClose = document.getElementById("goal-inspector-close");
+      const goalInspectorBody = document.getElementById("goal-inspector-body");
+      const goalInspectorDecompose = document.getElementById("goal-inspector-decompose");
+      const goalInspectorFocus = document.getElementById("goal-inspector-focus");
+      const goalStatStatus = document.getElementById("goal-stat-status");
+      const goalStatRemaining = document.getElementById("goal-stat-remaining");
+      const goalStatRequired = document.getElementById("goal-stat-required");
+      const goalStatHierarchy = document.getElementById("goal-stat-hierarchy");
+
       const GRAPH_SERVER_HOST = "127.0.0.1";
       const GRAPH_SERVER_PORT = 8085;
       const GRAPH_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/graph`;
@@ -1094,6 +1274,8 @@
       const RESEARCH_EVENTS_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/research/events`;
       const GOAL_CREATE_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/goal/create`;
       const GOAL_EVENTS_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/goal/events`;
+      const GOAL_LIST_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/goal/list`;
+      const GOAL_DECOMPOSE_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/goal/decompose`;
       const MESSAGE_ENDPOINT = `http://${GRAPH_SERVER_HOST}:${GRAPH_SERVER_PORT}/message`;
       const SERVER_OFFLINE_HINT = "Open CHANGE terminal client and select Start Server (run ./build.sh)";
 
@@ -1110,27 +1292,31 @@
       const CONNECTED_SVG = `<path d="M20 6L9 17l-5-5"></path>`;
 
       const EVENT_TYPE_META = {
-        sse_connected: { label: "SSE Connected", role: "The server confirmed that the stream is attached.", accent: "#34d399" },
-        research_started: { label: "Research Started", role: "The HTTP handler accepted /research/start and launched the session.", accent: "#38bdf8" },
-        "p-mem": { label: "Persistent Memory", role: "Persistent deep-search prompt emitted at the start.", accent: "#a78bfa" },
-        "ds-start": { label: "Deep Search Start", role: "Start marker before the investigation loop begins.", accent: "#60a5fa" },
-        "round-start": { label: "Round Start", role: "A new round begins.", accent: "#f59e0b", small: true },
-        "ds-model-response": { label: "Model Response", role: "Raw structured response returned by the model.", accent: "#22d3ee" },
-        "cmd-1": { label: "Command 1", role: "Global top-node search result.", accent: "#f472b6" },
-        "cmd-2": { label: "Command 2", role: "Target-node neighbor search result.", accent: "#fb7185" },
-        "cmd-3": { label: "Command 3", role: "Subgraph or node-family exploration result.", accent: "#f97316" },
-        "d-mem": { label: "Dynamic Memory", role: "Snapshot of accumulated dynamic memory.", accent: "#eab308" },
-        "judge-start": { label: "Judge Start", role: "Validator starts evaluating the current conclusion.", accent: "#c084fc" },
-        "judge-pass": { label: "Judge Pass", role: "Validator accepted the conclusion.", accent: "#34d399" },
-        "judge-fail": { label: "Judge Fail", role: "Validator rejected the conclusion and asked for another iteration.", accent: "#f87171" },
-        "ds-end": { label: "Deep Search End", role: "Final conclusion emitted at the end.", accent: "#38bdf8" }
+        sse_connected: { label: "SSE Connected", role: "Stream attached.", accent: "#34d399" },
+        research_started: { label: "Research Started", role: "Research launched.", accent: "#38bdf8" },
+        "p-mem": { label: "Persistent Memory", role: "Persistent prompt.", accent: "#a78bfa" },
+        "ds-start": { label: "Deep Search Start", role: "Loop start.", accent: "#60a5fa" },
+        "round-start": { label: "Round Start", role: "New round.", accent: "#f59e0b", small: true },
+        "ds-model-response": { label: "Model Response", role: "Model response.", accent: "#22d3ee" },
+        "cmd-1": { label: "Command 1", role: "Top-node search.", accent: "#f472b6" },
+        "cmd-2": { label: "Command 2", role: "Neighbor search.", accent: "#fb7185" },
+        "cmd-3": { label: "Command 3", role: "Subgraph search.", accent: "#f97316" },
+        "d-mem": { label: "Dynamic Memory", role: "Dynamic memory.", accent: "#eab308" },
+        "judge-start": { label: "Judge Start", role: "Judge started.", accent: "#c084fc" },
+        "judge-pass": { label: "Judge Pass", role: "Accepted.", accent: "#34d399" },
+        "judge-fail": { label: "Judge Fail", role: "Rejected.", accent: "#f87171" },
+        "ds-end": { label: "Deep Search End", role: "Final result.", accent: "#38bdf8" }
       };
 
       const GOAL_EVENT_TYPE_META = {
-        sse_connected: { label: "SSE Connected", role: "The server confirmed that /goal/events is attached for this goal.", accent: "#34d399" },
-        goal_create_started: { label: "Goal Create Started", role: "The server accepted the request and started CreateUserGoal().", accent: "#38bdf8" },
-        goal_created: { label: "Goal Created", role: "CreateUserGoal() returned a valid Goal pointer.", accent: "#34d399" },
-        goal_create_failed: { label: "Goal Create Failed", role: "CreateUserGoal() failed or returned null.", accent: "#fb7185" }
+        sse_connected: { label: "SSE Connected", role: "Goal stream attached.", accent: "#34d399" },
+        goal_create_started: { label: "Goal Create Started", role: "Create started.", accent: "#38bdf8" },
+        goal_created: { label: "Goal Created", role: "Goal created.", accent: "#34d399" },
+        goal_create_failed: { label: "Goal Create Failed", role: "Goal creation failed.", accent: "#fb7185" },
+        title: { label: "Title", role: "Generated title.", accent: "#7dd3fc" },
+        "extra-info": { label: "Extra Info", role: "Generated extra info.", accent: "#a78bfa" },
+        time: { label: "Time", role: "Estimated time.", accent: "#fbbf24" },
+        "deep-search-final-recomandation": { label: "Personalization", role: "Personalization result.", accent: "#22d3ee" }
       };
 
       const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
@@ -1193,11 +1379,19 @@
 
       const goalState = {
         goals: [],
+        serverGoals: [],
+        serverGoalByIndex: new Map(),
         eventSource: null,
         connectionState: "disconnected",
         createInFlight: false,
+        loadInFlight: false,
+        decomposeInFlight: false,
         connectedId: "",
         activeId: "",
+        selectedServerGoalIndex: 0,
+        focusedServerGoalIndex: 0,
+        structureMode: "structure",
+        explodeMode: false,
         statusDetail: "Ready.",
         runStateLabel: "Idle",
         firstServerEventPerf: null,
@@ -1292,6 +1486,29 @@
         return `+${(value / 1000).toFixed(3)}s`;
       }
 
+      function formatDurationSeconds(seconds) {
+        const raw = Number(seconds);
+        if (!Number.isFinite(raw)) return "unknown";
+
+        const sign = raw < 0 ? "-" : "";
+        let value = Math.abs(Math.trunc(raw));
+
+        const days = Math.floor(value / 86400);
+        value %= 86400;
+        const hours = Math.floor(value / 3600);
+        value %= 3600;
+        const minutes = Math.floor(value / 60);
+        const secs = value % 60;
+
+        const parts = [];
+        if (days) parts.push(`${days}d`);
+        if (hours) parts.push(`${hours}h`);
+        if (minutes) parts.push(`${minutes}m`);
+        if (secs || parts.length === 0) parts.push(`${secs}s`);
+
+        return `${sign}${parts.join(" ")}`;
+      }
+
       function formatPayload(value) {
         const text = typeof value === "string" ? value.trim() : String(value ?? "");
         if (!text) return "";
@@ -1314,10 +1531,29 @@
         return message;
       }
 
+      function goalRemainingSeconds(goal) {
+        const start = Number(goal?.start_date || 0);
+        const end = Number(goal?.end_date || 0);
+        const required = Number(goal?.required_time || 0);
+        if (end > 0) return 0;
+        if (start <= 0 || required <= 0) return null;
+        return Math.trunc(start + required - Date.now() / 1000);
+      }
+
+      function goalStatus(goal) {
+        const start = Number(goal?.start_date || 0);
+        const end = Number(goal?.end_date || 0);
+        const required = Number(goal?.required_time || 0);
+        if (end > 0) return "Finished";
+        if (start <= 0) return "Not started";
+        if (required <= 0) return "Running";
+        return goalRemainingSeconds(goal) < 0 ? "Overdue" : "Running";
+      }
+
       function getResearchEventMeta(type) {
         return EVENT_TYPE_META[type] || {
           label: type || "Unknown Event",
-          role: "SSE event without an explicit client-side classification.",
+          role: "Unclassified SSE event.",
           accent: "#94a3b8"
         };
       }
@@ -1325,7 +1561,7 @@
       function getGoalEventMeta(type) {
         return GOAL_EVENT_TYPE_META[type] || {
           label: type || "Unknown Goal Event",
-          role: "Goal SSE event without an explicit client-side classification.",
+          role: "Unclassified goal event.",
           accent: "#94a3b8"
         };
       }
@@ -1710,6 +1946,375 @@
         }
       }
 
+      class GoalStructureView {
+        constructor() {
+          this.canvas = goalStructureCanvas;
+          this.ctx = this.canvas.getContext("2d");
+          this.width = 0;
+          this.height = 0;
+          this.dpr = 1;
+          this.positions = [];
+          this.hovered = null;
+          this.camera = { x: 0, y: 0, scale: 0.88 };
+          this.pointer = { down: false, dragging: false, lastX: 0, lastY: 0, id: null };
+          this.canvas.style.cursor = "grab";
+          this.bind();
+        }
+
+        bind() {
+          this.canvas.addEventListener("pointerdown", (event) => this.onPointerDown(event));
+          this.canvas.addEventListener("pointermove", (event) => this.onPointerMove(event));
+          this.canvas.addEventListener("pointerup", (event) => this.onPointerUp(event));
+          this.canvas.addEventListener("pointercancel", () => this.onPointerCancel());
+          this.canvas.addEventListener("pointerleave", () => this.onPointerLeave());
+          this.canvas.addEventListener("wheel", (event) => this.onWheel(event), { passive: false });
+        }
+
+        resize() {
+          const rect = this.canvas.getBoundingClientRect();
+          this.width = Math.max(1, Math.round(rect.width));
+          this.height = Math.max(1, Math.round(rect.height));
+          this.dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+          this.canvas.width = Math.round(this.width * this.dpr);
+          this.canvas.height = Math.round(this.height * this.dpr);
+          this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+        }
+
+        colorForGoal(goal) {
+          const hue = ((goal.globalIndex * 137.508) % 360 + 360) % 360;
+          return `hsl(${hue.toFixed(3)} 68% 58%)`;
+        }
+
+        visibleGoals() {
+          if (!goalState.focusedServerGoalIndex) return goalState.serverGoals;
+          const root = findServerGoalByIndex(goalState.focusedServerGoalIndex);
+          if (!root) return goalState.serverGoals;
+
+          const visible = [];
+          const seen = new Set();
+          const walk = (goal) => {
+            if (!goal || seen.has(goal.globalIndex)) return;
+            seen.add(goal.globalIndex);
+            visible.push(goal);
+            for (const childIndex of goal.subgoals) walk(findServerGoalByIndex(childIndex));
+          };
+
+          walk(root);
+          return visible;
+        }
+
+        computeTreeLayout(goals) {
+          const byParent = new Map();
+          for (const goal of goals) {
+            if (!byParent.has(goal.parent)) byParent.set(goal.parent, []);
+            byParent.get(goal.parent).push(goal);
+          }
+
+          for (const list of byParent.values()) {
+            list.sort((a, b) => a.globalIndex - b.globalIndex);
+          }
+
+          const roots = goalState.focusedServerGoalIndex
+            ? [findServerGoalByIndex(goalState.focusedServerGoalIndex)].filter(Boolean)
+            : (byParent.get(0) || []);
+
+          const positions = [];
+          let cursorY = 0;
+
+          const walk = (goal, depth) => {
+            const children = (byParent.get(goal.globalIndex) || []).filter(Boolean);
+            const startY = cursorY;
+
+            if (children.length === 0) {
+              cursorY += 1;
+            } else {
+              for (const child of children) walk(child, depth + 1);
+            }
+
+            const endY = cursorY - 1;
+            const ySlot = children.length === 0 ? startY : (startY + endY) / 2;
+
+            positions.push({
+              goal,
+              x: depth * 260,
+              y: ySlot * 112,
+              radius: 28,
+              color: this.colorForGoal(goal)
+            });
+          };
+
+          for (const root of roots) walk(root, 0);
+
+          const minY = positions.length ? Math.min(...positions.map((p) => p.y)) : 0;
+          const maxY = positions.length ? Math.max(...positions.map((p) => p.y)) : 0;
+          const midY = (minY + maxY) * 0.5;
+
+          for (const pos of positions) pos.y -= midY;
+          return positions;
+        }
+
+        computeExplodeLayout(goals) {
+          const selected = findServerGoalByIndex(goalState.selectedServerGoalIndex) || findServerGoalByIndex(goalState.focusedServerGoalIndex);
+          const centerGoal = selected || goals.find((goal) => goal.parent === 0) || goals[0];
+          if (!centerGoal) return [];
+
+          const positions = [{
+            goal: centerGoal,
+            x: 0,
+            y: 0,
+            radius: 34,
+            color: this.colorForGoal(centerGoal)
+          }];
+
+          const children = centerGoal.subgoals.map((id) => findServerGoalByIndex(id)).filter(Boolean);
+          const siblings = goalState.serverGoals.filter((goal) => goal.parent === centerGoal.parent && goal.globalIndex !== centerGoal.globalIndex);
+          const parent = findServerGoalByIndex(centerGoal.parent);
+
+          const ring = (items, radius, offset, baseRadius) => {
+            items.forEach((goal, index) => {
+              const angle = offset + (Math.PI * 2 * index) / Math.max(1, items.length);
+              positions.push({
+                goal,
+                x: Math.cos(angle) * radius,
+                y: Math.sin(angle) * radius * 0.74,
+                radius: baseRadius,
+                color: this.colorForGoal(goal)
+              });
+            });
+          };
+
+          ring(children, 230, -Math.PI / 2, 27);
+          ring(siblings.slice(0, 12), 390, Math.PI / 2, 22);
+
+          if (parent) {
+            positions.push({
+              goal: parent,
+              x: 0,
+              y: -250,
+              radius: 26,
+              color: this.colorForGoal(parent)
+            });
+          }
+
+          return positions;
+        }
+
+        recompute() {
+          const goals = this.visibleGoals();
+          this.positions = goalState.explodeMode
+            ? this.computeExplodeLayout(goals)
+            : this.computeTreeLayout(goals);
+        }
+
+        worldToScreen(x, y) {
+          return {
+            x: (x - this.camera.x) * this.camera.scale + this.width * 0.5,
+            y: (y - this.camera.y) * this.camera.scale + this.height * 0.54
+          };
+        }
+
+        screenToWorld(x, y) {
+          return {
+            x: this.camera.x + (x - this.width * 0.5) / Math.max(this.camera.scale, 0.001),
+            y: this.camera.y + (y - this.height * 0.54) / Math.max(this.camera.scale, 0.001)
+          };
+        }
+
+        pick(screenX, screenY) {
+          const world = this.screenToWorld(screenX, screenY);
+          for (let i = this.positions.length - 1; i >= 0; i -= 1) {
+            const pos = this.positions[i];
+            if (Math.hypot(world.x - pos.x, world.y - pos.y) <= pos.radius + 10) return pos.goal;
+          }
+          return null;
+        }
+
+        drawEmpty() {
+          const c = this.ctx;
+          c.fillStyle = "#030508";
+          c.fillRect(0, 0, this.width, this.height);
+          c.fillStyle = "rgba(255,255,255,.94)";
+          c.font = "740 24px system-ui, sans-serif";
+          c.textAlign = "center";
+          c.textBaseline = "middle";
+          c.fillText("No goals loaded", this.width * 0.5, this.height * 0.48);
+          c.fillStyle = "rgba(255,255,255,.62)";
+          c.font = "500 13px system-ui, sans-serif";
+          c.fillText("Refresh Goals", this.width * 0.5, this.height * 0.48 + 30);
+        }
+
+        render() {
+          this.resize();
+          this.recompute();
+
+          const c = this.ctx;
+          c.clearRect(0, 0, this.width, this.height);
+          c.fillStyle = "#030508";
+          c.fillRect(0, 0, this.width, this.height);
+
+          if (goalState.serverGoals.length === 0) {
+            this.drawEmpty();
+            return;
+          }
+
+          const posByIndex = new Map(this.positions.map((pos) => [pos.goal.globalIndex, pos]));
+
+          c.save();
+          c.lineCap = "round";
+
+          for (const pos of this.positions) {
+            for (const childIndex of pos.goal.subgoals) {
+              const childPos = posByIndex.get(childIndex);
+              if (!childPos) continue;
+
+              const a = this.worldToScreen(pos.x, pos.y);
+              const b = this.worldToScreen(childPos.x, childPos.y);
+
+              c.strokeStyle = "rgba(125,211,252,.24)";
+              c.lineWidth = 1.4;
+              c.beginPath();
+              c.moveTo(a.x, a.y);
+              c.bezierCurveTo((a.x + b.x) / 2, a.y, (a.x + b.x) / 2, b.y, b.x, b.y);
+              c.stroke();
+            }
+          }
+
+          c.restore();
+
+          for (const pos of this.positions) {
+            const goal = pos.goal;
+            const screen = this.worldToScreen(pos.x, pos.y);
+            const selected = goal.globalIndex === goalState.selectedServerGoalIndex;
+            const hovered = this.hovered && this.hovered.globalIndex === goal.globalIndex;
+            const status = goalStatus(goal);
+            const color = status === "Overdue" ? "#fb7185" : status === "Finished" ? "#34d399" : pos.color;
+            const radius = pos.radius * this.camera.scale * (hovered ? 1.08 : selected ? 1.04 : 1);
+
+            c.save();
+
+            c.beginPath();
+            c.arc(screen.x, screen.y, radius + 10, 0, Math.PI * 2);
+            c.fillStyle = selected ? "rgba(255,255,255,.10)" : hovered ? "rgba(255,255,255,.07)" : "rgba(255,255,255,.025)";
+            c.fill();
+
+            c.beginPath();
+            c.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
+            c.fillStyle = "#05070a";
+            c.fill();
+            c.strokeStyle = color;
+            c.lineWidth = selected ? 4 : hovered ? 3.2 : 2.2;
+            c.stroke();
+
+            c.fillStyle = "#fff";
+            c.font = "740 11px system-ui, sans-serif";
+            c.textAlign = "center";
+            c.textBaseline = "middle";
+            c.fillText(String(goal.globalIndex), screen.x, screen.y);
+
+            c.textBaseline = "top";
+            c.font = selected || hovered ? "740 12px system-ui, sans-serif" : "650 11px system-ui, sans-serif";
+            c.fillStyle = selected || hovered ? "#fff" : "rgba(255,255,255,.74)";
+            c.fillText(truncateText(goal.title, 28), screen.x, screen.y + radius + 8);
+
+            c.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
+            c.fillStyle = "rgba(255,255,255,.45)";
+            const remaining = goalRemainingSeconds(goal);
+            const detail = remaining === null ? formatDurationSeconds(goal.required_time) : formatDurationSeconds(remaining);
+            c.fillText(detail, screen.x, screen.y + radius + 24);
+
+            c.restore();
+          }
+        }
+
+        onPointerDown(event) {
+          const rect = this.canvas.getBoundingClientRect();
+          this.pointer.down = true;
+          this.pointer.dragging = false;
+          this.pointer.id = event.pointerId;
+          this.pointer.lastX = event.clientX - rect.left;
+          this.pointer.lastY = event.clientY - rect.top;
+          this.canvas.setPointerCapture(event.pointerId);
+        }
+
+        onPointerMove(event) {
+          const rect = this.canvas.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+
+          if (this.pointer.down) {
+            const dx = x - this.pointer.lastX;
+            const dy = y - this.pointer.lastY;
+            if (Math.hypot(dx, dy) > 2) this.pointer.dragging = true;
+
+            if (this.pointer.dragging) {
+              this.camera.x -= dx / Math.max(this.camera.scale, 0.001);
+              this.camera.y -= dy / Math.max(this.camera.scale, 0.001);
+              this.canvas.style.cursor = "grabbing";
+            }
+          } else {
+            this.hovered = this.pick(x, y);
+            this.canvas.style.cursor = this.hovered ? "pointer" : "grab";
+          }
+
+          this.pointer.lastX = x;
+          this.pointer.lastY = y;
+          this.render();
+        }
+
+        onPointerUp(event) {
+          const rect = this.canvas.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          const wasDragging = this.pointer.dragging;
+
+          if (this.pointer.id !== null) this.canvas.releasePointerCapture(this.pointer.id);
+
+          this.pointer.down = false;
+          this.pointer.dragging = false;
+          this.pointer.id = null;
+
+          if (!wasDragging) {
+            const goal = this.pick(x, y);
+            if (goal) activateServerGoal(goal.globalIndex, true);
+          }
+
+          this.hovered = this.pick(x, y);
+          this.canvas.style.cursor = this.hovered ? "pointer" : "grab";
+          this.render();
+        }
+
+        onPointerCancel() {
+          this.pointer.down = false;
+          this.pointer.dragging = false;
+          this.pointer.id = null;
+          this.hovered = null;
+          this.canvas.style.cursor = "grab";
+          this.render();
+        }
+
+        onPointerLeave() {
+          if (!this.pointer.down) {
+            this.hovered = null;
+            this.canvas.style.cursor = "grab";
+            this.render();
+          }
+        }
+
+        onWheel(event) {
+          event.preventDefault();
+          const oldScale = this.camera.scale;
+          const direction = event.deltaY > 0 ? -1 : 1;
+          this.camera.scale = clamp(oldScale * (direction > 0 ? 1.08 : 0.92), 0.35, 2.4);
+          this.render();
+        }
+
+        resetCamera() {
+          this.camera.x = 0;
+          this.camera.y = 0;
+          this.camera.scale = goalState.explodeMode ? 0.76 : 0.88;
+        }
+      }
+
       const researchTimeline = new TimelineView({
         canvasId: "timeline-canvas",
         tooltipId: "timeline-tooltip",
@@ -1724,7 +2329,7 @@
         inspectorBodyId: "timeline-inspector-body",
         inspectorCloseId: "timeline-inspector-close",
         emptyTitle: "No deep-search events",
-        emptySubtitle: "Start or open a session to populate the timeline.",
+        emptySubtitle: "Start or open a session.",
         getMeta: getResearchEventMeta
       });
 
@@ -1742,9 +2347,11 @@
         inspectorBodyId: "goal-timeline-inspector-body",
         inspectorCloseId: "goal-timeline-inspector-close",
         emptyTitle: "No goal events",
-        emptySubtitle: "Create or open a goal to populate the timeline.",
+        emptySubtitle: "Create or open a goal.",
         getMeta: getGoalEventMeta
       });
+
+      const goalStructureView = new GoalStructureView();
 
       function findResearchSession(id) {
         return researchState.sessions.find((session) => session.id === id) || null;
@@ -1772,6 +2379,37 @@
         return { id, goalId: goalId || id, title, extraInfo, status: "Creating", createdAt: now, updatedAt: now, events: [] };
       }
 
+      function normalizeServerGoal(raw) {
+        return {
+          id: String(raw?.id || ""),
+          globalIndex: Number(raw?.globalIndex || 0),
+          title: String(raw?.title || "Untitled goal"),
+          extra_info: String(raw?.extra_info || ""),
+          start_date: Number(raw?.start_date || 0),
+          end_date: Number(raw?.end_date || 0),
+          required_time: Number(raw?.required_time || 0),
+          subgoals_len: Number(raw?.subgoals_len || 0),
+          subgoals: Array.isArray(raw?.subgoals) ? raw.subgoals.map(Number).filter(Number.isFinite) : [],
+          parent: Number(raw?.parent || 0),
+          prev: Number(raw?.prev || 0),
+          next: Number(raw?.next || 0),
+          depth: Number(raw?.depth || 0),
+          retry_depth: Number(raw?.retry_depth || 0),
+          priority: Number(raw?.priority || 0)
+        };
+      }
+
+      function rebuildServerGoalIndex() {
+        goalState.serverGoalByIndex = new Map();
+        for (const goal of goalState.serverGoals) {
+          if (goal.globalIndex > 0) goalState.serverGoalByIndex.set(goal.globalIndex, goal);
+        }
+      }
+
+      function findServerGoalByIndex(index) {
+        return goalState.serverGoalByIndex.get(Number(index)) || null;
+      }
+
       function moveToTop(list, id) {
         const index = list.findIndex((item) => item.id === id);
         if (index <= 0) return;
@@ -1789,6 +2427,7 @@
           if (!Array.isArray(session.events)) session.events = [];
           if (!session.taskName) session.taskName = "Untitled deep search";
         }
+
         for (const goal of goalState.goals) {
           if (!Array.isArray(goal.events)) goal.events = [];
           if (!goal.goalId || String(goal.goalId).length !== 32) goal.goalId = generateRandom32();
@@ -1814,21 +2453,27 @@
           researchSessionList.innerHTML = `<div class="session-empty">No saved deep-search sessions.</div>`;
           return;
         }
+
         researchSessionList.innerHTML = "";
+
         for (const session of researchState.sessions) {
           const button = document.createElement("button");
           button.type = "button";
           button.className = "session-item";
           button.classList.toggle("is-active", session.id === researchState.activeId);
+
           const title = document.createElement("div");
           title.className = "session-item__title";
           title.textContent = session.taskName || "Untitled deep search";
+
           const meta = document.createElement("div");
           meta.className = "session-item__meta";
           meta.textContent = `${session.events.length} events · ${formatLocalTime(session.createdAt)}`;
+
           const status = document.createElement("div");
           status.className = "session-item__status";
           status.textContent = session.status || "Saved";
+
           button.append(title, meta, status);
           button.addEventListener("click", () => activateResearchSession(session.id, true));
           researchSessionList.appendChild(button);
@@ -1836,27 +2481,37 @@
       }
 
       function renderGoalList() {
-        if (goalState.goals.length === 0) {
-          goalList.innerHTML = `<div class="session-empty">No saved goals.</div>`;
+        if (goalState.serverGoals.length === 0) {
+          goalList.innerHTML = `<div class="session-empty">No server goals loaded.</div>`;
           return;
         }
+
         goalList.innerHTML = "";
-        for (const goal of goalState.goals) {
+
+        for (const goal of goalState.serverGoals) {
+          const local = findGoal(goal.id);
           const button = document.createElement("button");
           button.type = "button";
           button.className = "session-item";
-          button.classList.toggle("is-active", goal.id === goalState.activeId);
+          button.classList.toggle("is-active", goal.globalIndex === goalState.selectedServerGoalIndex);
+
           const title = document.createElement("div");
           title.className = "session-item__title";
           title.textContent = goal.title || "Untitled goal";
+
           const meta = document.createElement("div");
           meta.className = "session-item__meta";
-          meta.textContent = `${goal.events.length} events · ${formatLocalTime(goal.createdAt)}`;
+          meta.textContent = `#${goal.globalIndex} · depth ${goal.depth} · ${goal.subgoals_len} children · ${local ? local.events.length : 0} events`;
+
           const status = document.createElement("div");
           status.className = "session-item__status";
-          status.textContent = goal.status || "Saved";
+          const remaining = goalRemainingSeconds(goal);
+          status.textContent = remaining === null
+            ? `${goalStatus(goal)} · ${formatDurationSeconds(goal.required_time)} required`
+            : `${goalStatus(goal)} · ${formatDurationSeconds(remaining)} remaining`;
+
           button.append(title, meta, status);
-          button.addEventListener("click", () => activateGoal(goal.id, true));
+          button.addEventListener("click", () => activateServerGoal(goal.globalIndex, true));
           goalList.appendChild(button);
         }
       }
@@ -1889,6 +2544,184 @@
         if (switchView) setActiveView("goal");
       }
 
+      function setGoalPanelMode(mode) {
+        goalState.structureMode = mode === "timeline" ? "timeline" : "structure";
+        const structureActive = goalState.structureMode === "structure";
+
+        goalStructurePanel.classList.toggle("is-active", structureActive);
+        goalTimelinePanel.classList.toggle("is-active", !structureActive);
+        goalStructureModeButton.classList.toggle("is-active", structureActive);
+        goalTimelineModeButton.classList.toggle("is-active", !structureActive);
+
+        if (structureActive) goalStructureView.render();
+        else goalTimeline.render();
+
+        updateGoalPanel();
+      }
+
+      function showGoalInspector(goal) {
+        if (!goal) {
+          goalInspector.classList.remove("is-visible");
+          goalInspector.setAttribute("aria-hidden", "true");
+          return;
+        }
+
+        const remaining = goalRemainingSeconds(goal);
+        const status = goalStatus(goal);
+
+        goalInspectorTitle.textContent = goal.title || "Untitled goal";
+        goalInspectorMeta.textContent = `#${goal.globalIndex} · id=${goal.id || "none"}`;
+
+        goalStatStatus.textContent = status;
+        goalStatRemaining.textContent = remaining === null ? "not running" : formatDurationSeconds(remaining);
+        goalStatRequired.textContent = formatDurationSeconds(goal.required_time);
+        goalStatHierarchy.textContent = `depth ${goal.depth} · parent ${goal.parent} · ${goal.subgoals_len} children`;
+
+        goalInspectorBody.textContent =
+          `Title:\n${goal.title}\n\n` +
+          `Extra info:\n${goal.extra_info || "(empty)"}\n\n` +
+          `Raw:\n${JSON.stringify(goal, null, 2)}`;
+
+        goalInspector.classList.add("is-visible");
+        goalInspector.setAttribute("aria-hidden", "false");
+      }
+
+      function activateServerGoal(globalIndex, switchView) {
+        const goal = findServerGoalByIndex(globalIndex);
+        if (!goal) return;
+
+        goalState.selectedServerGoalIndex = goal.globalIndex;
+        goalState.activeId = goal.id || String(goal.globalIndex);
+
+        goalTitleInput.value = goal.title || "";
+        goalExtraInfoInput.value = goal.extra_info || "";
+
+        const localSession = findGoal(goal.id);
+        goalTimeline.setEvents(localSession?.events || []);
+
+        goalState.runStateLabel = goalStatus(goal);
+        const remaining = goalRemainingSeconds(goal);
+        goalState.statusDetail = remaining === null
+          ? `Selected #${goal.globalIndex}. Required: ${formatDurationSeconds(goal.required_time)}.`
+          : `Selected #${goal.globalIndex}. Remaining: ${formatDurationSeconds(remaining)}.`;
+
+        showGoalInspector(goal);
+        renderGoalList();
+        updateGoalPanel();
+        goalStructureView.render();
+
+        if (switchView) {
+          setGoalPanelMode("structure");
+          setActiveView("goal");
+        }
+      }
+
+      async function loadGoalsFromServer(selectNewest = false) {
+        goalState.loadInFlight = true;
+        goalState.statusDetail = `GET ${GOAL_LIST_ENDPOINT}`;
+        updateGoalPanel();
+
+        try {
+          const response = await fetch(GOAL_LIST_ENDPOINT, { cache: "no-store" });
+          const raw = await response.json();
+
+          if (!response.ok || !raw || raw.ok === false || !Array.isArray(raw.goals)) {
+            throw new Error(JSON.stringify(raw));
+          }
+
+          goalState.serverGoals = raw.goals.map(normalizeServerGoal).filter((goal) => goal.globalIndex > 0);
+          goalState.serverGoals.sort((a, b) => a.globalIndex - b.globalIndex);
+          rebuildServerGoalIndex();
+
+          if (goalState.serverGoals.length > 0) {
+            let nextGoal = null;
+
+            if (selectNewest) nextGoal = goalState.serverGoals[goalState.serverGoals.length - 1];
+            else nextGoal = findServerGoalByIndex(goalState.selectedServerGoalIndex) || goalState.serverGoals[0];
+
+            goalState.selectedServerGoalIndex = nextGoal.globalIndex;
+            activateServerGoal(nextGoal.globalIndex, false);
+          } else {
+            goalState.selectedServerGoalIndex = 0;
+            showGoalInspector(null);
+          }
+
+          goalState.statusDetail = `Loaded ${goalState.serverGoals.length} goals.`;
+        } catch (error) {
+          console.error(error);
+          goalState.statusDetail = buildTransportMessage(error);
+        } finally {
+          goalState.loadInFlight = false;
+          renderGoalList();
+          updateGoalPanel();
+          goalStructureView.resetCamera();
+          goalStructureView.render();
+        }
+      }
+
+      async function decomposeSelectedGoal() {
+        const goal = findServerGoalByIndex(goalState.selectedServerGoalIndex);
+
+        if (!goal) {
+          goalState.statusDetail = "Select a goal first.";
+          updateGoalPanel();
+          return;
+        }
+
+        goalState.decomposeInFlight = true;
+        goalState.statusDetail = `POST ${GOAL_DECOMPOSE_ENDPOINT}`;
+        updateGoalPanel();
+
+        try {
+          const response = await fetch(GOAL_DECOMPOSE_ENDPOINT, {
+            method: "POST",
+            cache: "no-store",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ goalIndex: goal.globalIndex })
+          });
+
+          const raw = await response.json();
+
+          if (!response.ok || !raw || raw.ok === false) {
+            throw new Error(JSON.stringify(raw));
+          }
+
+          goalState.statusDetail = raw.decomposedNow
+            ? `Decomposed #${goal.globalIndex}.`
+            : `Children loaded for #${goal.globalIndex}.`;
+
+          await loadGoalsFromServer(false);
+          activateServerGoal(goal.globalIndex, false);
+        } catch (error) {
+          console.error(error);
+          goalState.statusDetail = buildTransportMessage(error);
+        } finally {
+          goalState.decomposeInFlight = false;
+          updateGoalPanel();
+          goalStructureView.render();
+        }
+      }
+
+      function focusSelectedGoal() {
+        const goal = findServerGoalByIndex(goalState.selectedServerGoalIndex);
+        if (!goal) return;
+
+        goalState.focusedServerGoalIndex = goal.globalIndex;
+        goalStructureView.resetCamera();
+        goalStructureView.render();
+
+        goalState.statusDetail = `Focused #${goal.globalIndex}.`;
+        updateGoalPanel();
+      }
+
+      function clearGoalFocus() {
+        goalState.focusedServerGoalIndex = 0;
+        goalStructureView.resetCamera();
+        goalStructureView.render();
+        goalState.statusDetail = "Showing all goals.";
+        updateGoalPanel();
+      }
+
       function updateResearchPanel() {
         updateConnectionIndicator(researchConnectionState, researchConnectionIcon, researchConnectionText, researchState.connectionState);
         const session = findResearchSession(researchState.activeId);
@@ -1902,25 +2735,43 @@
         document.getElementById("timeline-total-chip").textContent = `${events.length} ${events.length === 1 ? "Event" : "Events"}`;
         document.getElementById("timeline-session-chip").textContent = session ? truncateText(session.taskName || "Active Session", 28) : "No Session";
         document.getElementById("timeline-header-subtitle").textContent = events.length > 0
-          ? "Chronological nodes are connected in order of arrival. Hover and click to inspect raw payloads."
-          : "Start or open a deep-search session to populate the timeline.";
+          ? "Hover and click to inspect."
+          : "Start or open a session.";
         renderResearchSessionList();
       }
 
       function updateGoalPanel() {
         updateConnectionIndicator(goalConnectionState, goalConnectionIcon, goalConnectionText, goalState.connectionState);
+
         const activeGoal = findGoal(goalState.activeId);
+        const selectedServerGoal = findServerGoalByIndex(goalState.selectedServerGoalIndex);
         const events = getActiveGoalEvents();
+
         goalRunState.textContent = goalState.runStateLabel;
         goalStatusDetail.textContent = goalState.statusDetail;
+
         createGoalButton.disabled = goalState.createInFlight || goalTitleInput.value.trim().length === 0;
         createGoalButton.textContent = goalState.createInFlight ? "Creating..." : "Create Goal";
         clearGoalHistoryButton.disabled = goalState.createInFlight || goalState.goals.length === 0;
+
+        refreshGoalsButton.disabled = goalState.loadInFlight;
+        refreshGoalsSidebarButton.disabled = goalState.loadInFlight;
+        decomposeSelectedGoalButton.disabled = goalState.decomposeInFlight || !selectedServerGoal;
+        goalInspectorDecompose.disabled = goalState.decomposeInFlight || !selectedServerGoal;
+        goalInspectorFocus.disabled = !selectedServerGoal;
+        goalClearFocusButton.disabled = !goalState.focusedServerGoalIndex;
+
+        goalExplodeToggle.textContent = goalState.explodeMode ? "Tree" : "Explode";
+        goalStructureCountChip.textContent = `${goalState.serverGoals.length} ${goalState.serverGoals.length === 1 ? "Goal" : "Goals"}`;
+        goalStructureSelectedChip.textContent = selectedServerGoal ? `#${selectedServerGoal.globalIndex} ${truncateText(selectedServerGoal.title, 20)}` : "No Selection";
+        goalStructureModeChip.textContent = goalState.explodeMode ? "Explode" : goalState.focusedServerGoalIndex ? "Focused" : "Tree";
+
         document.getElementById("goal-timeline-total-chip").textContent = `${events.length} ${events.length === 1 ? "Event" : "Events"}`;
         document.getElementById("goal-timeline-session-chip").textContent = activeGoal ? truncateText(activeGoal.title || "Active Goal", 28) : "No Goal";
         document.getElementById("goal-timeline-header-subtitle").textContent = activeGoal
           ? `Timeline for: ${activeGoal.title}`
-          : "Create or open a goal to inspect goal_emit messages.";
+          : "Create or open a goal.";
+
         renderGoalList();
       }
 
@@ -1928,17 +2779,24 @@
         const graphActive = uiState.activeView === "graph";
         const deepActive = uiState.activeView === "deep-search";
         const goalActive = uiState.activeView === "goal";
+
         graphView.classList.toggle("is-active", graphActive);
         deepSearchView.classList.toggle("is-active", deepActive);
         goalView.classList.toggle("is-active", goalActive);
+
         graphViewToggle.classList.toggle("is-active", graphActive);
         deepSearchViewToggle.classList.toggle("is-active", deepActive);
         goalViewToggle.classList.toggle("is-active", goalActive);
+
         graphViewToggle.setAttribute("aria-pressed", String(graphActive));
         deepSearchViewToggle.setAttribute("aria-pressed", String(deepActive));
         goalViewToggle.setAttribute("aria-pressed", String(goalActive));
+
         if (deepActive) researchTimeline.render();
-        if (goalActive) goalTimeline.render();
+        if (goalActive) {
+          goalTimeline.render();
+          goalStructureView.render();
+        }
       }
 
       function setActiveView(view) {
@@ -1953,7 +2811,7 @@
         researchState.firstServerEventPerf = null;
         researchState.connectionState = "disconnected";
         researchState.runStateLabel = "Idle";
-        researchState.statusDetail = "Ready for a new deep-search session.";
+        researchState.statusDetail = "Ready.";
         researchTaskInput.value = "";
         researchMinRoundsInput.value = "2";
         researchTimeline.setEvents([]);
@@ -1971,7 +2829,7 @@
         researchState.firstServerEventPerf = null;
         researchState.connectionState = "disconnected";
         researchState.runStateLabel = "Idle";
-        researchState.statusDetail = "Deep-search history cleared.";
+        researchState.statusDetail = "Cleared.";
         saveResearchSessions();
         researchTimeline.closeInspector();
         researchTimeline.setEvents([]);
@@ -1981,11 +2839,10 @@
       function clearGoalHistory() {
         closeGoalStream();
         goalState.goals = [];
-        goalState.activeId = "";
         goalState.firstServerEventPerf = null;
         goalState.connectionState = "disconnected";
         goalState.runStateLabel = "Idle";
-        goalState.statusDetail = "Goal emit history cleared.";
+        goalState.statusDetail = "SSE history cleared.";
         saveGoals();
         goalTimeline.closeInspector();
         goalTimeline.setEvents([]);
@@ -2035,7 +2892,7 @@
         store.connectedId = targetId;
         store.activeId = targetId;
         store.connectionState = "connecting";
-        store.statusDetail = isGoal ? "Connecting goal SSE stream." : "Connecting SSE stream.";
+        store.statusDetail = isGoal ? "Connecting goal SSE." : "Connecting SSE.";
         updatePanel();
 
         const source = new EventSource(buildUrl(targetId));
@@ -2048,7 +2905,7 @@
             settled = true;
             closeStream();
             store.connectionState = "error";
-            store.statusDetail = `SSE connection timed out. ${SERVER_OFFLINE_HINT}`;
+            store.statusDetail = `SSE timeout. ${SERVER_OFFLINE_HINT}`;
             updatePanel();
             reject(new Error("Timed out while connecting SSE."));
           }, 5000);
@@ -2084,7 +2941,7 @@
             } catch (error) {
               console.error("Failed to parse SSE payload", error, messageEvent.data);
               store.connectionState = "error";
-              store.statusDetail = "Received malformed SSE payload from server.";
+              store.statusDetail = "Malformed SSE payload.";
               updatePanel();
             }
           };
@@ -2093,12 +2950,12 @@
             if (store.eventSource !== source) return;
             if (source.readyState === EventSource.CONNECTING) {
               store.connectionState = "reconnecting";
-              store.statusDetail = "Reconnecting SSE stream.";
+              store.statusDetail = "Reconnecting SSE.";
               updatePanel();
               return;
             }
             store.connectionState = "error";
-            store.statusDetail = `SSE connection closed. ${SERVER_OFFLINE_HINT}`;
+            store.statusDetail = `SSE closed. ${SERVER_OFFLINE_HINT}`;
             closeStream();
             updatePanel();
             settleFailure("Could not connect SSE.");
@@ -2119,17 +2976,21 @@
         const receivedDate = new Date();
         const receivedPerf = performance.now();
         if (researchState.firstServerEventPerf === null) researchState.firstServerEventPerf = receivedPerf;
+
         const type = typeof payload.type === "string" ? payload.type : "unknown";
         const id = typeof payload.id === "string" && payload.id.length > 0 ? payload.id : researchState.connectedId || "default";
+
         let session = findResearchSession(id);
         if (!session) {
           session = makeResearchSession({ id, taskName: "Recovered session", minRounds: 1 });
           session.status = "Recovered";
           researchState.sessions.unshift(session);
         }
+
         const data = typeof payload.data === "string" ? payload.data : JSON.stringify(payload.data ?? "");
         const meta = getResearchEventMeta(type);
         const elapsedMs = receivedPerf - researchState.firstServerEventPerf;
+
         session.events.push({
           sequence: session.events.length + 1,
           type,
@@ -2139,6 +3000,7 @@
           elapsedLabel: formatElapsedMs(elapsedMs),
           timestamp: receivedDate.getTime()
         });
+
         session.updatedAt = Date.now();
         researchState.activeId = id;
         researchState.statusDetail = type === "sse_connected" ? "SSE connected." : meta.role;
@@ -2155,17 +3017,21 @@
         const receivedDate = new Date();
         const receivedPerf = performance.now();
         if (goalState.firstServerEventPerf === null) goalState.firstServerEventPerf = receivedPerf;
+
         const type = typeof payload.type === "string" ? payload.type : "unknown";
         const id = typeof payload.id === "string" && payload.id.length > 0 ? payload.id : goalState.connectedId || "default";
+
         let goal = findGoal(id);
         if (!goal) {
           goal = makeGoal({ id, goalId: id.length === 32 ? id : generateRandom32(), title: "Recovered goal", extraInfo: "" });
           goal.status = "Recovered";
           goalState.goals.unshift(goal);
         }
+
         const data = typeof payload.data === "string" ? payload.data : JSON.stringify(payload.data ?? "");
         const meta = getGoalEventMeta(type);
         const elapsedMs = receivedPerf - goalState.firstServerEventPerf;
+
         goal.events.push({
           sequence: goal.events.length + 1,
           type,
@@ -2175,6 +3041,10 @@
           elapsedLabel: formatElapsedMs(elapsedMs),
           timestamp: receivedDate.getTime()
         });
+
+        if (type === "title") goal.title = data || goal.title;
+        if (type === "extra-info") goal.extraInfo = data || goal.extraInfo;
+
         goal.updatedAt = Date.now();
         goalState.activeId = id;
         goalState.statusDetail = type === "sse_connected" ? "Goal SSE connected." : meta.role;
@@ -2182,6 +3052,7 @@
         if (type === "goal_create_started") goalState.runStateLabel = "Creating";
         else if (type === "goal_created") goalState.runStateLabel = "Created";
         else if (type === "goal_create_failed") goalState.runStateLabel = "Error";
+
         goal.status = goalState.runStateLabel;
         moveToTop(goalState.goals, goal.id);
         saveGoals();
@@ -2191,6 +3062,7 @@
 
       async function startDeepSearch(event) {
         event.preventDefault();
+
         const taskName = researchTaskInput.value.trim();
         const minRounds = normalizeMinRounds(researchMinRoundsInput.value);
         researchMinRoundsInput.value = String(minRounds);
@@ -2198,7 +3070,7 @@
 
         if (!taskName) {
           researchState.runStateLabel = "Idle";
-          researchState.statusDetail = "Task Name is required.";
+          researchState.statusDetail = "Task Name required.";
           updateResearchPanel();
           researchTaskInput.focus();
           return;
@@ -2209,16 +3081,18 @@
           session = makeResearchSession({ id, taskName, minRounds });
           researchState.sessions.unshift(session);
         }
+
         session.taskName = taskName;
         session.minRounds = minRounds;
         session.status = "Starting";
         session.updatedAt = Date.now();
         session.events = [];
+
         researchState.activeId = id;
         researchState.firstServerEventPerf = null;
         researchState.startInFlight = true;
         researchState.runStateLabel = "Starting";
-        researchState.statusDetail = "Preparing deep search.";
+        researchState.statusDetail = "Preparing.";
         saveResearchSessions();
         researchTimeline.closeInspector();
         researchTimeline.setEvents(session.events);
@@ -2239,12 +3113,14 @@
 
           const responseText = await response.text();
           if (!response.ok) throw new Error(responseText || `HTTP ${response.status}`);
+
           if (researchState.runStateLabel === "Starting" || researchState.runStateLabel === "Running") {
             researchState.runStateLabel = "Completed";
           }
+
           session.status = researchState.runStateLabel;
           session.updatedAt = Date.now();
-          researchState.statusDetail = responseText.trim() ? "Deep search completed and HTTP response returned." : "Deep search completed.";
+          researchState.statusDetail = "Completed.";
           researchState.preparedId = "";
           saveResearchSessions();
           loadGraph();
@@ -2264,11 +3140,12 @@
 
       async function createGoal(event) {
         event.preventDefault();
+
         const title = goalTitleInput.value.trim();
         const extraInfo = goalExtraInfoInput.value.trim();
 
         if (!title) {
-          goalState.statusDetail = "Goal Title is required.";
+          goalState.statusDetail = "Goal title required.";
           updateGoalPanel();
           goalTitleInput.focus();
           return;
@@ -2277,17 +3154,20 @@
         const goalId = generateRandom32();
         const id = goalId;
         const goal = makeGoal({ id, goalId, title, extraInfo });
+
         goalState.goals.unshift(goal);
         goalState.activeId = id;
         goalState.firstServerEventPerf = null;
         goalState.createInFlight = true;
         goalState.runStateLabel = "Creating";
-        goalState.statusDetail = "Preparing goal creation.";
+        goalState.statusDetail = "Preparing.";
         saveGoals();
+
         goalTimeline.closeInspector();
         goalTimeline.setEvents(goal.events);
         updateGoalPanel();
         setActiveView("goal");
+        setGoalPanelMode("timeline");
 
         try {
           await connectStream("goal", id, true);
@@ -2303,11 +3183,14 @@
 
           const responseText = await response.text();
           if (!response.ok) throw new Error(responseText || `HTTP ${response.status}`);
+
           if (goalState.runStateLabel === "Creating") goalState.runStateLabel = "Created";
           goal.status = goalState.runStateLabel;
           goal.updatedAt = Date.now();
-          goalState.statusDetail = "Goal creation request completed.";
+          goalState.statusDetail = "Goal created.";
           saveGoals();
+
+          await loadGoalsFromServer(true);
         } catch (error) {
           console.error(error);
           goal.status = "Error";
@@ -2346,11 +3229,14 @@
       function parseNodes(rawNodes) {
         const nodes = [];
         const nodeById = new Map();
+
         for (const item of rawNodes) {
           const id = Number(item.id);
           if (!Number.isFinite(id) || nodeById.has(id)) continue;
+
           const hasParent = hasOwn(item, "parent");
           const parsedParentId = hasParent ? Number(item.parent) : null;
+
           const node = {
             raw: item,
             id,
@@ -2373,39 +3259,48 @@
             directChildCount: 0,
             seed: ((id * 9301 + 49297) % 233280) / 233280
           };
+
           node.radius = computeNodeRadius(node);
           nodes.push(node);
           nodeById.set(id, node);
         }
+
         nodes.sort((a, b) => a.id - b.id);
         return { nodes, nodeById };
       }
 
       function buildChildrenByParent(nodes) {
         const map = new Map();
+
         for (const node of nodes) {
           if (!node.hasParent || !Number.isFinite(node.parentId)) continue;
           if (!map.has(node.parentId)) map.set(node.parentId, []);
           map.get(node.parentId).push(node);
         }
+
         for (const children of map.values()) children.sort((a, b) => a.id - b.id);
         return map;
       }
 
       function assignColors(nodes, nodeById) {
         const resolving = new Set();
+
         function resolve(node) {
           if (node.color) return node.color;
+
           if (resolving.has(node.id) || !node.hasParent) {
             node.color = generatedColorFromId(node.id);
             return node.color;
           }
+
           resolving.add(node.id);
           const parent = Number.isFinite(node.parentId) ? nodeById.get(node.parentId) : null;
           node.color = parent ? resolve(parent) : generatedColorFromId(node.id);
           resolving.delete(node.id);
+
           return node.color;
         }
+
         for (const node of nodes) resolve(node);
       }
 
@@ -2417,11 +3312,15 @@
 
       function buildEdges(rawConnections, nodeById) {
         const edges = [];
+
         for (const item of rawConnections) {
           if (!item || !Array.isArray(item.nodes) || item.nodes.length !== 2) continue;
+
           const source = nodeById.get(Number(item.nodes[0]));
           const target = nodeById.get(Number(item.nodes[1]));
+
           if (!source || !target || source === target) continue;
+
           edges.push({
             source,
             target,
@@ -2429,6 +3328,7 @@
             activation: clamp(toNumber(item.activation, 1), 0.1, 5)
           });
         }
+
         return edges;
       }
 
@@ -2443,24 +3343,41 @@
 
       function buildExplodedGroups(parents) {
         const groups = [];
+
         for (const parent of parents) {
           const members = (graphState.childrenByParent.get(parent.id) || []).slice();
           if (members.length === 0) continue;
-          groups.push({ id: parent.id, parent, color: parent.color, members, anchorX: 0, anchorY: 0, centerX: 0, centerY: 0, radius: 0, targetRadius: 0 });
+
+          groups.push({
+            id: parent.id,
+            parent,
+            color: parent.color,
+            members,
+            anchorX: 0,
+            anchorY: 0,
+            centerX: 0,
+            centerY: 0,
+            radius: 0,
+            targetRadius: 0
+          });
         }
+
         return groups.sort((a, b) => a.id - b.id);
       }
 
       function seedCompactLayout(nodes, centerX = 0, centerY = 0, spread = null) {
         const count = nodes.length;
         if (count === 0) return;
+
         const spacing = spread === null ? 56 : clamp(spread * 0.22, 26, 42);
         const maxDistance = spread === null ? Infinity : spread;
         const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+
         for (let index = 0; index < count; index += 1) {
           const node = nodes[index];
           const distance = count === 1 ? 0 : Math.min(spacing * Math.sqrt(index + 0.45), maxDistance);
           const angle = count === 1 ? -Math.PI * 0.5 : index * goldenAngle + node.seed * 0.75;
+
           node.x = centerX + Math.cos(angle) * distance;
           node.y = centerY + Math.sin(angle) * distance;
           node.vx = 0;
@@ -2472,32 +3389,43 @@
       function seedExplodedLayout(groups) {
         const count = groups.length;
         const ringRadius = clamp(140 + count * 32, 180, 420);
+
         groups.forEach((group, index) => {
           const angle = count === 1 ? -Math.PI * 0.5 : -Math.PI * 0.5 + (Math.PI * 2 * index) / count + (group.parent.seed - 0.5) * 0.22;
+
           group.anchorX = Math.cos(angle) * ringRadius;
           group.anchorY = Math.sin(angle) * ringRadius * 0.72;
           group.targetRadius = clamp(84 + Math.sqrt(group.members.length) * 26, 92, 210);
+
           seedCompactLayout(group.members, group.anchorX, group.anchorY, group.targetRadius * 0.45);
+
           for (const member of group.members) member.layoutGroupId = group.id;
         });
+
         refreshGroupGeometry();
       }
 
       function refreshGroupGeometry() {
         for (const group of graphState.visibleGroups) {
           if (group.members.length === 0) continue;
+
           let sumX = 0;
           let sumY = 0;
+
           for (const node of group.members) {
             sumX += node.x;
             sumY += node.y;
           }
+
           group.centerX = sumX / group.members.length;
           group.centerY = sumY / group.members.length;
+
           let radius = group.targetRadius;
+
           for (const node of group.members) {
             radius = Math.max(radius, Math.hypot(node.x - group.centerX, node.y - group.centerY) + node.radius + 22);
           }
+
           group.radius = radius;
         }
       }
@@ -2506,6 +3434,7 @@
         const parents = getCurrentLayerParents();
         let visibleNodes;
         let visibleGroups;
+
         if (graphState.explodeMode) {
           visibleGroups = buildExplodedGroups(parents);
           visibleNodes = visibleGroups.flatMap((group) => group.members);
@@ -2514,30 +3443,38 @@
           visibleNodes = parents.slice();
           for (const node of visibleNodes) node.layoutGroupId = null;
         }
+
         const visibleIds = new Set(visibleNodes.map((node) => node.id));
+
         graphState.visibleGroups = visibleGroups;
         graphState.visibleNodes = visibleNodes;
         graphState.visibleEdges = graphState.allEdges.filter((edge) => visibleIds.has(edge.source.id) && visibleIds.has(edge.target.id));
         graphState.hoveredNode = null;
         graphState.hoveredGroup = null;
         graphState.selectedNode = null;
+
         for (const node of visibleNodes) node.pinned = false;
+
         if (graphState.explodeMode) seedExplodedLayout(visibleGroups);
         else seedCompactLayout(visibleNodes);
+
         graphState.camera.x = 0;
         graphState.camera.y = 0;
         graphState.camera.scale = graphState.explodeMode ? 0.72 : 0.96;
+
         updateExplodeButton();
         updateFocusNodeBadge();
       }
 
       function updateFocusNodeBadge() {
         const activeNode = graphState.selectedNode || getFocusNode();
+
         if (!activeNode) {
           focusNodeBadge.classList.remove("is-visible");
           focusNodeLabel.textContent = "";
           return;
         }
+
         focusNodeBadge.classList.add("is-visible");
         focusNodeBadge.style.color = activeNode.color;
         focusNodeRing.style.borderColor = activeNode.color;
@@ -2548,6 +3485,7 @@
         const hasGraph = graphState.allNodes.length > 0;
         const hasDeeperLayer = getCurrentLayerParents().some((parent) => (graphState.childrenByParent.get(parent.id) || []).length > 0);
         const label = graphState.explodeMode ? "Collapse Layers" : "Explode Layers";
+
         explodeToggle.setAttribute("title", label);
         explodeToggle.setAttribute("aria-label", label);
         explodeToggle.classList.toggle("is-active", graphState.explodeMode);
@@ -2576,21 +3514,26 @@
       function pickNode(screenX, screenY) {
         const world = screenToWorld(screenX, screenY);
         const padding = 8 / Math.max(graphState.camera.scale, 0.001);
+
         for (let index = graphState.visibleNodes.length - 1; index >= 0; index -= 1) {
           const node = graphState.visibleNodes[index];
           const radius = node.radius + padding;
           if (Math.hypot(world.x - node.x, world.y - node.y) <= radius) return node;
         }
+
         return null;
       }
 
       function pickGroup(screenX, screenY) {
         if (graphState.visibleGroups.length === 0) return null;
+
         const world = screenToWorld(screenX, screenY);
+
         for (let index = graphState.visibleGroups.length - 1; index >= 0; index -= 1) {
           const group = graphState.visibleGroups[index];
           if (Math.hypot(world.x - group.centerX, world.y - group.centerY) <= group.radius) return group;
         }
+
         return null;
       }
 
@@ -2610,30 +3553,37 @@
       function stepLayout(delta) {
         const nodes = graphState.visibleNodes;
         if (nodes.length === 0) return;
+
         const exploded = graphState.explodeMode && graphState.visibleGroups.length > 0;
         const repulsionBase = exploded ? 2400 : nodes.length > 24 ? 2500 : 2200;
 
         for (let i = 0; i < nodes.length; i += 1) {
           const a = nodes[i];
+
           for (let j = i + 1; j < nodes.length; j += 1) {
             const b = nodes[j];
             let dx = b.x - a.x;
             let dy = b.y - a.y;
+
             if (dx === 0 && dy === 0) {
               dx = Math.cos((a.seed + b.seed) * Math.PI * 2) * 0.01;
               dy = Math.sin((a.seed + b.seed) * Math.PI * 2) * 0.01;
             }
+
             const sameGroup = exploded && a.layoutGroupId !== null && a.layoutGroupId === b.layoutGroupId;
             const d2 = Math.max(dx * dx + dy * dy, 0.01);
             const d = Math.sqrt(d2);
             const nx = dx / d;
             const ny = dy / d;
             const repulsion = repulsionBase * (sameGroup ? 0.76 : exploded ? 1.45 : 1);
+
             a.vx -= nx * (repulsion / d2) * delta;
             a.vy -= ny * (repulsion / d2) * delta;
             b.vx += nx * (repulsion / d2) * delta;
             b.vy += ny * (repulsion / d2) * delta;
+
             const minDistance = a.radius + b.radius + (sameGroup ? 10 : exploded ? 18 : 12);
+
             if (d < minDistance) {
               const push = (minDistance - d) * 0.18;
               a.x -= nx * push;
@@ -2653,6 +3603,7 @@
           const sameGroup = edge.source.layoutGroupId !== null && edge.source.layoutGroupId === edge.target.layoutGroupId;
           const desired = clamp(edge.source.radius + edge.target.radius + 18 + edge.activation * 7, sameGroup ? 52 : 66, sameGroup ? 130 : 180);
           const spring = (d - desired) * (exploded && !sameGroup ? 0.0016 : 0.0036) * edge.weight * delta;
+
           edge.source.vx += nx * spring;
           edge.source.vy += ny * spring;
           edge.target.vx -= nx * spring;
@@ -2678,11 +3629,13 @@
             node.vx += (node.pinX - node.x) * 0.18 * delta;
             node.vy += (node.pinY - node.y) * 0.18 * delta;
           }
+
           node.vx *= exploded ? 0.9 : 0.87;
           node.vy *= exploded ? 0.9 : 0.87;
           node.x += node.vx * delta;
           node.y += node.vy * delta;
         }
+
         if (exploded) refreshGroupGeometry();
       }
 
@@ -2694,11 +3647,13 @@
         ctx.fillStyle = "#fff";
         ctx.font = "650 18px system-ui, sans-serif";
         ctx.fillText(title, graphState.width * 0.5, graphState.height * 0.5 - 8);
+
         if (detail) {
           ctx.font = "500 12px system-ui, sans-serif";
           ctx.fillStyle = "rgba(255,255,255,.72)";
           ctx.fillText(detail, graphState.width * 0.5, graphState.height * 0.5 + 20);
         }
+
         ctx.restore();
       }
 
@@ -2706,6 +3661,7 @@
         for (const group of graphState.visibleGroups) {
           const pos = worldToScreen(group.centerX, group.centerY);
           const radius = group.radius * graphState.camera.scale;
+
           ctx.save();
           ctx.globalAlpha = graphState.hoveredGroup && graphState.hoveredGroup.id === group.id ? 0.14 : 0.08;
           ctx.fillStyle = group.color;
@@ -2713,6 +3669,7 @@
           ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
+
           ctx.save();
           ctx.strokeStyle = group.color;
           ctx.lineWidth = graphState.hoveredGroup && graphState.hoveredGroup.id === group.id ? 2 : 1.2;
@@ -2721,6 +3678,7 @@
           ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
+
           drawLabelPill(pos.x, pos.y - radius - 18, group.parent.name, group.color);
         }
       }
@@ -2732,6 +3690,7 @@
         const height = 26;
         const x = centerX - width * 0.5;
         const y = centerY - height * 0.5;
+
         ctx.fillStyle = "rgba(0,0,0,.78)";
         ctx.beginPath();
         ctx.roundRect(x, y, width, height, 13);
@@ -2739,6 +3698,7 @@
         ctx.strokeStyle = accent;
         ctx.lineWidth = 1;
         ctx.stroke();
+
         ctx.fillStyle = "#fff";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -2749,11 +3709,13 @@
       function drawGraphEdges() {
         ctx.save();
         ctx.lineCap = "round";
+
         for (const edge of graphState.visibleEdges) {
           const source = worldToScreen(edge.source.x, edge.source.y);
           const target = worldToScreen(edge.target.x, edge.target.y);
           const sameGroup = edge.source.layoutGroupId !== null && edge.source.layoutGroupId === edge.target.layoutGroupId;
           const alpha = clamp((0.06 + edge.activation * 0.028) * (sameGroup ? 1 : graphState.explodeMode ? 0.5 : 1), 0.04, 0.42);
+
           ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
           ctx.lineWidth = clamp((0.9 + edge.weight * 0.7) * graphState.camera.scale * 0.7, 0.8, 3.2);
           ctx.beginPath();
@@ -2761,6 +3723,7 @@
           ctx.lineTo(target.x, target.y);
           ctx.stroke();
         }
+
         ctx.restore();
       }
 
@@ -2776,11 +3739,13 @@
         ctx.save();
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
+
         for (const node of ordered) {
           const hovered = graphState.hoveredNode && graphState.hoveredNode.id === node.id;
           const selected = graphState.selectedNode && graphState.selectedNode.id === node.id;
           const pos = worldToScreen(node.x, node.y);
           const radius = node.radius * graphState.camera.scale * (hovered ? 1.1 : selected ? 1.04 : 1);
+
           if (hovered || selected) {
             ctx.beginPath();
             ctx.arc(pos.x, pos.y, radius + 7, 0, Math.PI * 2);
@@ -2788,6 +3753,7 @@
             ctx.lineWidth = selected ? 1.5 : 2;
             ctx.stroke();
           }
+
           ctx.beginPath();
           ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
           ctx.fillStyle = "#000";
@@ -2795,33 +3761,42 @@
           ctx.strokeStyle = node.color;
           ctx.lineWidth = selected ? 4 : hovered ? 3.2 : 2.3;
           ctx.stroke();
+
           ctx.fillStyle = "#fff";
           ctx.font = `500 ${clamp(11 * graphState.camera.scale + 2, 11, 14)}px system-ui, sans-serif`;
           ctx.fillText(node.name, pos.x, pos.y + radius + 7);
         }
+
         ctx.restore();
       }
 
       function drawGraphTooltip(node) {
         if (!node) return;
+
         const pos = worldToScreen(node.x, node.y);
         const radius = node.radius * graphState.camera.scale;
         const lines = [`${node.name} (#${node.id})`, `activation ${node.activation.toFixed(2)}`, `weight ${node.weight.toFixed(2)}`];
+
         if (node.directChildCount > 0) lines.push(`children ${node.directChildCount}`);
+
         ctx.save();
         ctx.font = "12px system-ui, sans-serif";
+
         const width = Math.max(...lines.map((line) => ctx.measureText(line).width)) + 20;
         const height = lines.length * 18 + 14;
         const x = clamp(pos.x + radius + 14, 12, graphState.width - width - 12);
         const y = clamp(pos.y - height * 0.5, 12, graphState.height - height - 12);
+
         ctx.fillStyle = "rgba(0,0,0,.82)";
         ctx.fillRect(x, y, width, height);
         ctx.strokeStyle = node.color;
         ctx.strokeRect(x + 0.5, y + 0.5, width - 1, height - 1);
+
         ctx.fillStyle = "#fff";
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
         lines.forEach((line, index) => ctx.fillText(line, x + 10, y + 8 + index * 18));
+
         ctx.restore();
       }
 
@@ -2834,15 +3809,20 @@
           renderMessage("Loading graph", `Fetching ${GRAPH_ENDPOINT}`);
           return;
         }
+
         if (graphState.error) {
           renderMessage(graphState.error.title, graphState.error.detail);
           return;
         }
+
         if (graphState.visibleGroups.length > 0) drawGraphGroups();
         drawGraphEdges();
         drawGraphNodes();
         drawGraphTooltip(graphState.selectedNode || graphState.hoveredNode);
-        if (graphState.visibleNodes.length === 0) renderMessage(getFocusNode() ? "This node has no direct children" : "No root nodes found", "Click empty background to return");
+
+        if (graphState.visibleNodes.length === 0) {
+          renderMessage(getFocusNode() ? "This node has no direct children" : "No root nodes found", "Click empty background to return");
+        }
       }
 
       function nodeHasChildren(node) {
@@ -2855,16 +3835,19 @@
           recomputeVisibleGraph();
           return true;
         }
+
         if (graphState.focusPath.length > 0) {
           graphState.focusPath = graphState.focusPath.slice(0, -1);
           recomputeVisibleGraph();
           return true;
         }
+
         return false;
       }
 
       function handleCanvasClick(x, y) {
         const hit = pickNode(x, y);
+
         if (!hit) {
           if (!stepBackOneLevel()) {
             graphState.selectedNode = null;
@@ -2872,6 +3855,7 @@
           }
           return;
         }
+
         if (nodeHasChildren(hit)) {
           graphState.focusPath = graphState.focusPath.concat(hit);
           graphState.explodeMode = false;
@@ -2884,11 +3868,13 @@
 
       function onPointerDown(event) {
         if (event.button !== 0) return;
+
         const rect = canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
         const targetNode = pickNode(x, y);
         const targetGroup = targetNode ? null : pickGroup(x, y);
+
         graphState.pointer.isDown = true;
         graphState.pointer.dragging = false;
         graphState.pointer.pointerId = event.pointerId;
@@ -2899,6 +3885,7 @@
         graphState.pointer.startY = y;
         graphState.pointer.lastX = x;
         graphState.pointer.lastY = y;
+
         canvas.setPointerCapture(event.pointerId);
         updateHover(x, y);
       }
@@ -2907,30 +3894,53 @@
         const rect = canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
+
         if (graphState.pointer.isDown) {
           const moveDistance = Math.hypot(x - graphState.pointer.startX, y - graphState.pointer.startY);
           if (!graphState.pointer.dragging && moveDistance > 4) graphState.pointer.dragging = true;
+
           if (graphState.pointer.dragging) {
             const prev = screenToWorld(graphState.pointer.lastX, graphState.pointer.lastY);
             const curr = screenToWorld(x, y);
             const dx = curr.x - prev.x;
             const dy = curr.y - prev.y;
+
             if (graphState.pointer.mode === "node" && graphState.pointer.targetNode) {
               const node = graphState.pointer.targetNode;
-              node.x += dx; node.y += dy; node.pinX = node.x; node.pinY = node.y; node.pinned = true; node.vx = 0; node.vy = 0;
+              node.x += dx;
+              node.y += dy;
+              node.pinX = node.x;
+              node.pinY = node.y;
+              node.pinned = true;
+              node.vx = 0;
+              node.vy = 0;
             } else if (graphState.pointer.mode === "group" && graphState.pointer.targetGroup) {
               const group = graphState.pointer.targetGroup;
-              group.anchorX += dx; group.anchorY += dy; group.centerX += dx; group.centerY += dy;
-              for (const node of group.members) { node.x += dx; node.y += dy; node.vx = 0; node.vy = 0; }
+              group.anchorX += dx;
+              group.anchorY += dy;
+              group.centerX += dx;
+              group.centerY += dy;
+              for (const node of group.members) {
+                node.x += dx;
+                node.y += dy;
+                node.vx = 0;
+                node.vy = 0;
+              }
             } else {
               graphState.camera.x -= (x - graphState.pointer.lastX) / Math.max(graphState.camera.scale, 0.001);
               graphState.camera.y -= (y - graphState.pointer.lastY) / Math.max(graphState.camera.scale, 0.001);
             }
+
             graphState.hoveredNode = null;
             graphState.hoveredGroup = null;
             updateCursor();
-          } else updateHover(x, y);
-        } else updateHover(x, y);
+          } else {
+            updateHover(x, y);
+          }
+        } else {
+          updateHover(x, y);
+        }
+
         graphState.pointer.lastX = x;
         graphState.pointer.lastY = y;
       }
@@ -2940,13 +3950,17 @@
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
         const wasDragging = graphState.pointer.dragging;
+
         graphState.pointer.isDown = false;
         graphState.pointer.dragging = false;
+
         if (graphState.pointer.pointerId !== null) canvas.releasePointerCapture(graphState.pointer.pointerId);
+
         graphState.pointer.pointerId = null;
         graphState.pointer.mode = "camera";
         graphState.pointer.targetNode = null;
         graphState.pointer.targetGroup = null;
+
         if (!wasDragging) handleCanvasClick(x, y);
         updateHover(x, y);
       }
@@ -2982,39 +3996,48 @@
         graphState.requestSerial = requestSerial;
         graphState.loading = true;
         graphState.error = null;
+
         updateRefreshButton();
         updateExplodeButton();
 
         try {
           const response = await fetch(GRAPH_ENDPOINT, { cache: "no-store" });
           if (!response.ok) throw new Error(`Server responded with HTTP ${response.status}`);
+
           const raw = await response.json();
           if (!raw || !Array.isArray(raw.nodes) || !Array.isArray(raw.connections)) throw new Error("Invalid graph payload from server");
           if (requestSerial !== graphState.requestSerial) return;
 
           const parsed = parseNodes(raw.nodes);
+
           graphState.allNodes = parsed.nodes;
           graphState.nodeById = parsed.nodeById;
           graphState.roots = graphState.allNodes.filter((node) => node.hasParent === false);
           graphState.childrenByParent = buildChildrenByParent(graphState.allNodes);
+
           annotateChildren(graphState.allNodes);
           assignColors(graphState.allNodes, graphState.nodeById);
+
           graphState.allEdges = buildEdges(raw.connections, graphState.nodeById);
           graphState.focusPath = [];
           graphState.selectedNode = null;
           graphState.loading = false;
           graphState.error = null;
+
           updateRefreshButton();
           recomputeVisibleGraph();
           updateCursor();
         } catch (error) {
           if (requestSerial !== graphState.requestSerial) return;
+
           console.error(error);
+
           graphState.loading = false;
           graphState.error = {
             title: error instanceof TypeError ? "Graph server unavailable" : "Failed to load graph",
             detail: error instanceof TypeError ? SERVER_OFFLINE_HINT : error.message
           };
+
           updateRefreshButton();
           updateExplodeButton();
           updateCursor();
@@ -3044,11 +4067,14 @@
 
       async function submitMessageInput(event) {
         event.preventDefault();
+
         const input = messageInput.value.trim();
         if (!input || uiState.messageSubmitInFlight) return;
+
         uiState.messageSubmitInFlight = true;
         uiState.messageStatus = `POST ${MESSAGE_ENDPOINT}`;
         updateMessagePanel();
+
         try {
           const response = await fetch(MESSAGE_ENDPOINT, {
             method: "POST",
@@ -3056,9 +4082,11 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ input })
           });
+
           const responseText = await response.text();
           if (!response.ok) throw new Error(responseText || `HTTP ${response.status}`);
-          uiState.messageStatus = "Message accepted. Refreshing graph.";
+
+          uiState.messageStatus = "Accepted. Refreshing graph.";
           await loadGraph();
           closeMessagePanel();
         } catch (error) {
@@ -3101,6 +4129,25 @@
       goalExtraInfoInput.addEventListener("input", updateGoalPanel);
       clearGoalHistoryButton.addEventListener("click", clearGoalHistory);
 
+      refreshGoalsButton.addEventListener("click", () => loadGoalsFromServer(false));
+      refreshGoalsSidebarButton.addEventListener("click", () => loadGoalsFromServer(false));
+      decomposeSelectedGoalButton.addEventListener("click", decomposeSelectedGoal);
+      goalInspectorDecompose.addEventListener("click", decomposeSelectedGoal);
+      goalInspectorFocus.addEventListener("click", focusSelectedGoal);
+      goalClearFocusButton.addEventListener("click", clearGoalFocus);
+      goalInspectorClose.addEventListener("click", () => {
+        goalInspector.classList.remove("is-visible");
+        goalInspector.setAttribute("aria-hidden", "true");
+      });
+      goalExplodeToggle.addEventListener("click", () => {
+        goalState.explodeMode = !goalState.explodeMode;
+        goalStructureView.resetCamera();
+        goalStructureView.render();
+        updateGoalPanel();
+      });
+      goalStructureModeButton.addEventListener("click", () => setGoalPanelMode("structure"));
+      goalTimelineModeButton.addEventListener("click", () => setGoalPanelMode("timeline"));
+
       graphViewToggle.addEventListener("click", () => setActiveView("graph"));
       deepSearchViewToggle.addEventListener("click", () => setActiveView("deep-search"));
       goalViewToggle.addEventListener("click", () => setActiveView("goal"));
@@ -3116,19 +4163,40 @@
         resizeCanvas();
         researchTimeline.render();
         goalTimeline.render();
+        goalStructureView.render();
       });
 
       window.addEventListener("keydown", (event) => {
         if (event.key !== "Escape") return;
-        if (uiState.messagePanelOpen) { closeMessagePanel(); return; }
-        if (researchTimeline.inspector.classList.contains("is-visible")) { researchTimeline.closeInspector(); return; }
-        if (goalTimeline.inspector.classList.contains("is-visible")) { goalTimeline.closeInspector(); return; }
+
+        if (uiState.messagePanelOpen) {
+          closeMessagePanel();
+          return;
+        }
+
+        if (researchTimeline.inspector.classList.contains("is-visible")) {
+          researchTimeline.closeInspector();
+          return;
+        }
+
+        if (goalTimeline.inspector.classList.contains("is-visible")) {
+          goalTimeline.closeInspector();
+          return;
+        }
+
+        if (goalInspector.classList.contains("is-visible")) {
+          goalInspector.classList.remove("is-visible");
+          goalInspector.setAttribute("aria-hidden", "true");
+          return;
+        }
+
         if (!stepBackOneLevel()) {
           graphState.selectedNode = null;
           graphState.hoveredNode = null;
           graphState.hoveredGroup = null;
           updateFocusNodeBadge();
         }
+
         updateCursor();
       });
 
@@ -3143,7 +4211,9 @@
       updateMessagePanel();
       researchTimeline.render();
       goalTimeline.render();
+      goalStructureView.render();
       loadGraph();
+      loadGoalsFromServer(false);
       requestAnimationFrame(frame);
     })();
   </script>

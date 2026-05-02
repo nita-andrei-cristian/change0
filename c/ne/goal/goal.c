@@ -21,43 +21,43 @@ static Goal *GOAL_CONTAINER[1024];
 static size_t GOAL_CONTAINER_COUNT = INITIAL_GOAL_INDEX;
 
 // AI generated function
-static void create_subgoal_id(Goal *parent, size_t child_index, char out[32])
+static void create_subgoal_id(Goal *parent, size_t child_index, char out[33])
 {
-	memset(out, 0, 32);
+	memset(out, 0, 33);
 
-	int n = snprintf(
-		out,
-		32,
-		"g%zu-%zu",
-		parent->globalIndex,
-		child_index + 1
-	);
+	int n = snprintf(out, 33, "g%zu-%zu", parent->globalIndex, child_index + 1);
 
-	change_assert(n > 0 && n < 32, "Failed to create subgoal id.\n");
+	change_assert(n > 0 && n < 33, "Failed to create subgoal id.\n");
 }
 
 static inline Goal *FindGoal(size_t id)
 {
-    if (id == 0 || id > GOAL_CONTAINER_COUNT)
+    if (id == 0 || id >= GOAL_CONTAINER_COUNT)
         return NULL;
 
     return GOAL_CONTAINER[id];
 }
 
+Goal *ExternalFindGoal(size_t id){
+	return FindGoal(id);
+};
 
-static Goal *create_goal(char goalId[32], String *input_goal, String *input_extrainfo, size_t estimated_time, size_t parent_index, size_t depth)
+static Goal *create_goal(char goalId[], String *input_goal, String *input_extrainfo, size_t estimated_time, size_t parent_index, size_t depth)
 {
 	Goal *g = malloc(sizeof(Goal));
 
-	InitString(&g->title, 256);
+	InitString(&g->title, input_goal->len + 1);
 	CopyString(&g->title, input_goal);
 
-	InitString(&g->extra_info, 1024);
+	InitString(&g->extra_info, input_extrainfo->len + 1);
 	CopyString(&g->extra_info, input_extrainfo);
 
 	g->required_time = estimated_time;
 
-	memcpy(g->id, goalId, sizeof(g->id));
+	memset(g->id, 0, sizeof(g->id));
+	memcpy(g->id, goalId, 32);
+	g->id[32] = '\0';
+
 	g->subgoals = NULL;
 	g->subgoals_len = 0;
 	g->priority = 0;
@@ -108,44 +108,6 @@ static time_t calc_required_time(Goal *g){
 
 	return sum;
 }
-
-
-/*
-void mock_develop_subgoals(Goal *g)
-{
-	time_t now = g->start_date;
-	time_t end = g->end_date;
-
-	Goal **subgoals = malloc(2 * sizeof(Goal *));
-	size_t *goals_index  = malloc(2 * sizeof(size_t));
-
-	String *input0 = CreateStringFrom(FSTRING_SIZE_PARAMS("Frontend development"));
-	String *info0 = CreateStringFrom(FSTRING_SIZE_PARAMS("Advance the skill for generating a website."));
-
-	String *input1 = CreateStringFrom(FSTRING_SIZE_PARAMS("Backend development"));
-	String *info1 = CreateStringFrom(FSTRING_SIZE_PARAMS("Learn how to debug and stay sane."));
-
-	size_t hours60 = 60 * 60 * 60;
-
-	subgoals[0] = create_goal(input0, info0, hours60, g->globalIndex, g->depth + 1);
-	subgoals[1] = create_goal(input1, info1, hours60, g->globalIndex, g->depth + 1);
-
-	goals_index[0] = subgoals[0]->globalIndex;
-	goals_index[1] = subgoals[1]->globalIndex;
-
-	link_goals(subgoals[0], subgoals[1]);
-
-	g->subgoals = goals_index;
-	g->subgoals_len += 2;
-
-	FreeString(input0);
-	FreeString(info0);
-	FreeString(input1);
-	FreeString(info1);
-
-	free(subgoals);
-}
-*/
 
 static enum GOAL_STATUS validate_goal(Goal *g, time_t now)
 {
@@ -641,7 +603,7 @@ static void lazy_load(){
 }
 
 // those are mapped to input1 -> title input2 -> extrainfo
-Goal* CreateUserGoal(String *input1, String *input2, char goalId[32])
+Goal* CreateUserGoal(String *input1, String *input2, char goalId[])
 {
 	lazy_load();
 
@@ -655,15 +617,21 @@ Goal* CreateUserGoal(String *input1, String *input2, char goalId[32])
 	goal_emit(goalId, "title", title.p, title.len);
 	goal_emit(goalId, "extra-info", extra_info.p, extra_info.len);
 
-	char total_time_buff[16] = {0};
-	size_t len = snprintf(total_time_buff, 16, "%zu", extra_info.len);
-	change_assert(len < 16, "Compiler is retarded\n");
+	char total_time_buff[32] = {0};
+	size_t len = snprintf(total_time_buff, sizeof(total_time_buff), "%ld", (long)estimated_time);
+	change_assert(len < sizeof(total_time_buff), "time buffer too small\n");
 
 	goal_emit(goalId, "time", total_time_buff, len);
 
-	printf("Goal created:\ntime [%ld]\nextra_info [%s]\ntitle [%s]\n\n", estimated_time, extra_info.p, title.p);
-	
-	return create_goal(goalId, &title, &extra_info, estimated_time, 0, 1);
+	printf("before create_goal\n");
+	Goal *created = create_goal(goalId, &title, &extra_info, estimated_time, 0, 1);
+	printf("after create_goal [%p]\n", (void*)created);
+
+	FreeString(&title);
+	FreeString(&extra_info);
+	FreeString(&deep_search_result);
+
+	return created;
 }
 
 // AI generated function
@@ -780,7 +748,7 @@ _Bool DecomposeGoal(Goal *g){
 
 		parse_decomposition_subgoal(item, &title, &extrainfo, &estimated_time);
 
-		char child_goal_id[32];
+		char child_goal_id[33];
 		create_subgoal_id(g, i, child_goal_id);
 
 		Goal *child = create_goal(
@@ -814,4 +782,9 @@ _Bool DecomposeGoal(Goal *g){
 	printf("Goal decomposed into [%zu] subgoals.\n", subgoal_count);
 
 	return 1;
+}
+
+Goal **GetGoalsContainer(size_t *len){
+	*len = GOAL_CONTAINER_COUNT - INITIAL_GOAL_INDEX;
+	return &GOAL_CONTAINER[1];
 }

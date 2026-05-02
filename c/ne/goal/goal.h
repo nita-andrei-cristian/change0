@@ -28,7 +28,7 @@ typedef struct GoalType {
 
 	size_t priority;
 
-	char id[32];
+	char id[33];
 } Goal;
 
 enum GOAL_STATUS {
@@ -136,5 +136,9 @@ Goal* CreateUserGoal(String *input1, String *input2, char goalId[32]);
 typedef _Bool (*goal_emit_like_func)(const char* id, const char *type, const char *buffer, size_t buffer_len);
 
 _Bool DecomposeGoal(Goal *g);
+
+void UpdateGoal(Goal *g, time_t now);
+Goal *ExternalFindGoal(size_t id);
+Goal **GetGoalsContainer(size_t *len);
 
 #endif

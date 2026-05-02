@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define SERVER_BACKLOG      10
 #define READ_CHUNK_SIZE     4096
@@ -391,8 +392,12 @@ static int query_get_param(const char* query, const char* key, char* out, size_t
 	return 0;
 }
 
-/* ========================= JSON ESCAPE FOR SSE / RESPONSES ========================= */
+/* ========================= JSON ESCAPE FOR SSE ========================= */
 
+/*
+ * Kept because SSE emits buffers with explicit lengths.
+ * For normal goal JSON serialization below, use global json_escape_dup(...).
+ */
 static char* json_escape_dup_n(const char* src, size_t len) {
 	size_t i;
 	size_t cap = len * 6 + 1;
@@ -455,6 +460,320 @@ static int validate_goal_id_32(const char* goal_id) {
 	}
 
 	return 1;
+}
+
+/* ========================= JSON PARSE HELPERS ========================= */
+
+static const char* json_skip_ws(const char* p) {
+	while (*p && isspace((unsigned char)*p)) p++;
+	return p;
+}
+
+static int json_get_string_field(const char* json, const char* key, char* out, size_t out_cap) {
+	char pattern[128];
+	const char* p;
+	const char* start;
+	size_t w = 0;
+
+	if (!json || !key || !out || out_cap == 0) return 0;
+
+	snprintf(pattern, sizeof(pattern), "\"%s\"", key);
+	p = strstr(json, pattern);
+	if (!p) return 0;
+
+	p += strlen(pattern);
+	p = json_skip_ws(p);
+	if (*p != ':') return 0;
+
+	p++;
+	p = json_skip_ws(p);
+	if (*p != '\"') return 0;
+
+	p++;
+	start = p;
+
+	while (*p) {
+		if (*p == '\\') {
+			p++;
+			if (*p) p++;
+			continue;
+		}
+		if (*p == '\"') break;
+		p++;
+	}
+
+	if (*p != '\"') return 0;
+
+	while (start < p && w + 1 < out_cap) {
+		if (*start == '\\') {
+			start++;
+			if (!*start) break;
+
+			switch (*start) {
+				case '\"':  out[w++] = '\"'; break;
+				case '\\': out[w++] = '\\'; break;
+				case '/':  out[w++] = '/'; break;
+				case 'b':  out[w++] = '\b'; break;
+				case 'f':  out[w++] = '\f'; break;
+				case 'n':  out[w++] = '\n'; break;
+				case 'r':  out[w++] = '\r'; break;
+				case 't':  out[w++] = '\t'; break;
+				default:   out[w++] = *start; break;
+			}
+			start++;
+		} else {
+			out[w++] = *start++;
+		}
+	}
+
+	out[w] = '\0';
+	return 1;
+}
+
+static int json_get_int_field(const char* json, const char* key, int* out_value) {
+	char pattern[128];
+	const char* p;
+	char* endptr = NULL;
+	long value;
+
+	if (!json || !key || !out_value) return 0;
+
+	snprintf(pattern, sizeof(pattern), "\"%s\"", key);
+	p = strstr(json, pattern);
+	if (!p) return 0;
+
+	p += strlen(pattern);
+	p = json_skip_ws(p);
+	if (*p != ':') return 0;
+
+	p++;
+	p = json_skip_ws(p);
+
+	errno = 0;
+	value = strtol(p, &endptr, 10);
+	if (endptr == p || errno != 0) return 0;
+
+	*out_value = (int)value;
+	return 1;
+}
+
+/* ========================= GOAL JSON SERIALIZATION ========================= */
+
+static void goal_id_to_cstr(const Goal* g, char out[GOAL_ID_LEN + 1]) {
+	if (!g) {
+		out[0] = '\0';
+		return;
+	}
+
+	memcpy(out, g->id, GOAL_ID_LEN);
+	out[GOAL_ID_LEN] = '\0';
+}
+
+static Goal* find_goal_by_id_string(const char* goal_id) {
+	size_t goals_len = 0;
+	Goal** goals = GetGoalsContainer(&goals_len);
+
+	if (!goal_id || !goals)
+		return NULL;
+
+	for (size_t i = 0; i < goals_len; i++) {
+		Goal* g = goals[i];
+		char cur_id[GOAL_ID_LEN + 1];
+
+		if (!g)
+			continue;
+
+		goal_id_to_cstr(g, cur_id);
+
+		if (strcmp(cur_id, goal_id) == 0)
+			return g;
+	}
+
+	return NULL;
+}
+
+static void append_goal_json(String* out, Goal* g) {
+	char goal_id[GOAL_ID_LEN + 1];
+
+	char* esc_id = NULL;
+	char* esc_title = NULL;
+	char* esc_extra_info = NULL;
+
+	change_assert(out, "append_goal_json got NULL output.\n");
+	change_assert(g, "append_goal_json got NULL goal.\n");
+
+	goal_id_to_cstr(g, goal_id);
+
+	esc_id = json_escape_dup(goal_id);
+	esc_title = json_escape_dup(c_str(&g->title));
+	esc_extra_info = json_escape_dup(c_str(&g->extra_info));
+
+	CatTemplateString(
+		out,
+		"{"
+			"\"id\":\"%s\","
+			"\"globalIndex\":%zu,"
+			"\"title\":\"%s\","
+			"\"title_len\":%zu,"
+			"\"extra_info\":\"%s\","
+			"\"extra_info_len\":%zu,"
+			"\"start_date\":%lld,"
+			"\"end_date\":%lld,"
+			"\"required_time\":%lld,"
+			"\"subgoals_len\":%zu,"
+			"\"subgoals\":[",
+		esc_id,
+		g->globalIndex,
+		esc_title,
+		g->title.len,
+		esc_extra_info,
+		g->extra_info.len,
+		(long long)g->start_date,
+		(long long)g->end_date,
+		(long long)g->required_time,
+		g->subgoals_len
+	);
+
+	for (size_t i = 0; i < g->subgoals_len; i++) {
+		if (i > 0) {
+			CatString(out, FSTRING_SIZE_PARAMS(","));
+		}
+
+		CatTemplateString(out, "%zu", g->subgoals[i]);
+	}
+
+	CatTemplateString(
+		out,
+		"],"
+			"\"parent\":%zu,"
+			"\"prev\":%zu,"
+			"\"next\":%zu,"
+			"\"depth\":%zu,"
+			"\"retry_depth\":%zu,"
+			"\"priority\":%zu"
+		"}",
+		g->parent,
+		g->prev,
+		g->next,
+		g->depth,
+		g->retry_depth,
+		g->priority
+	);
+
+	free(esc_extra_info);
+	free(esc_title);
+	free(esc_id);
+}
+
+static char* serialize_goals_container_json(void) {
+	size_t goals_len = 0;
+	size_t active_count = 0;
+	Goal** goals = GetGoalsContainer(&goals_len);
+
+	String out;
+
+	if (!goals && goals_len > 0) {
+		char* error = malloc(128);
+		cassert(error, "Failed to allocate error json.\n");
+		snprintf(error, 128, "{\"ok\":false,\"error\":\"goals_container_null\"}");
+		return error;
+	}
+
+	for (size_t i = 0; i < goals_len; i++) {
+		if (goals[i])
+			active_count++;
+	}
+
+	InitString(&out, 8192 + active_count * 1024);
+
+	CatTemplateString(
+		&out,
+		"{\"ok\":true,\"count\":%zu,\"container_len\":%zu,\"goals\":[",
+		active_count,
+		goals_len
+	);
+
+	_Bool first = 1;
+
+	for (size_t i = 0; i < goals_len; i++) {
+		Goal* g = goals[i];
+
+		if (!g)
+			continue;
+
+		if (!first) {
+			CatString(&out, FSTRING_SIZE_PARAMS(","));
+		}
+
+		append_goal_json(&out, g);
+		first = 0;
+	}
+
+	CatString(&out, FSTRING_SIZE_PARAMS("]}"));
+
+	return out.p;
+}
+
+static char* serialize_goal_children_json(Goal* g) {
+	String out;
+	char goal_id[GOAL_ID_LEN + 1];
+	char* esc_goal_id = NULL;
+	_Bool decomposed_now = 0;
+
+	if (!g) {
+		char* error = malloc(128);
+		cassert(error, "Failed to allocate error json.\n");
+		snprintf(error, 128, "{\"ok\":false,\"error\":\"goal_not_found\"}");
+		return error;
+	}
+
+	if (g->subgoals_len == 0 && g->required_time >= 60 * 15) {
+		decomposed_now = DecomposeGoal(g);
+	}
+
+	goal_id_to_cstr(g, goal_id);
+	esc_goal_id = json_escape_dup(goal_id);
+
+	InitString(&out, 4096 + g->subgoals_len * 1024);
+
+	CatTemplateString(
+		&out,
+		"{"
+			"\"ok\":true,"
+			"\"goalIndex\":%zu,"
+			"\"goalId\":\"%s\","
+			"\"decomposedNow\":%s,"
+			"\"goal\":",
+		g->globalIndex,
+		esc_goal_id,
+		decomposed_now ? "true" : "false"
+	);
+
+	append_goal_json(&out, g);
+
+	CatString(&out, FSTRING_SIZE_PARAMS(",\"children\":["));
+
+	_Bool first_child = 1;
+
+	for (size_t i = 0; i < g->subgoals_len; i++) {
+		Goal* child = ExternalFindGoal(g->subgoals[i]);
+
+		if (!child)
+			continue;
+
+		if (!first_child) {
+			CatString(&out, FSTRING_SIZE_PARAMS(","));
+		}
+
+		append_goal_json(&out, child);
+		first_child = 0;
+	}
+
+	CatString(&out, FSTRING_SIZE_PARAMS("]}"));
+
+	free(esc_goal_id);
+
+	return out.p;
 }
 
 /* ========================= SSE REGISTRY ========================= */
@@ -651,97 +970,112 @@ static void handle_get_graph(int client_fd) {
 	free(graph_json);
 }
 
-static const char* json_skip_ws(const char* p) {
-	while (*p && isspace((unsigned char)*p)) p++;
-	return p;
-}
+static void handle_get_goal_list(int client_fd) {
+	char* goals_json = serialize_goals_container_json();
 
-static int json_get_string_field(const char* json, const char* key, char* out, size_t out_cap) {
-	char pattern[128];
-	const char* p;
-	const char* start;
-	size_t w = 0;
-
-	if (!json || !key || !out || out_cap == 0) return 0;
-
-	snprintf(pattern, sizeof(pattern), "\"%s\"", key);
-	p = strstr(json, pattern);
-	if (!p) return 0;
-
-	p += strlen(pattern);
-	p = json_skip_ws(p);
-	if (*p != ':') return 0;
-
-	p++;
-	p = json_skip_ws(p);
-	if (*p != '\"') return 0;
-
-	p++;
-	start = p;
-
-	while (*p) {
-		if (*p == '\\') {
-			p++;
-			if (*p) p++;
-			continue;
-		}
-		if (*p == '\"') break;
-		p++;
+	if (!goals_json) {
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"goals_container_failed\"}"
+		);
+		return;
 	}
 
-	if (*p != '\"') return 0;
+	send_response(
+		client_fd,
+		200,
+		"OK",
+		"application/json",
+		goals_json,
+		strlen(goals_json)
+	);
 
-	while (start < p && w + 1 < out_cap) {
-		if (*start == '\\') {
-			start++;
-			if (!*start) break;
-
-			switch (*start) {
-				case '\"':  out[w++] = '\"'; break;
-				case '\\': out[w++] = '\\'; break;
-				case '/':  out[w++] = '/'; break;
-				case 'b':  out[w++] = '\b'; break;
-				case 'f':  out[w++] = '\f'; break;
-				case 'n':  out[w++] = '\n'; break;
-				case 'r':  out[w++] = '\r'; break;
-				case 't':  out[w++] = '\t'; break;
-				default:   out[w++] = *start; break;
-			}
-			start++;
-		} else {
-			out[w++] = *start++;
-		}
-	}
-
-	out[w] = '\0';
-	return 1;
+	free(goals_json);
 }
 
-static int json_get_int_field(const char* json, const char* key, int* out_value) {
-	char pattern[128];
-	const char* p;
-	char* endptr = NULL;
-	long value;
+static void handle_post_goal_decompose(int client_fd, const HttpRequest* req) {
+	int goal_index_int = 0;
+	char goal_id[256];
+	Goal* goal = NULL;
+	char* result_json = NULL;
 
-	if (!json || !key || !out_value) return 0;
+	goal_id[0] = '\0';
 
-	snprintf(pattern, sizeof(pattern), "\"%s\"", key);
-	p = strstr(json, pattern);
-	if (!p) return 0;
+	if (!req->body) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_body\"}"
+		);
+		return;
+	}
 
-	p += strlen(pattern);
-	p = json_skip_ws(p);
-	if (*p != ':') return 0;
+	if (json_get_int_field(req->body, "goalIndex", &goal_index_int) ||
+	    json_get_int_field(req->body, "globalIndex", &goal_index_int) ||
+	    json_get_int_field(req->body, "goal-index", &goal_index_int)) {
 
-	p++;
-	p = json_skip_ws(p);
+		if (goal_index_int <= 0) {
+			send_json_response(
+				client_fd,
+				400,
+				"Bad Request",
+				"{\"ok\":false,\"error\":\"invalid_goal_index\"}"
+			);
+			return;
+		}
 
-	errno = 0;
-	value = strtol(p, &endptr, 10);
-	if (endptr == p || errno != 0) return 0;
+		goal = ExternalFindGoal((size_t)goal_index_int);
+	} else if (
+		json_get_string_field(req->body, "goal-id", goal_id, sizeof(goal_id)) ||
+		json_get_string_field(req->body, "goalId", goal_id, sizeof(goal_id)) ||
+		json_get_string_field(req->body, "id", goal_id, sizeof(goal_id))
+	) {
+		goal = find_goal_by_id_string(goal_id);
+	} else {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_goal_identifier\"}"
+		);
+		return;
+	}
 
-	*out_value = (int)value;
-	return 1;
+	if (!goal) {
+		send_json_response(
+			client_fd,
+			404,
+			"Not Found",
+			"{\"ok\":false,\"error\":\"goal_not_found\"}"
+		);
+		return;
+	}
+
+	result_json = serialize_goal_children_json(goal);
+
+	if (!result_json) {
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"goal_decompose_failed\"}"
+		);
+		return;
+	}
+
+	send_response(
+		client_fd,
+		200,
+		"OK",
+		"application/json",
+		result_json,
+		strlen(result_json)
+	);
+
+	free(result_json);
 }
 
 static void handle_get_goal_events(int client_fd, const char* full_path) {
@@ -758,6 +1092,7 @@ static void handle_get_goal_events(int client_fd, const char* full_path) {
 
 	split_path_and_query(full_path, path_only, sizeof(path_only), &query);
 	goal_id[0] = '\0';
+
 
 	if (!query_get_param(query, "goal-id", goal_id, sizeof(goal_id))) {
 		query_get_param(query, "id", goal_id, sizeof(goal_id));
@@ -912,7 +1247,7 @@ static void handle_post_goal_create(int client_fd, const HttpRequest* req) {
 		strlen("goal created")
 	);
 
-	esc_goal_id = json_escape_dup_n(goal_id, strlen(goal_id));
+	esc_goal_id = json_escape_dup(goal_id);
 	response_len = snprintf(
 		response_body,
 		sizeof(response_body),
@@ -1008,6 +1343,7 @@ static void handle_post_research_start(int client_fd, const HttpRequest* req) {
 
 	memset(&task, 0, sizeof(task));
 
+	InitString(&task.name, strlen(task_name) + 1);
 	CatString(&task.name, task_name, strlen(task_name));
 	task.minDepth = min_rounds;
 
@@ -1027,6 +1363,7 @@ static void handle_post_research_start(int client_fd, const HttpRequest* req) {
 	);
 
 	FreeString(&out);
+	FreeString(&task.name);
 }
 
 static void handle_post_message(int client_fd, const HttpRequest* req) {
@@ -1160,6 +1497,16 @@ static int handle_request(int client_fd, const HttpRequest* req) {
 	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/goal/events") == 0) {
 		handle_get_goal_events(client_fd, req->path);
 		return 1;
+	}
+
+	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/goal/list") == 0) {
+		handle_get_goal_list(client_fd);
+		return 0;
+	}
+
+	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/goal/decompose") == 0) {
+		handle_post_goal_decompose(client_fd, req);
+		return 0;
 	}
 
 	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/message") == 0) {

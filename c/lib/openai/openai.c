@@ -648,7 +648,7 @@ String *ai_openai_call_gpt_request(ai_gpt_request *req) {
         ai_openai_response_free(&created);
         free(json_body);
 
-        cassert(0, "Error: OpenAI request failed.\n");
+        cassert(0, "Error: OpenAI request failed. Check sent.txt and received.txt\n");
     }
 
     free(json_body);
