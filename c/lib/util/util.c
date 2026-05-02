@@ -429,3 +429,18 @@ char *json_escape_dup(const char *src){
 	*w = '\0';
 	return out;
 }
+
+// AI generated function
+json_value *json_object_get(json_value *obj, const char *name)
+{
+	change_assert(obj && obj->type == json_object, "Expected JSON object.\n");
+
+	for (size_t i = 0; i < obj->u.object.length; i++) {
+		json_object_entry entry = obj->u.object.values[i];
+
+		if (strcmp(entry.name, name) == 0)
+			return entry.value;
+	}
+
+	return NULL;
+}

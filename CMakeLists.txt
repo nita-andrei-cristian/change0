@@ -220,7 +220,38 @@ target_include_directories(goal PUBLIC
 	${CMAKE_SOURCE_DIR}/c/ne/goal
 	${CMAKE_SOURCE_DIR}/c/ne/search
 )
-target_link_libraries(goal PUBLIC util openai jsonp node deepsearchsession globals)
+target_link_libraries(goal PUBLIC goal-ai goal-info goal-util util openai jsonp node deepsearchsession)
+
+add_library(goal-util SHARED ${CMAKE_SOURCE_DIR}/c/ne/goal/goal-util.c)
+target_include_directories(goal-util 
+	PUBLIC
+	${CMAKE_SOURCE_DIR}/c/lib/util
+	${CMAKE_SOURCE_DIR}/c/lib/jsonp
+	${CMAKE_SOURCE_DIR}/c/ne
+	${CMAKE_SOURCE_DIR}/c
+	${CMAKE_SOURCE_DIR}/c/ne/goal
+	${CMAKE_SOURCE_DIR}/c/ne/search
+)
+target_link_libraries(goal-util PUBLIC deepsearchsession util globals jsonp)
+
+add_library(goal-info SHARED ${CMAKE_SOURCE_DIR}/c/ne/goal/goal-info.c)
+target_include_directories(goal-info 
+	PUBLIC
+	${CMAKE_SOURCE_DIR}/c
+	${CMAKE_SOURCE_DIR}/c/ne/goal
+)
+target_link_libraries(goal-info PUBLIC goal-util)
+
+add_library(goal-ai SHARED ${CMAKE_SOURCE_DIR}/c/ne/goal/goal-ai.c)
+target_include_directories(goal-ai 
+	PUBLIC
+	${CMAKE_SOURCE_DIR}/c
+	${CMAKE_SOURCE_DIR}/c/ne/goal
+	${CMAKE_SOURCE_DIR}/c/ne/search
+	${CMAKE_SOURCE_DIR}/c/lib/openai
+	${CMAKE_SOURCE_DIR}/c/lib/util
+)
+target_link_libraries(goal-ai PUBLIC util goal-info openai deepsearchsession)
 
 add_executable(change ${CMAKE_SOURCE_DIR}/c/main.c)
 target_include_directories(change PRIVATE

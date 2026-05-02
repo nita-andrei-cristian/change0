@@ -16,6 +16,7 @@ size_t mystrnlen(const char* s, size_t maxlen);
 
 #include <stdio.h>
 #include "change-errors.h"
+#include "json.h"
 
 char* readFile(char* filename, size_t *bytes);
 
@@ -24,6 +25,8 @@ void WaitForInput(void);
 size_t mygetline(char **lineptr, size_t *n, FILE *stream);
 
 char *json_escape_dup(const char *src);
+
+json_value *json_object_get(json_value *obj, const char *name);
 
 #endif
 

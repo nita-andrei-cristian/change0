@@ -59,6 +59,8 @@ void UIStart(){
 	// Setup Global Pointers
 	SetGlobalPointerF("ds_emit", &ds_emit_event);
 	SetGlobalPointerF("goal_emit", &goal_emit_event);
+
+	InitGoalSystem();
 }
 
 static void Run(int i){
@@ -219,5 +221,5 @@ void UILoop(){
 void UIKill(){
 	FreeNodes();
 	FreeGlobalPointerMap();
-	free_goals();
+	FreeGoals();
 }
