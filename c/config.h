@@ -241,4 +241,76 @@
 "Return only valid JSON and nothing else. " \
 "Message: [%s]"
 
+
+/*
+ * Placeholder Mapping
+ * -------------------
+ * %s (1) : goal_title
+ * %s (2) : goal_extrainfo
+ * %s (3) : parent_goal_chain_with_extrainfo
+ *
+ * Tells the deepsearch to come with helpfull summary when spliting goal
+ */
+#define GOAL_DECOMPOSITION_PERSONAL_CONTEXT_PROMPT \
+"You are preparing a personalization context report for a goal-decomposition agent. "\
+"The current goal is titled [%s], with extrainfo [%s]. "\
+"Parent goal chain with extrainfo: [%s]. "\
+"Use what is known about the user's interests, preferred concepts, motivations, taste, and thinking style. "\
+"Do not assume access to detailed goal-completion history, timing history, or execution metrics. "\
+"Do not decompose the goal yourself. Do not create subgoals. "\
+"Instead, explain how another agent should frame and split this goal so it feels natural, motivating, and understandable for this user. "\
+"Focus on useful personalization signals: familiar concepts, preferred abstraction level, likely motivating angle, concepts to emphasize, concepts to avoid, and suitable tone of subgoal descriptions. "\
+"Return a compact report with these sections: "\
+"1. Relevant user interests or mental models. "\
+"2. Recommended framing for this goal. "\
+"3. Recommended decomposition style. "\
+"4. Concepts or directions to avoid. "\
+"5. Personalization notes for subgoal extrainfo. "
+
+/*
+ * Placeholder Mapping
+ * -------------------
+ * %s  (1) : goal_title
+ * %s  (2) : goal_extrainfo
+ * %zu (3) : goal_estimated_time_seconds
+ * %zu (4) : current_depth
+ * %s  (5) : local_user_goal_history
+ * %s  (6) : user_personalization_context
+ * %s  (7) : parent_goal_chain_with_extrainfo
+ * %s  (8) : current_goal_siblings_with_extrainfo
+ * %s  (9) : parent_sibling_goals_with_extrainfo
+ *
+ * The main prompt for decomposing a goal
+ */
+#define DECOMPOSE_GOAL_AI_PROMPT \
+"You are a personalized goal-decomposition agent. Your job is to split one existing goal into a clear ordered sequence of child goals. "\
+"The goal to decompose is titled [%s], with extrainfo [%s]. "\
+"The goal estimated time is [%zu] seconds. Treat this as an approximate scale signal, not as an exact budget. "\
+"The current depth is [%zu]. Generated child goals will be one level deeper. "\
+"Local user goal history: [%s]. Use this only if it contains relevant timing, completion, or scope evidence. Do not overfit to weak history. "\
+"User personalization context: [%s]. This may include the user's interests, preferred concepts, motivations, and thinking style. Use it to make the child goals feel natural and understandable, but do not let it change the goal's objective. "\
+"Parent goal chain with extrainfo: [%s]. The child goals must serve this hierarchy and stay inside the same strategic direction. "\
+"Sibling goals of the current goal: [%s]. Do not create child goals that duplicate, conflict with, or take over the role of these sibling goals. "\
+"Sibling goals of the parent goal, also called uncle goals: [%s]. Use these as broader neighborhood context so the decomposition does not drift into adjacent branches of the goal tree. "\
+"Decompose the current goal into child goals linked as simple follow-up steps. "\
+"For now, dependencies are linear: child 2 follows child 1, child 3 follows child 2, and so on. "\
+"The array order is the execution order. Do not create branching, parallel, optional, circular, or conditional dependency structures. "\
+"Each child goal must be meaningfully smaller than the parent goal, but not so tiny that it becomes administrative noise. "\
+"Adapt the decomposition using three sources in this priority order: first the goal hierarchy, second the current goal's actual intent, third the user's personalization context. "\
+"Use personalization to choose wording, framing, and granularity style, not to redirect the goal into unrelated interests. "\
+"If personalization context conflicts with the parent goal or sibling boundaries, ignore the personalization context. "\
+"Estimated_time values are required and must be positive integer seconds, but they are approximate. They should roughly indicate relative effort. "\
+"The sum of child estimated_time values should be reasonable relative to the parent estimate, but logical decomposition is more important than exact time arithmetic. "\
+"The child goals together must cover the parent goal's intent without adding unrelated work. "\
+"Each child goal must have a distinct responsibility and a clear handoff to the next child goal. "\
+"Do not create vague child goals such as 'work on it', 'continue development', 'improve things', or 'finish the task'. "\
+"Prefer a natural number of child goals based on complexity, usually between 3 and 7. Do not force an exact count. "\
+"The first child should usually clarify, inspect, prepare, or set up the work if that is needed. "\
+"Middle children should perform the main work in a logical progression. "\
+"The final child should usually verify, integrate, review, test, or make the result usable. "\
+"Each title must be concise and action-oriented. "\
+"Each extrainfo must explain the child goal's scope, success condition, boundary against sibling or uncle goals, and handoff to the next child when relevant. "\
+"Return JSON only, with this exact structure and no extra text: "\
+"{\"subgoals\":[{\"title\":\"string\",\"extrainfo\":\"string\",\"estimated_time\":1}]}"
+
 #endif

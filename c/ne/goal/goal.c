@@ -3,6 +3,7 @@
 #include <openssl/x509.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include "globals.h"
 #include "node.h"
@@ -14,16 +15,20 @@
 static goal_emit_like_func goal_emit = NULL;
 
 #define INITIAL_GOAL_INDEX 1 // must be > 0
-#define FindGoal(x) (GOAL_CONTAINER[(x) - INITIAL_GOAL_INDEX])
-
+			     
 static Goal *GOAL_CONTAINER[1024];
 static size_t GOAL_CONTAINER_COUNT = INITIAL_GOAL_INDEX;
 
-Goal* GetGoalFromID(size_t ID){
-	return FindGoal(ID);
+static inline Goal *FindGoal(size_t id)
+{
+    if (id == 0 || id > GOAL_CONTAINER_COUNT)
+        return NULL;
+
+    return GOAL_CONTAINER[id];
 }
 
-static Goal *create_goal(String *input_goal, String *input_extrainfo, size_t estimated_time, size_t parent_index, size_t depth)
+
+static Goal *create_goal(char goalId[32], String *input_goal, String *input_extrainfo, size_t estimated_time, size_t parent_index, size_t depth)
 {
 	Goal *g = malloc(sizeof(Goal));
 
@@ -35,11 +40,14 @@ static Goal *create_goal(String *input_goal, String *input_extrainfo, size_t est
 
 	g->required_time = estimated_time;
 
+	memcpy(g->id, goalId, sizeof(g->id));
 	g->subgoals = NULL;
 	g->subgoals_len = 0;
 	g->priority = 0;
 	g->prev = 0;
 	g->next = 0;
+	g->start_date = 0;
+	g->end_date = 0;
 	g->retry_depth = 0;
 	g->globalIndex = GOAL_CONTAINER_COUNT;
 	g->depth = depth;
@@ -58,6 +66,34 @@ static inline void link_goals(Goal* a, Goal* b){
 	b->prev = a->globalIndex;
 }
 
+static time_t calc_required_time(Goal *g){
+	change_assert(g, "Goal with required time of 0 must not exist [%s]", g->title.p);
+
+	/*
+		If a goal has children, return the children sum
+		else return the default required time 
+	*/
+
+	if (g->subgoals_len == 0){
+		return g->required_time;
+	}
+
+	time_t sum = 0;
+
+	for (size_t i = 0; i < g->subgoals_len; i++){
+		Goal *subgoal = FindGoal(g->subgoals[i]);
+		
+		sum += calc_required_time(subgoal);		
+	}
+
+	// also cache the calculated required just in case children are regenerated
+	g->required_time = sum;
+
+	return sum;
+}
+
+
+/*
 void mock_develop_subgoals(Goal *g)
 {
 	time_t now = g->start_date;
@@ -92,35 +128,20 @@ void mock_develop_subgoals(Goal *g)
 
 	free(subgoals);
 }
+*/
 
-enum GOAL_STATUS validate_goal(Goal *g)
+static enum GOAL_STATUS validate_goal(Goal *g, time_t now)
 {
-	if (!g->subgoals || g->subgoals_len == 0)
+	// parent goals are valid because they depend on children validation
+	if (g->subgoals_len > 0)
 		return GOAL_VALID;
 
-	size_t required_sum = 0;
-	if(g->subgoals_len == 1)
-		required_sum = FindGoal(g->subgoals[0])->required_time;
-	
-	for (size_t i = 1; i < g->subgoals_len; i++)
-	{
-		size_t old_index = g->subgoals[i - 1];
-		Goal* old = FindGoal(old_index);
-
-		size_t new_index = g->subgoals[i];
-		Goal* new = FindGoal(new_index);
-
-		cassert(new, "This should never be null. subgoal1");
-		cassert(old, "This should never be null. subgoal2");
-
-		required_sum += old->required_time;
-		if (i == g->subgoals_len - 1)
-			required_sum += new->required_time;
+	if (g->start_date && !g->end_date && (now - g->start_date) > calc_required_time(g) * (1 + TIME_MARIGN) ){
+		// goal is imposible to finish
+		return GOAL_INVALID;
 	}
 
-	if (required_sum > g->required_time * (1 + TIME_MARIGN))
-		return GOAL_OVERDUE;
-
+	// goal hasn't started
 	return GOAL_VALID;
 }
 
@@ -129,14 +150,7 @@ static void call_title_extra(String *input, String *out)
     String prompt;
     InitString(&prompt, input->len + 2048);
 
-    size_t len = sprintf(
-        c_str(&prompt),
-        GOAL_JSON_EXTRACT_PROMPT,
-        c_str(input)
-    );
-
-    cassert(len < prompt.cap, "Goal extraction prompt is too big.\n");
-    prompt.len = len;
+    CatTemplateString(&prompt, GOAL_JSON_EXTRACT_PROMPT, c_str(input));
 
     ai_gpt_request req = {0};
     req.prompt = prompt;
@@ -169,7 +183,7 @@ static void extract_goal(String* text, String* title, String* extrainfo, time_t 
 
 	call_title_extra(text, &json_extract_result);
 
-	json_value* doc = json_parse(c_str(&json_extract_result), json_extract_result.cap);
+	json_value* doc = json_parse(c_str(&json_extract_result), json_extract_result.len);
 	change_assert(doc && doc->type == json_object, "Goal is not an object or is not a json\n\n\n%s", c_str(text));
 
 	for (size_t i = 0; i < doc->u.object.length; i++){
@@ -198,62 +212,55 @@ static Goal *get_root(Goal *g){
 	return g;
 }
 
-static time_t calc_required_time(Goal *g){
+#define OTHER_GOAL_TEMPLATE \
+"{\"relation\":\"%s\",\"goal_title\":\"%s\",\"goal_extrainfo\":\"%s\",\"depth\":%zu,\"estimated_time\":%zu,\"started_on_date\" : \"%s\",\"finished_on_date\":\"%s\"}\n"
 
-	/*
-		If a goal has children, return the children sum
-		else return the default required time 
-	*/
-
-	if (g->subgoals_len == 0){
-		return g->required_time;
-	}
-
-	time_t sum = 0;
-
-	for (size_t i = 0; i < g->subgoals_len; i++){
-		Goal *subgoal = FindGoal(g->subgoals[i]);
-		
-		sum += calc_required_time(subgoal);		
-	}
-
-	// also cache the calculated required just in case children are regenerated
-	g->required_time = sum;
-
-	return sum;
-}
-
-#define REGISTERED_ACITON_TEMPLATE "{\"goal_title\" : %s, \"depth\" : %zu, \"finished on date\": \"%s\", \"efficiency_score\" : \"%s\"}\n"
+#define OTHER_GOAL_TEMPLATE_RICH \
+"{\"relation\":\"%s\",\"goal_title\":\"%s\",\"goal_extrainfo\":\"%s\",\"depth\":%zu,\"estimated_time\":%zu,\"started_on_date\" : \"%s\",\"finished_on_date\":\"%s\",\"time_efficiency_metric\" : \"%s\"}\n"
  
-inline static char* register_goal(Goal* g, size_t *min_len){
-	*min_len = sizeof(REGISTERED_ACITON_TEMPLATE) + g->title.len + 512;
+inline static char* register_goal(Goal* g, size_t *length, char* relation, _Bool showExtraInfo){
+	*length = sizeof(OTHER_GOAL_TEMPLATE_RICH) + g->extra_info.len + g->title.len + 512;
 
-	char* main_buffer = malloc(*min_len);
+	char* main_buffer = malloc(*length);
 	cassert(main_buffer, "Coudln't malloc mem for main buffer\n");
 
-	time_t copytime = g->end_date;
-	char time_buffer[128];
-	size_t l0 = sprintf(time_buffer, "%s", copytime == 0 ? "goal is not finished" : ctime(&copytime));
-	cassert(l0 < 128, "Buffer too small 0\n");
+	char end_time_buffer[128];
+	size_t temp_len = sprintf(end_time_buffer, "%s", g->end_date == 0 ? "goal is not finished" : ctime(&g->end_date));
+	cassert(temp_len < 128, "Buffer too small 0\n");
 
-	char efficiency_buffer[128];
-	if (g->end_date && g->start_date && g->required_time && g->end_date != g->start_date){
-		size_t l1 = snprintf(efficiency_buffer, 128, "%.2f%%",
-				(double)g->required_time /
-				(double)(g->end_date - g->start_date) * 100.0
-				);
-		cassert(l1 < 128, "Buffer too small 1\n");
-	}else{
-		sprintf(efficiency_buffer, "goal not finished.");
+	char start_time_buffer[128];
+	temp_len = sprintf(start_time_buffer, "%s", g->start_date == 0 ? "goal is not started" : ctime(&g->start_date));
+	cassert(temp_len < 128, "Buffer too small 0\n");
+
+	end_time_buffer[strcspn(end_time_buffer, "\n")] = '\0';
+	start_time_buffer[strcspn(start_time_buffer, "\n")] = '\0';
+
+	char completion_metrics_buffer[256] = "\0";
+	const size_t req_time = calc_required_time(g);
+	_Bool can_display_efficiency = g->start_date != 0 && g->end_date != 0 && g->start_date != g->end_date && req_time;
+
+	if (can_display_efficiency){
+		size_t difference = (g->end_date - g->start_date);
+		double efficiency = (double)req_time / (double)(g->end_date - g->start_date) * 100.0;
+		temp_len = sprintf(completion_metrics_buffer, "Actual duration: about %zu seconds, Time efficiency: %.2f%%", difference, efficiency);
+		change_assert(temp_len < 256, "Buffer too small 0\n");
 	}
+	
+	int actual_len = -1; // this should give overflow and max value
+	if (can_display_efficiency)
+		actual_len = snprintf(main_buffer, *length, OTHER_GOAL_TEMPLATE_RICH, relation, g->title.p, showExtraInfo ? g->extra_info.p : "[hidden]", g->depth, req_time, start_time_buffer, end_time_buffer, completion_metrics_buffer);
+	else
+		actual_len = snprintf(main_buffer, *length, OTHER_GOAL_TEMPLATE, relation, g->title.p, showExtraInfo ? g->extra_info.p : "[hidden]", g->depth, req_time, start_time_buffer, end_time_buffer);
 
-	sprintf(main_buffer, REGISTERED_ACITON_TEMPLATE, g->title.p, g->depth, time_buffer, efficiency_buffer);
+	change_assert(actual_len >= 0, "Failed to calc an actual len [%d]", actual_len);
+	change_assert(actual_len < *length, "You calculated the max len wrong. max [%zu] and actual [%d]\n", *length, actual_len);
+
+	*length = actual_len;
 
 	return main_buffer;
 }
 
 static void compute_user_action_up_to(Goal* g, String *buffer, int max){
-	InitString(buffer, 4048);
 
 	size_t currentIndex = g->globalIndex - 1;
 	int i = 0;
@@ -263,7 +270,7 @@ static void compute_user_action_up_to(Goal* g, String *buffer, int max){
 
 		if (g->start_date != 0){
 			size_t register_len_size = 0;
-			char* info = register_goal(g, &register_len_size);
+			char* info = register_goal(g, &register_len_size, "example-goal", 1);
 			cassert(info, "Something failed when provdiing info.\n");
 			CatString(buffer, info, register_len_size);
 			free(info);
@@ -275,16 +282,18 @@ static void compute_user_action_up_to(Goal* g, String *buffer, int max){
 }
 
 static void compute_same_layer(Goal *g, String *buffer){
-	InitString(buffer, 4048);
+	if (g->parent == 0) {
+		CatString(buffer, FSTRING_SIZE_PARAMS("Root goal has no same-layer siblings.\n"));
+		return;
+	}
 
 	Goal* parent = FindGoal(g->parent);
 
 	for (size_t i = 0; i < parent->subgoals_len; i++){
-		Goal *friend = FindGoal(g->subgoals[i]);
+		Goal *slibing = FindGoal(parent->subgoals[i]);
+
 		size_t len = 0;
-
-		char* info = register_goal(friend, &len);
-
+		char* info = register_goal(slibing, &len, "brother-goal", 1);
 		CatString(buffer, info, len);
 
 		free(info);
@@ -292,19 +301,62 @@ static void compute_same_layer(Goal *g, String *buffer){
 }
 
 static void compute_goal_parent_chain(Goal *g, String *buffer){
-	InitString(buffer, 2048);
 	
 	while (g->parent != 0){
+		g = FindGoal(g->parent);
 
 		size_t len;
-		char* info = register_goal(g, &len);
+		char* info = register_goal(g, &len, "parent-goal", 1);
 
 		CatString(buffer, info, len);
 
-		g = FindGoal(g->parent);
 		free(info);
 	}
 }
+
+static void compute_goal_brothers_chain(Goal *g, String *buffer, _Bool displayInfo){
+	
+	CatString(buffer, FSTRING_SIZE_PARAMS("Follow-up goals: \n"));
+	while (g->next != 0){
+		g = FindGoal(g->next);
+
+		size_t len;
+		char* info = register_goal(g, &len, "follow-up-goal", displayInfo);
+
+		CatString(buffer, info, len);
+
+		free(info);
+	}
+
+	CatString(buffer, FSTRING_SIZE_PARAMS("\n\nPrevious goals: \n"));
+	while (g->prev != 0){
+		g = FindGoal(g->prev);
+
+		size_t len;
+		char* info = register_goal(g, &len, "prev-goal", displayInfo);
+
+		CatString(buffer, info, len);
+
+		free(info);
+	}
+}
+
+static void compute_uncle_chain(Goal *g, String *buffer, _Bool displayInfo){
+	if (g->parent == 0){
+		CatString(buffer, FSTRING_SIZE_PARAMS("Root goal has no uncle because it's a root goal."));
+		return;
+	}
+	Goal* parent = FindGoal(g->parent);
+	if (parent == 0){
+		CatString(buffer, FSTRING_SIZE_PARAMS("This is a root goal, it doesn't have any uncles."));
+		return;
+	}
+
+	CatString(buffer, FSTRING_SIZE_PARAMS("Uncles divided by follow up and previous relative to parent goal:\n"));
+
+	compute_goal_brothers_chain(parent, buffer, displayInfo);
+}
+
 
 static void set_shorten_goal_prompt(Goal* g, String* prompt, time_t now){
 	time_t old_required_time = g->required_time;
@@ -319,18 +371,22 @@ static void set_shorten_goal_prompt(Goal* g, String* prompt, time_t now){
 	char* extra_info = c_str(&g->extra_info);
 
 	// user action will be last max 20 goals
-	String user_action;
+	String user_action; InitString(&user_action, 4096);
 	compute_user_action_up_to(g, &user_action, 20);
 
-	String same_layer;
+	String same_layer; InitString(&same_layer, 2048);
 	compute_same_layer(g, &same_layer);
 
-	String goal_parent_chain;
+	String goal_parent_chain; InitString(&goal_parent_chain, 2048);
 	compute_goal_parent_chain(g, &goal_parent_chain);
+
+	String goal_brothers_chain; InitString(&goal_brothers_chain, 2048);
+	compute_goal_brothers_chain(g, &goal_brothers_chain, 0);
 
 	char* user_action_raw = user_action.p;
 	char* same_layer_raw = same_layer.p;
 	char* goal_parent_chain_raw = goal_parent_chain.p;
+	char* goal_brothers_chain_raw = goal_brothers_chain.p;
 
 	size_t estimated_size = user_action.len + same_layer.len + goal_parent_chain.len + g->title.len + g->extra_info.len + sizeof(SHORTEN_GOAL_AI_PROMPT) + 1024;
 
@@ -340,13 +396,81 @@ static void set_shorten_goal_prompt(Goal* g, String* prompt, time_t now){
 			initial_timeframe,
 			remaining_time,
 			same_layer_raw,
-			goal_parent_chain_raw
+			goal_parent_chain_raw,
+			goal_brothers_chain_raw
 		);
 
 	FreeString(&user_action);
 	FreeString(&same_layer);
 	FreeString(&goal_parent_chain);
+	FreeString(&goal_brothers_chain);
 }
+
+static void set_decompose_goal_prompt(Goal* g, String* prompt, time_t now){
+	time_t old_required_time = g->required_time;
+
+	time_t estimated_end_date = g->start_date + old_required_time;
+
+	time_t required_time = calc_required_time(g);
+	size_t depth = g->depth;
+	char* title = c_str(&g->title);
+	char* extra_info = c_str(&g->extra_info);
+
+	// user action will be last max 20 goals
+	String user_action; InitString(&user_action, 4096);
+	compute_user_action_up_to(g, &user_action, 20);
+
+	String same_layer; InitString(&same_layer, 2048);
+	compute_same_layer(g, &same_layer);
+
+	String goal_parent_chain; InitString(&goal_parent_chain, 2048);
+	compute_goal_parent_chain(g, &goal_parent_chain);
+
+	String goal_brothers_chain; InitString(&goal_brothers_chain, 2048);
+	compute_goal_brothers_chain(g, &goal_brothers_chain, 0);
+
+	String goal_uncle_chain; InitString(&goal_uncle_chain, 2048);
+	compute_uncle_chain(g, &goal_uncle_chain, 1);
+
+	size_t estimated_size = user_action.len + same_layer.len + goal_parent_chain.len + g->title.len + g->extra_info.len + sizeof(SHORTEN_GOAL_AI_PROMPT) + 1024;
+
+	String personalization_context; InitString(&personalization_context, 2048);
+	Task task = {0};
+	task.minDepth = 2;
+	InitString(&task.name, 2048);
+	CatTemplateString(&task.name, GOAL_DECOMPOSITION_PERSONAL_CONTEXT_PROMPT, g->title, g->extra_info, goal_parent_chain.p);
+
+	start_ds_session(&task, g->id, &personalization_context);
+
+	char* user_action_raw = user_action.p;
+	char* same_layer_raw = same_layer.p;
+	char* goal_parent_chain_raw = goal_parent_chain.p;
+	char* goal_brothers_chain_raw = goal_brothers_chain.p;
+	char* goal_uncle_chain_raw = goal_uncle_chain.p;
+	char* personalization_context_raw = personalization_context.p;
+
+
+	CatTemplateString(prompt, DECOMPOSE_GOAL_AI_PROMPT, 
+			title, 
+			extra_info,
+			required_time,
+			depth,
+			user_action_raw,
+			personalization_context_raw,
+			goal_parent_chain_raw,
+			goal_brothers_chain_raw,
+			goal_uncle_chain_raw
+		);
+
+	FreeString(&user_action);
+	FreeString(&same_layer);
+	FreeString(&goal_parent_chain);
+	FreeString(&goal_brothers_chain);
+	FreeString(&goal_uncle_chain);
+	FreeString(&task.name);
+	FreeString(&personalization_context);
+}
+
 
 void shorten_goal(Goal *g, time_t now){
 	String prompt; InitString(&prompt, 256);
@@ -359,7 +483,7 @@ void shorten_goal(Goal *g, time_t now){
 	CatString(&req.schema, FSTRING_SIZE_PARAMS(OPENAI_GOAL_EXTRACT_SCHEMA_JSON));
 
 	req.model = AI_OPENAI_MODEL_GPT_5_4_MINI;
-	req.schema_name = "shorten_goal";
+	req.schema_name = "goal_extract";
 
 	String *out = ai_openai_call_gpt_request(&req);
 
@@ -369,8 +493,7 @@ void shorten_goal(Goal *g, time_t now){
 	
 	change_assert(new_title.len > 1 && new_extra_info.len > 1, "Goal title or extra info is broken. title : [%s], info : [%s]\n", new_title.p, new_extra_info.p);
 
-	EmptyString(&g->title);
-	CatTemplateString(&g->extra_info, "%s\n user failed to finish goal [%s] so was shortened to [%s] in date [%s]\n", g->title, new_title, ctime(&now));
+	CatTemplateString(&g->extra_info, "\n user failed to finish goal [%s] so was shortened to [%s] in date [%s]\n", g->title, new_title, ctime(&now));
 
 	CopyString(&g->title, &new_title);
 	CopyString(&g->extra_info, &new_extra_info);
@@ -379,14 +502,16 @@ void shorten_goal(Goal *g, time_t now){
 	FreeString(out);
 }
 
-void repair_goal(Goal *g)
+static void repair_goal_leaf(Goal *g)
 {
+	change_assert(g->subgoals_len == 0, "Only leaf goals can be repaired directly [%s]\n", g->title.p);
+	
 	time_t max_end_date = g->start_date + g->required_time * (1 + TIME_MARIGN);
 	time_t now = time(NULL);
 
 	time_t delta = (max_end_date - now) * (max_end_date - g->start_date);
 	
-	_Bool shouldExtend = g->retry_depth < 3;
+	_Bool shouldExtend = g->retry_depth < 2;
 	g->retry_depth ++;
 
 	if (shouldExtend){
@@ -402,19 +527,20 @@ void repair_goal(Goal *g)
 	}
 }
 
-void UpdateGoal(Goal *g)
+void UpdateGoal(Goal *g, time_t now)
 {
+	if (!g)
+		return;
+
 	for (size_t i = 0; i < g->subgoals_len; i++)
-	{
-		Goal *s = FindGoal(g->subgoals[i]);
+		UpdateGoal(FindGoal(g->subgoals[i]), now);
 
-		enum GOAL_STATUS status = validate_goal(s);
+	enum GOAL_STATUS status = validate_goal(g, now);
 
-		if (status != GOAL_VALID)
-			repair_goal(g);
+	if (status == GOAL_VALID)
+		return;
 
-		UpdateGoal(s);
-	}
+	repair_goal_leaf(g);
 }
 
 void free_goal(Goal *g)
@@ -442,15 +568,21 @@ void free_goal(Goal *g)
 
 void free_goals()
 {
-	for (size_t i = 0; i < GOAL_CONTAINER_COUNT; i++)
+	for (size_t i = INITIAL_GOAL_INDEX; i < GOAL_CONTAINER_COUNT; i++)
 	{
+		Goal* g = FindGoal(i);
+
+		if (!g || g->parent != 0) continue;
+
 		free_goal(GOAL_CONTAINER[i]);
 		GOAL_CONTAINER[i] = NULL;
 	}
+
+	GOAL_CONTAINER_COUNT = INITIAL_GOAL_INDEX;
 }
 
 static void create_goal_deep_search_id(char* name, char* deep_search_id){
-	size_t index_end = MAX(strlen(name), 200);
+	size_t index_end = MIN(strlen(name), 200);
 	memcpy(deep_search_id, name, index_end);
 
 	memcpy(deep_search_id + index_end, FSTRING_SIZE_PARAMS("-deep-search-id"));
@@ -514,5 +646,27 @@ Goal* CreateUserGoal(String *input1, String *input2, char goalId[32])
 
 	printf("Goal created:\ntime [%ld]\nextra_info [%s]\ntitle [%s]\n\n", estimated_time, extra_info.p, title.p);
 	
-	return create_goal(&title, &extra_info, estimated_time, 0, 1);
+	return create_goal(goalId, &title, &extra_info, estimated_time, 0, 1);
+}
+
+_Bool DecomposeGoal(Goal *g){
+	
+	if (g->subgoals_len != 0){
+		printf("Goal seems already decomposed.\n");
+		return 0;
+	}
+	if (g->required_time < 60 * 15){
+		printf("Goal si too short to decompose, shortest is 15 minutes");
+		return 0;
+	}
+
+	String prompt;
+	InitString(&prompt, 2048);
+
+	set_decompose_goal_prompt(g, &prompt, time(NULL));
+
+	change_assert(0, "TODO: Continue here");
+
+
+	return 1;
 }
