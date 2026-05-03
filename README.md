@@ -1,6 +1,6 @@
 # CHANGE
 
-Welcome to the change project, so far the application decomposes user inputs into nodes, forming a cluster of nodes called User Identity.
+Welcome to the change project, so far the application decomposes user inputs into nodes, forming a cluster of nodes called User Identity. This user identity is used to personalize any kind of goals.
 See below a brief overview:
 
 ## Concepts overview
@@ -10,14 +10,15 @@ The Neuroengine is responsible for managing a User Idenitity, which is obviously
 The neuroengine supports Deep Search (Or Deep Research) to perform a task tailored to a user's identity
 #### Decomposition system
 This is the system responsible for input-processing and spliting human readable text into nodes.
+#### The goal systems (goals)
+This is the system responsible for repairing, updaing, decomponsing and managing goals.
 ### Server
 The client application has a `server` feature, this allows Neuro Engine (And DS) data to be exposed via HTTP protocol. (Read instalation guide for running.)
 
 ## Future plans
 - Make OpenAI optional, so you can host your own AI
-- Goal implmenetation, where you can customize a dynamic real-life goal based on a user's identity. The goal dinamically syncs with the user context.
-- Reintroduce mocks
-- Clean the terminal client
+- Create a more intuitive js viewer
+- Write the UI for teh actual app
 - Much more
 
 ## To consider
