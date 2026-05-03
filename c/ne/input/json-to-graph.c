@@ -5,6 +5,7 @@
 #include "node.h"
 #include "string.h"
 #include "config.h"
+#include <stddef.h>
 
 static void AddNodeFromEntry(json_value *val, size_t context, time_t now){
 	if (val->type != json_object) return;
@@ -164,4 +165,264 @@ _Bool AddContextNodesFromJSON(char* context_name, size_t context_size, json_valu
 	return 1;
 }
 
+void LoadGraphFromFile(char* path){
 
+	FreeNodes();
+	InitNodes();
+
+	size_t len = 0;
+	char* buff = readFile(path, &len);
+
+	if (massert(buff, "Coudln't load graph from file\n")){
+		return;
+	}
+
+	json_value* doc = json_parse(buff, len);
+	change_assert(doc, "Couldn't load object from file: [%s], len [%zu]\n", buff, len);
+	change_assert(doc->type == json_object, "Loaded file is JSON, but not an objects [%s]\n", buff);
+
+	time_t now = time(NULL);
+
+	for (size_t i = 0; i < doc->u.object.length; i++){
+		json_object_entry entry = doc->u.object.values[i];
+
+		if (strcmp(entry.name, "nodes") == 0){
+
+			// add nodes
+			change_assert(entry.value->type == json_array, "Nodes are not an array [%s]", buff);
+
+			for (size_t j = 0; j < entry.value->u.array.length; j++){
+				json_value *node_val = entry.value->u.array.values[j];
+
+				String name;
+				InitString(&name, NODE_LABEL_CAP + 2);
+
+				uint64_t id = UINT64_MAX;
+				uint64_t parent = UINT64_MAX;
+				_Bool has_parent = 0;
+
+				double activation = NODE_INIT_ACT;
+				double weight = NODE_INIT_WGHT;
+
+				_Bool has_name = 0;
+				_Bool has_id = 0;
+
+				change_assert(
+						node_val->type == json_object,
+						"Some node is not an object\n at pos [%zu] file [%s]",
+						j,
+						buff
+					     );
+
+				for (size_t k = 0; k < node_val->u.object.length; k++) {
+					json_object_entry property = node_val->u.object.values[k];
+
+					if (strcmp(property.name, "name") == 0) {
+						change_assert(
+								property.value->type == json_string,
+								"Name is not a string on some node [%s]",
+								buff
+							     );
+
+						CatString(&name, property.value->u.string.ptr, property.value->u.string.length);
+						has_name = 1;
+					}
+					else if (strcmp(property.name, "id") == 0) {
+						change_assert(
+								property.value->type == json_integer,
+								"ID is not an integer on node [%s]",
+								buff
+							     );
+
+						change_assert(
+								property.value->u.integer >= 0,
+								"ID is negative on node [%s]",
+								buff
+							     );
+
+						id = (uint64_t)property.value->u.integer;
+						has_id = 1;
+					}
+					else if (strcmp(property.name, "parent") == 0) {
+						change_assert(
+								property.value->type == json_integer,
+								"Parent is not an integer on node [%s]",
+								buff
+							     );
+
+						change_assert(
+								property.value->u.integer >= 0,
+								"Parent is negative on node [%s]",
+								buff
+							     );
+
+						parent = (uint64_t)property.value->u.integer;
+						has_parent = 1;
+					}
+					else if (strcmp(property.name, "activation") == 0) {
+						change_assert(
+								property.value->type == json_double || property.value->type == json_integer,
+								"Activation is not a number on node [%s]",
+								buff
+							     );
+
+						if (property.value->type == json_double)
+							activation = property.value->u.dbl;
+						else
+							activation = (double)property.value->u.integer;
+					}
+					else if (strcmp(property.name, "weight") == 0) {
+						change_assert(
+								property.value->type == json_double || property.value->type == json_integer,
+								"Weight is not a number on node [%s]",
+								buff
+							     );
+
+						if (property.value->type == json_double)
+							weight = property.value->u.dbl;
+						else
+							weight = (double)property.value->u.integer;
+					}
+				}
+
+				change_assert(
+						has_name,
+						"Node has no name at pos [%zu] file [%s]",
+						j,
+						buff
+					     );
+
+				change_assert(
+						has_id,
+						"Node has no id at pos [%zu] file [%s]",
+						j,
+						buff
+					     );
+
+				AddNodeEx(name.p, name.len, activation, weight, has_parent, (size_t)parent, 1, now);
+
+				FreeString(&name);
+
+			}
+
+		}else if(strcmp(entry.name, "connections") == 0){
+			change_assert(entry.value->type == json_array, "Connections are not an array [%s]", buff);
+
+			for (size_t j = 0; j < entry.value->u.array.length; j++){
+				json_value *conn_val = entry.value->u.array.values[j];
+
+				uint64_t A_id = UINT64_MAX;
+				uint64_t B_id = UINT64_MAX;
+
+				double activation = 1.0;
+				double weight = 1.0;
+
+				_Bool has_nodes = 0;
+
+				change_assert(
+						conn_val->type == json_object,
+						"Some connection is not an object\n at pos [%zu] file [%s]",
+						j,
+						buff
+					     );
+
+				for (size_t k = 0; k < conn_val->u.object.length; k++){
+					json_object_entry property = conn_val->u.object.values[k];
+
+					if (strcmp(property.name, "nodes") == 0){
+						change_assert(
+								property.value->type == json_array,
+								"Connection nodes is not an array [%s]",
+								buff
+							     );
+
+						change_assert(
+								property.value->u.array.length == 2,
+								"Connection nodes array doesn't have exactly 2 elements at pos [%zu] file [%s]",
+								j,
+								buff
+							     );
+
+						json_value *A_val = property.value->u.array.values[0];
+						json_value *B_val = property.value->u.array.values[1];
+
+						change_assert(
+								A_val->type == json_integer && B_val->type == json_integer,
+								"Connection nodes are not integers at pos [%zu] file [%s]",
+								j,
+								buff
+							     );
+
+						change_assert(
+								A_val->u.integer >= 0 && B_val->u.integer >= 0,
+								"Connection nodes contain negative ids at pos [%zu] file [%s]",
+								j,
+								buff
+							     );
+
+						A_id = (uint64_t)A_val->u.integer;
+						B_id = (uint64_t)B_val->u.integer;
+
+						has_nodes = 1;
+					}
+					else if (strcmp(property.name, "activation") == 0){
+						change_assert(
+								property.value->type == json_double || property.value->type == json_integer,
+								"Connection activation is not a number at pos [%zu] file [%s]",
+								j,
+								buff
+							     );
+
+						if (property.value->type == json_double)
+							activation = property.value->u.dbl;
+						else
+							activation = (double)property.value->u.integer;
+					}
+					else if (strcmp(property.name, "weight") == 0){
+						change_assert(
+								property.value->type == json_double || property.value->type == json_integer,
+								"Connection weight is not a number at pos [%zu] file [%s]",
+								j,
+								buff
+							     );
+
+						if (property.value->type == json_double)
+							weight = property.value->u.dbl;
+						else
+							weight = (double)property.value->u.integer;
+					}
+				}
+
+				change_assert(
+						has_nodes,
+						"Connection has no nodes field at pos [%zu] file [%s]",
+						j,
+						buff
+					     );
+
+				Node *A = NodeAt((size_t)A_id);
+				Node *B = NodeAt((size_t)B_id);
+
+				change_assert(
+						A,
+						"Connection references missing A node id [%zu] at pos [%zu] file [%s]",
+						(size_t)A_id,
+						j,
+						buff
+					     );
+
+				change_assert(
+						B,
+						"Connection references missing B node id [%zu] at pos [%zu] file [%s]",
+						(size_t)B_id,
+						j,
+						buff
+					     );
+
+				BiLinkEx(A, B, activation, weight);
+			}
+		}
+	}
+
+	json_value_free(doc);
+}

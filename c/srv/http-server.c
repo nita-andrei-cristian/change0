@@ -1,3 +1,4 @@
+
 // mostly AI GENERATED CODE
 
 #include "http-server.h"
@@ -31,10 +32,17 @@
 #define MAX_STREAM_ID_LEN   63
 #define GOAL_ID_LEN         32
 
+#define GRAPH_COPY_PATH     DEFAULT_GRAPH_EXPORT
+
 static _Bool started = 0;
 static int server_fd = -1;
 static pthread_t server_thread;
 static pthread_mutex_t server_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/* ========================= EXTERNAL GRAPH API ========================= */
+
+extern _Bool ExportGraphTo(char* path);
+extern void LoadGraphFromFile(char* path);
 
 /* ========================= HTTP REQUEST ========================= */
 
@@ -970,6 +978,56 @@ static void handle_get_graph(int client_fd) {
 	free(graph_json);
 }
 
+static void handle_post_graph_export(int client_fd) {
+	if (!ExportGraphTo((char*)GRAPH_COPY_PATH)) {
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"graph_export_failed\"}"
+		);
+		return;
+	}
+
+	send_json_response(
+		client_fd,
+		200,
+		"OK",
+		"{\"ok\":true,\"path\":\"" GRAPH_COPY_PATH "\"}"
+	);
+}
+
+static void handle_get_graph_load(int client_fd) {
+	if (access(GRAPH_COPY_PATH, R_OK) != 0) {
+		if (errno == ENOENT) {
+			send_json_response(
+				client_fd,
+				404,
+				"Not Found",
+				"{\"ok\":false,\"error\":\"graph_copy_not_found\"}"
+			);
+			return;
+		}
+
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"graph_copy_not_readable\"}"
+		);
+		return;
+	}
+
+	LoadGraphFromFile((char*)GRAPH_COPY_PATH);
+
+	send_json_response(
+		client_fd,
+		200,
+		"OK",
+		"{\"ok\":true,\"path\":\"" GRAPH_COPY_PATH "\"}"
+	);
+}
+
 static void handle_get_goal_list(int client_fd) {
 	char* goals_json = serialize_goals_container_json();
 
@@ -1476,6 +1534,16 @@ static int handle_request(int client_fd, const HttpRequest* req) {
 
 	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/graph") == 0) {
 		handle_get_graph(client_fd);
+		return 0;
+	}
+
+	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/graph/export") == 0) {
+		handle_post_graph_export(client_fd);
+		return 0;
+	}
+
+	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/graph/load") == 0) {
+		handle_get_graph_load(client_fd);
 		return 0;
 	}
 
