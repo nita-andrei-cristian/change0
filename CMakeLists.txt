@@ -124,6 +124,7 @@ target_link_libraries(deepsearchsession PUBLIC
     graphengine
     mocks
     globals
+    deepsearchexecute
 )
 
 add_library(deepsearchexecute SHARED ${CMAKE_SOURCE_DIR}/c/ne/search/deep-search-execute.c)

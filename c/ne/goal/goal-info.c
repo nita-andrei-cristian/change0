@@ -49,7 +49,8 @@ void SerializeUserGoalHistoryUpTo(Goal* g, String *buffer, int max){
 	size_t currentIndex = g->globalIndex - 1;
 	int i = 0;
 
-	while (currentIndex >= INITIAL_GOAL_INDEX && i < max){
+	for (size_t currentIndex = g->globalIndex;
+			currentIndex-- > INITIAL_GOAL_INDEX && i < max;){
 		Goal *g = FindGoal(currentIndex);
 
 		if (g->start_date != 0){
@@ -101,6 +102,8 @@ void SerializeGoalParentChain(Goal *g, String *buffer){
 void SerializeGoalLinkedSlibingsChain(Goal *g, String *buffer, _Bool displayInfo){
 	
 	CatString(buffer, FSTRING_SIZE_PARAMS("Follow-up goals: \n"));
+	Goal* original = g;
+
 	while (g->next != 0){
 		g = FindGoal(g->next);
 
@@ -112,6 +115,7 @@ void SerializeGoalLinkedSlibingsChain(Goal *g, String *buffer, _Bool displayInfo
 		free(info);
 	}
 
+	g = original;
 	CatString(buffer, FSTRING_SIZE_PARAMS("\n\nPrevious goals: \n"));
 	while (g->prev != 0){
 		g = FindGoal(g->prev);

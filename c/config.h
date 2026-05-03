@@ -90,7 +90,7 @@
 "It is used to identify the strongest candidate nodes globally when no strong lead exists or when a reorientation is needed. " \
 "It uses these parameters: " \
 "command: must be 1. " \
-"percentage: integer from 0 to 100, representing how much of the top-ranked global nodes to keep. Lower percentages mean stronger filtering and higher selectivity. " \
+"percentage: integer from 1 to 100, representing how much of the top-ranked global nodes to keep. Lower percentages mean stronger filtering and higher selectivity. " \
 "criteria: must be either activation or weight. Use activation to surface currently dominant nodes. Use weight to surface structurally important nodes. " \
 "intent: short operational explanation of why this global scan is being performed. " \
 "Use command 1 at the beginning of an investigation when no precise starting node is yet justified. " \
@@ -99,7 +99,7 @@
 "It is used to inspect the strongest neighbors of a known node inside a specific context. " \
 "It uses these parameters: " \
 "command: must be 2. " \
-"percentage: integer from 0 to 100, representing how much of the top local related nodes to keep. Lower percentages mean stronger filtering and a tighter neighborhood. " \
+"percentage: integer from 1 to 100, representing how much of the top local related nodes to keep. Lower percentages mean stronger filtering and a tighter neighborhood. " \
 "node: the exact label of the node to inspect. This node must exist in the provided context. " \
 "criteria: must be either activation or weight. Use activation to inspect the currently strongest local relations. Use weight to inspect the most structurally important local relations. " \
 "context: must be exactly one of profesie, emotie, pasiuni, generalitati, subiectiv. It specifies where the node lookup happens. " \
@@ -174,12 +174,11 @@
 "prefer around 8 nodes per context when enough information exists. " \
 "if evidence is sparse, return fewer nodes, but still include plausible low-confidence inferred nodes when justified. " \
 "node naming constraints: node names must be lowercase, short, and canonical. " \
-"maximum length is 32 characters. " \
+"maximum length is 31 characters. " \
 "use only letters " \
 "use only alphanumeric characters (a to z). " \
-"do not use quotes, apostrophes, dashes, spases, punctuation, underscores, hyphens, or any special characters. " \
+"do not use quotes, apostrophes, dashes, spaces, punctuation, underscores, hyphens, or any special characters. " \
 "do not include characters like \\\" or any other quoting marks inside names. " \
-"use plain spaces between words only. " \
 "prefer single-word names; use two words only if necessary. " \
 "remove articles, determiners, pronouns, and filler words. " \
 "avoid phrases like \"the house\", \"a career\", \"my fear\"; use \"house\", \"career\", \"fear\". " \
@@ -261,8 +260,8 @@
  * - you may alter just as much as you like.
  * */
 #define GOAL_ADAPTATION_PROMPT \
-"Adapt the proposed goal [%s] to the specific user, using the stated reason [%s]. " \
-"The stated reason explains why the goal may be useful, valuable, or important for the user. " \
+"Adapt the proposed goal [%s] to the specific user, using the stated extrainfo [%s]. " \
+"The stated extrainfo explains why the goal may be useful, valuable, or important for the user. " \
 "Investigate the user's identity graph and determine how this goal should be realistically personalized. " \
 "Ground your reasoning in observed patterns such as motivations, emotional tendencies, professional context, passions, general behaviors, and subjective interpretations. " \
 "Be willing to make the adapted goal concrete and specific when the original goal is broad or vague. " \

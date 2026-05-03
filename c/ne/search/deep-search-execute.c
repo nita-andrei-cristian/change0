@@ -25,10 +25,12 @@ void exec_response(json_value* doc, String *dynamic_mem, size_t depth, String *c
 
 	if (command == 1)
 		run1(doc, dynamic_mem, ds_id);
-	if (command == 2)
+	else if (command == 2)
 		run2(doc, dynamic_mem, ds_id);
-	if (command == 3)
+	else if (command == 3)
 		run3(doc, dynamic_mem, ds_id);
+	else 
+		CatTemplateString(dynamic_mem, "{Error : Commands are only 1-3, you passed [%d] }", command);
 }
 
 // Half is AI generated
