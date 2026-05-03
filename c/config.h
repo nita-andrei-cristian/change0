@@ -175,9 +175,9 @@
 "if evidence is sparse, return fewer nodes, but still include plausible low-confidence inferred nodes when justified. " \
 "node naming constraints: node names must be lowercase, short, and canonical. " \
 "maximum length is 32 characters. " \
-"use only letters and dashes " \
-"use only alphanumeric characters and dashes (a to z and '-' only). " \
-"do not use quotes, apostrophes, spases, punctuation, underscores, hyphens, or any special characters. " \
+"use only letters " \
+"use only alphanumeric characters (a to z). " \
+"do not use quotes, apostrophes, dashes, spases, punctuation, underscores, hyphens, or any special characters. " \
 "do not include characters like \\\" or any other quoting marks inside names. " \
 "use plain spaces between words only. " \
 "prefer single-word names; use two words only if necessary. " \

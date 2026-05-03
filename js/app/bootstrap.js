@@ -320,24 +320,25 @@ function goalDays(goal){
   return 0;
 }
 function formatGoalLength(goal){
-  const days=goalDays(goal);
-  if(!days)return"n/a";
-  if(days>=365){
-    const years=Math.floor(days/365);
-    const months=Math.round((days%365)/30);
-    return months?`${years}y ${months}m`:`${years}y`;
-  }
-  if(days>=30){
-    const months=Math.floor(days/30);
-    const weeks=Math.round((days%30)/7);
-    return weeks?`${months}mo ${weeks}w`:`${months}mo`;
-  }
-  if(days>=7){
-    const weeks=Math.floor(days/7);
-    const rem=days%7;
-    return rem?`${weeks}w ${rem}d`:`${weeks}w`;
-  }
-  return `${days}d`;
+  const totalSeconds=goal.end_date>goal.start_date&&goal.start_date>0
+    ? Math.max(0,Math.round(goal.end_date-goal.start_date))
+    : goal.required_time>0
+      ? Math.max(0,Math.round(goal.required_time))
+      : 0;
+  if(!totalSeconds)return"n/a";
+
+  const days=Math.floor(totalSeconds/86400);
+  const hours=Math.floor((totalSeconds%86400)/3600);
+  const minutes=Math.floor((totalSeconds%3600)/60);
+  const seconds=totalSeconds%60;
+  const parts=[];
+
+  if(days)parts.push(`${days}d`);
+  if(hours)parts.push(`${hours}h`);
+  if(minutes)parts.push(`${minutes}m`);
+  if(!parts.length||seconds)parts.push(`${seconds}s`);
+
+  return parts.slice(0,3).join(" ");
 }
 function closeGoalStructureInspector(){
   $("goal-structure-inspector").classList.remove("is-visible");
@@ -888,7 +889,7 @@ function drawGoals(){
     c.textAlign="center";
     c.fillText(String(point.goal.globalIndex),s.x,s.y+4);
     c.font=selected||hovered?"650 12px system-ui":"650 11px system-ui";
-    c.fillText(point.goal.title.slice(0,28),s.x,s.y+46);
+    c.fillText(point.goal.title.slice(0,36),s.x,s.y+46);
     if(selected)selectedPoint={goal:point.goal,x:s.x,y:s.y,hasChildren:point.goal.subgoals.length>0};
   }
   canvas.style.cursor=goalStructureState.dragging?"grabbing":goalStructureState.hoveredGoal?"pointer":"grab";
@@ -898,8 +899,9 @@ function drawGoals(){
 function syncGoalContextAction(point=null){
   const button=$("decompose-selected-goal");
   if(!button)return;
-  const canShow=Boolean(point)&&L.mode!=="timeline"&&!point.hasChildren&&L.selected===point.goal.globalIndex;
+  const canShow=Boolean(point)&&L.mode!=="timeline"&&!L.decomp&&!point.hasChildren&&L.selected===point.goal.globalIndex;
   if(!canShow){
+    button.disabled=true;
     button.classList.remove("is-visible");
     button.setAttribute("aria-hidden","true");
     return;
@@ -907,6 +909,7 @@ function syncGoalContextAction(point=null){
   const rect=goalStructureState.canvas.getBoundingClientRect();
   button.style.left=`${Math.round(point.x)}px`;
   button.style.top=`${Math.round(Math.max(18,point.y-44))}px`;
+  button.disabled=false;
   button.classList.add("is-visible");
   button.setAttribute("aria-hidden","false");
   button.style.maxWidth=`${Math.max(96,Math.min(240,rect.width-24))}px`;
@@ -922,12 +925,14 @@ async function decomposeGoal(){
   }
   L.decomp=true;
   L.detail="Decomposing.";
+  syncGoalContextAction(null);
   panels();
   try{
     const response=await fetch(EP.goalDecompose,{method:"POST",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({goalIndex:goal.globalIndex})});
     const raw=await response.json();
     if(!response.ok||raw.ok===false)throw new Error(JSON.stringify(raw));
     L.detail=raw.decomposedNow?"Decomposed.":"Children loaded.";
+    $("decompose-selected-goal").disabled=true;
     await loadGoals(false);
   }catch(error){
     L.detail="Error.";
@@ -1075,7 +1080,10 @@ function setView(view){
   $("goal-view-toggle").classList.toggle("is-active",view==="goal");
   graphView.setActive(view==="graph");
   if(view==="ds")drawResearchTimeline();
-  if(view==="goal")(L.mode==="timeline"?drawGoalTimeline:drawGoals)();
+  if(view==="goal"){
+    loadGoals(false);
+    (L.mode==="timeline"?drawGoalTimeline:drawGoals)();
+  }
 }
 
 async function submitMsg(event){
