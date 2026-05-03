@@ -4,22 +4,93 @@ import { findGoalByGlobalIndex, loadGoalsFromServer, type Goal } from './goal'
 
 type RouteName = 'home' | 'goal'
 
-function getRouteFromLocation() {
-  return window.location.pathname === '/goal' ? 'goal' : 'home'
+function getLocationState() {
+  const route = window.location.pathname === '/goal' ? 'goal' : 'home'
+  if (route !== 'goal') {
+    return { route, goalIndex: null as number | null }
+  }
+
+  const query = new URLSearchParams(window.location.search)
+  const goalIndex = Number(query.get('goal'))
+  return {
+    route,
+    goalIndex: Number.isFinite(goalIndex) && goalIndex > 0 ? goalIndex : null,
+  }
 }
 
 function App() {
-  const [route, setRoute] = useState<RouteName>(getRouteFromLocation)
+  const initialLocation = getLocationState()
+  const [route, setRoute] = useState<RouteName>(initialLocation.route)
+  const [goalIndex, setGoalIndex] = useState<number | null>(
+    initialLocation.goalIndex,
+  )
   const [goals, setGoals] = useState<Goal[]>([])
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
   const [message, setMessage] = useState('Server not connected.')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    const onPopState = () => setRoute(getRouteFromLocation())
+    const onPopState = () => {
+      const locationState = getLocationState()
+      setRoute(locationState.route)
+      setGoalIndex(locationState.goalIndex)
+      if (locationState.route === 'home') {
+        setSelectedGoal(null)
+        setGoalIndex(null)
+      }
+    }
+
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
+
+  useEffect(() => {
+    if (route !== 'goal' || selectedGoal) {
+      return
+    }
+
+    let alive = true
+
+    ;(async () => {
+      try {
+        const loadedGoals = goals.length > 0 ? goals : await loadServerGoals()
+        const targetIndex = goalIndex ?? loadedGoals[0]?.globalIndex ?? null
+        const goal = targetIndex
+          ? findGoalByGlobalIndex(loadedGoals, targetIndex)
+          : null
+
+        if (!alive) {
+          return
+        }
+
+        if (goal) {
+          setSelectedGoal(goal)
+          setGoals(loadedGoals)
+          return
+        }
+
+        setMessage('Success. No goals were returned by the server.')
+        window.history.replaceState({}, '', '/')
+        setRoute('home')
+        setGoalIndex(null)
+      } catch (error) {
+        if (!alive) {
+          return
+        }
+
+        setMessage(
+          error instanceof Error ? error.message : 'Failed to restore goal view.',
+        )
+        window.history.replaceState({}, '', '/')
+        setRoute('home')
+        setGoalIndex(null)
+      }
+    })()
+
+    return () => {
+      alive = false
+    }
+  }, [route, goalIndex, goals, selectedGoal])
 
   async function loadServerGoals() {
     const loadedGoals = await loadGoalsFromServer()
@@ -60,7 +131,8 @@ function App() {
       }
 
       setSelectedGoal(firstGoal)
-      window.history.pushState({}, '', '/goal')
+      setGoalIndex(firstGoal.globalIndex)
+      window.history.pushState({}, '', `/goal?goal=${firstGoal.globalIndex}`)
       setRoute('goal')
     } catch (error) {
       setMessage(
@@ -72,6 +144,10 @@ function App() {
   }
 
   if (route === 'goal') {
+    if (!selectedGoal) {
+      return <p className="goal-connect-message">Loading goal...</p>
+    }
+
     return <GoalViewer goal={selectedGoal} />
   }
 
@@ -99,4 +175,3 @@ function App() {
 }
 
 export default App
-

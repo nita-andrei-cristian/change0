@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { Goal } from '../goal';
+import type { Goal } from '../goal'
 
 function resizeCanvas(canvas: HTMLCanvasElement) {
   const context = canvas.getContext('2d')
@@ -19,7 +19,7 @@ function resizeCanvas(canvas: HTMLCanvasElement) {
   return { context, width, height }
 }
 
-function drawCanvas(canvas: HTMLCanvasElement, goal : Goal) {
+function drawCanvas(canvas: HTMLCanvasElement, goal: Goal) {
   const frame = resizeCanvas(canvas)
   if (!frame) {
     return
@@ -31,9 +31,9 @@ function drawCanvas(canvas: HTMLCanvasElement, goal : Goal) {
 
   const cx = width/2, cy = height/2;
 
-  context.fillStyle = "#ffffff";
+  context.fillStyle = '#ffffff'
   const fontSize = 32;
-  context.font = `Roboto ${fontSize}px`;
+  context.font = `${fontSize}px Roboto`
 
   const text_m_info = context.measureText(goal.title);
   
@@ -58,7 +58,7 @@ export default function GoalViewer({ goal }: GoalViewerProps) {
 
     window.addEventListener('resize', redraw)
     return () => window.removeEventListener('resize', redraw)
-  }, [])
+  }, [goal])
 
   return (
     <canvas
@@ -68,4 +68,3 @@ export default function GoalViewer({ goal }: GoalViewerProps) {
     />
   )
 }
-

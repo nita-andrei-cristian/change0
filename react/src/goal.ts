@@ -137,7 +137,7 @@ export class Goal implements GoalInit {
    * Returns the canonical decomposition endpoint URL.
    */
   static decomposeUrl(baseUrl = SERVER_BASE_URL) {
-    return `${baseUrl}/goal/decompose`
+    return buildGoalDecomposeUrl(baseUrl)
   }
 
   formatRequiredTime() {
