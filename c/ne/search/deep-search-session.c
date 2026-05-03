@@ -200,6 +200,7 @@ void start_ds_session(Task *task, char* id, String* out){
 	}
 
 	ds_emit(id, "d-mem", mem.dynamic.p, mem.dynamic.len);
+	ds_emit(id, "p-mem", mem.persistent.p, mem.persistent.len);
 	ds_emit(id, "ds-end", out->p, out->len);
 
 	printf("[debug] Persistent Memory : %s", mem.persistent.p);
