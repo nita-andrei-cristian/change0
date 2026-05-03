@@ -47,9 +47,9 @@ static json_value *call_gpt_decomposition(String *input){
 	FreeString(&prompt);
 
 	cassert(st == AI_OPENAI_OK, (char*) ai_openai_strerror(st));
-	cassert(created.body.data, "OpenAI returned empty body.\n");
+	cassert(c_str(&created.body), "OpenAI returned empty body.\n");
 
-	json_value *root = json_parse(created.body.data, created.body.len);
+	json_value *root = json_parse(c_str(&created.body), created.body.len);
 	cassert(root, "Failed to parse OpenAI response body.\n");
 
 	ai_openai_response_free(&created);
@@ -136,10 +136,13 @@ void DecomposeInputIntoGraph(String *input){
 	json_value* response_target = extract_ai_json(root);
 	cassert(response_target, "Respose from OpenAI seems corrupt, can t parse\n");
 
-	for (size_t i = 0; i < response_target->u.object.length; i++)
-		AddContextNodesFromJSON(&response_target->u.object.values[i]);
+	for (size_t i = 0; i < response_target->u.object.length; i++){
+		json_object_entry entry = response_target->u.object.values[i];
+	
+		AddContextNodesFromJSON(entry.name, entry.name_length, entry.value);
+	}
+
 
 	json_value_free(response_target);
 	json_value_free(root);
 }
-

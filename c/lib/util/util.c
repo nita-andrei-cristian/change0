@@ -1,4 +1,6 @@
 #include "util.h"
+#include <stdarg.h>
+#include <time.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,6 +8,7 @@
 #include <string.h>
 #include <string.h>
 #include <stdlib.h>
+#include "change-errors.h"
 
 size_t mystrnlen(const char* s, size_t maxlen) {
     size_t i;
@@ -214,32 +217,27 @@ void lowerAll(char** s, size_t len){
 		a[i] = a[i] < 'a' ? a[i] + ('a' - 'A') : a[i];
 }
 
-_Bool massert(_Bool assertion, char* message){
-	if (!assertion && message) fprintf(stderr, "%s", message);
-	return !assertion;
-}
-void cassert(_Bool assertion, char* message){
-	if (!assertion && message){
-		fprintf(stderr, "%s", message);
-		exit(EXIT_FAILURE);
-	}
-}
-
 void InitString(String* s, size_t init_cap){
 	s->cap = init_cap + 1;
 	s->len = 0;
 	s->p = malloc(s->cap);
 	cassert(s->p, "Coudln't initialize string");
 	*s->p = '\0';
+	s->used = 0;
+	s->init = 1;
 }
+
 void FreeString(String* s){
 	if (!s || !s->p) return;
+	s->used = 0;
+	s->init = 0;
 	free(c_str(s));
+	c_str(s) = NULL;
 }
 
 void CatString(String* s, char* c, size_t len){
-	if (massert(s, "No string passed...")) return;
-	cassert(s, "Can't concatinate : String not initialized");
+	change_assert(s, "No String passed...\n");
+	if (!s || !s->init) InitString(s, len+2);
 
 	if (s->cap <= len + s->len + 1){
 		size_t req_cap = s->cap ? s->cap : 1; // avoid 0
@@ -250,9 +248,53 @@ void CatString(String* s, char* c, size_t len){
 	memcpy(c_str(s) + s->len, c, len);
 	s->len += len;
 	*(c_str(s) + s->len) = '\0';
+
+	s->used = 1;
+}
+
+// AI INSPIRED
+void CatTemplateString(String* s, char *fmt, ...){
+	if (massert(s, "No string passed...")) return;
+	cassert(s && s->init, "Can't concatinate : String not initialized");
+
+	va_list args;
+	va_start(args, fmt);
+
+	va_list args_copy;
+	va_copy(args_copy, args);
+
+	long needed = vsnprintf(NULL, 0, fmt, args_copy);
+	
+	if (needed < 0){
+		va_end(args);
+		cassert(0, "Formatting failed\n");
+		return;
+	}
+
+	size_t add_len = (size_t)needed;
+	size_t required_len = s->len + add_len;
+
+	if (s->cap <= required_len + 1) {
+		size_t new_cap = s->cap ? s->cap : 16;
+		while (new_cap <= required_len + 1) 
+			new_cap *= 2;
+		ResizeString(s, new_cap);
+	}
+
+	vsnprintf(c_str(s) + s->len, s->cap - s->len, fmt, args);
+	va_end(args);
+
+	s->len += add_len;
+	s->used = 1;
 }
 
 void ResizeString(String* s, size_t new_cap){
+
+	if (!s->init){
+		InitString(s, new_cap);
+		return;
+	}
+
 	char* tmp = realloc(c_str(s), new_cap + 1);
 	if (!tmp){
 		fprintf(stderr, "String is |%s|\n", c_str(s));
@@ -388,12 +430,17 @@ char *json_escape_dup(const char *src){
 	return out;
 }
 
-void dump_to_file(const char *path, const char *data, size_t len){
-    FILE *f = fopen(path, "wb");
-    cassert(f, "Failed to open debug file.\n");
+// AI generated function
+json_value *json_object_get(json_value *obj, const char *name)
+{
+	change_assert(obj && obj->type == json_object, "Expected JSON object.\n");
 
-    size_t written = fwrite(data, 1, len, f);
-    cassert(written == len, "Failed to write full buffer to file.\n");
+	for (size_t i = 0; i < obj->u.object.length; i++) {
+		json_object_entry entry = obj->u.object.values[i];
 
-    fclose(f);
+		if (strcmp(entry.name, name) == 0)
+			return entry.value;
+	}
+
+	return NULL;
 }

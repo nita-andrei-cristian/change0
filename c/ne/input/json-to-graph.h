@@ -4,6 +4,116 @@
 #include "../lib/util/util.h"
 #include "../lib/jsonp/json.h"
 
-_Bool AddContextNodesFromJSON(json_object_entry* context_data);
+_Bool AddContextNodesFromJSON(char* context_name, size_t context_size, json_value* root);
+
+#define OPENAI_SCHEMA_JSON \
+"{" \
+  "\"type\":\"object\"," \
+  "\"additionalProperties\":false," \
+  "\"required\":[\"graph_mocks\",\"action_mocks\"]," \
+  "\"properties\":{" \
+    "\"graph_mocks\":{" \
+      "\"type\":\"array\"," \
+      "\"items\":{" \
+        "\"type\":\"object\"," \
+        "\"additionalProperties\":false," \
+        "\"required\":[\"context\",\"nodes\",\"connections\"]," \
+        "\"properties\":{" \
+          "\"context\":{" \
+            "\"type\":\"string\"," \
+            "\"enum\":[\"profesie\",\"emotie\",\"pasiuni\",\"generalitati\",\"subiectiv\"]" \
+          "}," \
+          "\"nodes\":{" \
+            "\"type\":\"array\"," \
+            "\"items\":{" \
+              "\"type\":\"object\"," \
+              "\"additionalProperties\":false," \
+              "\"required\":[\"name\",\"weight\",\"activation\"]," \
+              "\"properties\":{" \
+                "\"name\":{\"type\":\"string\"}," \
+                "\"weight\":{\"type\":[\"number\",\"null\"]}," \
+                "\"activation\":{\"type\":[\"number\",\"null\"]}" \
+              "}" \
+            "}" \
+          "}," \
+          "\"connections\":{" \
+            "\"type\":\"array\"," \
+            "\"items\":{" \
+              "\"type\":\"object\"," \
+              "\"additionalProperties\":false," \
+              "\"required\":[\"nodes\",\"weight\",\"activation\"]," \
+              "\"properties\":{" \
+                "\"nodes\":{" \
+                  "\"type\":\"array\"," \
+                  "\"minItems\":2," \
+                  "\"maxItems\":2," \
+                  "\"items\":{\"type\":\"string\"}" \
+                "}," \
+                "\"weight\":{\"type\":[\"number\",\"null\"]}," \
+                "\"activation\":{\"type\":[\"number\",\"null\"]}" \
+              "}" \
+            "}" \
+          "}" \
+        "}" \
+      "}" \
+    "}," \
+    "\"action_mocks\":{" \
+      "\"type\":\"array\"," \
+      "\"items\":{" \
+        "\"anyOf\":[" \
+          "{" \
+            "\"type\":\"object\"," \
+            "\"additionalProperties\":false," \
+            "\"required\":[\"command\",\"percentage\",\"criteria\",\"intent\"]," \
+            "\"properties\":{" \
+              "\"command\":{\"type\":\"integer\"}," \
+              "\"percentage\":{\"type\":[\"integer\",\"null\"]}," \
+              "\"criteria\":{\"type\":[\"string\",\"null\"]}," \
+              "\"intent\":{\"type\":[\"string\",\"null\"]}" \
+            "}" \
+          "}," \
+          "{" \
+            "\"type\":\"object\"," \
+            "\"additionalProperties\":false," \
+            "\"required\":[\"command\",\"percentage\",\"node\",\"criteria\",\"context\",\"intent\"]," \
+            "\"properties\":{" \
+              "\"command\":{\"type\":\"integer\"}," \
+              "\"percentage\":{\"type\":[\"integer\",\"null\"]}," \
+              "\"node\":{\"type\":[\"string\",\"null\"]}," \
+              "\"criteria\":{\"type\":[\"string\",\"null\"]}," \
+              "\"context\":{\"type\":[\"string\",\"null\"]}," \
+              "\"intent\":{\"type\":[\"string\",\"null\"]}" \
+            "}" \
+          "}," \
+          "{" \
+            "\"type\":\"object\"," \
+            "\"additionalProperties\":false," \
+            "\"required\":[\"command\",\"node\",\"context\",\"percA\",\"percW\",\"depth\",\"intent\"]," \
+            "\"properties\":{" \
+              "\"command\":{\"type\":\"integer\"}," \
+              "\"node\":{\"type\":[\"string\",\"null\"]}," \
+              "\"context\":{\"type\":[\"string\",\"null\"]}," \
+              "\"percA\":{\"type\":[\"integer\",\"null\"]}," \
+              "\"percW\":{\"type\":[\"integer\",\"null\"]}," \
+              "\"depth\":{\"type\":[\"integer\",\"null\"]}," \
+              "\"intent\":{\"type\":[\"string\",\"null\"]}" \
+            "}" \
+          "}," \
+          "{" \
+            "\"type\":\"object\"," \
+            "\"additionalProperties\":false," \
+            "\"required\":[\"finished\",\"conclusion\"]," \
+            "\"properties\":{" \
+              "\"finished\":{\"type\":\"boolean\"}," \
+              "\"conclusion\":{\"type\":\"string\"}" \
+            "}" \
+          "}" \
+        "]" \
+      "}" \
+    "}" \
+  "}" \
+"}"
+
+
 
 #endif

@@ -6,6 +6,7 @@
 enum INPUT_OPTION {
 	QUIT,
 	MESSAGE,
+	NMESSAGE,
 	REGEN_OPENAI,
 	EXPORT,
 	DEEPRESEARCH,
@@ -22,7 +23,8 @@ typedef struct {
 InputOption options[] = {
     {QUIT, QUIT_BUTTON, "Exit client."},
     {MESSAGE, 'u', "Write user input."},
-    //{REGEN_OPENAI, 'r', "Regen mocks with ChatGPT"},
+    {REGEN_OPENAI, 'r', "Regen mocks with ChatGPT"},
+    {NMESSAGE, 'n', "Create n messages directly from pre-cached mocks."},
     {EXPORT, 'e', "Export brain to json."},
     {DEEPRESEARCH, 'd', "Run deep research"},
     {STARTSERVER, 's', "Start HTTP Server"},

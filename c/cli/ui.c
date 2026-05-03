@@ -2,8 +2,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "json-to-graph.h"
 #include "node.h"
 #include "util.h"
+#include "json.h"
 #include "mockopenai.h"
 #include "graph-export.h"
 #include "input-processor.h"
@@ -56,6 +58,9 @@ void UIStart(){
 
 	// Setup Global Pointers
 	SetGlobalPointerF("ds_emit", &ds_emit_event);
+	SetGlobalPointerF("goal_emit", &goal_emit_event);
+
+	InitGoalSystem();
 }
 
 static void Run(int i){
@@ -103,8 +108,7 @@ static void Run(int i){
 		if (read < 0) input_size = 0;
 
 		if (input_size > 5){
-			memcpy(task.name, input_raw, input_size);
-			task.name_len = input_size;
+			CatString(&task.name, input_raw, input_size);
 			task.minDepth = 2;
 		}
 
@@ -113,7 +117,7 @@ static void Run(int i){
 		String out; InitString(&out, 2048);
 		start_ds_session(&task, "default", &out);
 
-		printf("Deep research result : \n\n%s\n", out.p);
+		printf("See result in:\n\n%s%s\n", PROJECT_ROOT, "deep-search-result.txt");
 		dump_to_file(PROJECT_ROOT "deep-search-result.txt", out.p, out.len);
 
 		FreeString(&out);
@@ -147,13 +151,43 @@ static void Run(int i){
 		String input0; InitString(&input0, input_size0 + 1);
 		String input1; InitString(&input1, input_size1 + 1);
 
-		Goal *g = create_goal(&input0, &input1, 60 * 60, NULL);
-
-		printf("Goal Created...\nUpdaing goal...\n\n");
-		update_goal(g);
+		Goal *g = CreateUserGoal(&input0, &input1, "12345678901234567890123456789012");
 
 		FreeString(&input0);
 		FreeString(&input1);
+	}
+
+	if (options[i].type == NMESSAGE){
+		for (int i = 0; i < DEFAULT_MOCK_NODES_COUNT; i++){
+			char file[512];
+			sprintf(file, DEFAULT_MOCK_DIRECTORY "nodes/graph_%03u.json", i);
+
+			size_t buffer_len = 0;
+			char* buffer = readFile(file, &buffer_len);
+
+			cassert(buffer, "File probably doesn't exist\n");
+
+			json_value* doc = json_parse(buffer, buffer_len);
+			cassert(doc, "Coudln't parse mock \n");
+			cassert(doc->type == json_object, "Json is not an object");
+
+			char context[256] = "\0";
+			for (size_t i = 0; i < doc->u.object.length; i++){
+				json_object_entry e = doc->u.object.values[i];
+
+				if (strcmp(e.name, "context") == 0 && e.value->type == json_string){
+					memcpy(context, e.value->u.string.ptr, e.value->u.string.length);
+				}
+			}
+
+			AddContextNodesFromJSON(context, strlen(context), doc);
+
+			json_value_free(doc);
+		}
+	}
+
+	if (options[i].type == REGEN_OPENAI){
+		RegenMocksOpenAI();
 	}
 
 	WaitForInput();
@@ -187,5 +221,5 @@ void UILoop(){
 void UIKill(){
 	FreeNodes();
 	FreeGlobalPointerMap();
-	free_goals();
+	FreeGoals();
 }

@@ -88,9 +88,9 @@ static json_value *call_gpt_deep_search(DS_memory *mem){
 	FreeString(&prompt);
 
 	cassert(st == AI_OPENAI_OK, (char*) ai_openai_strerror(st));
-	cassert(created.body.data, "Error: OpenAI returned empty body.\n");
+	cassert(c_str(&created.body), "Error: OpenAI returned empty body.\n");
 
-	json_value *root = json_parse(created.body.data, created.body.len);
+	json_value *root = json_parse(c_str(&created.body), created.body.len);
 	cassert(root, "Error: Failed to parse OpenAI response body.\n");
 
 	ai_openai_response_free(&created);
@@ -118,7 +118,7 @@ json_value *call_gpt_judge(String *out, Task *task){
 
 	size_t prompt_cap =
 		strlen(DS_JUDGE_PROMPT) +
-		task->name_len +
+		task->name.len +
 		out->len +
 		64;
 
@@ -128,7 +128,7 @@ json_value *call_gpt_judge(String *out, Task *task){
 	int written = snprintf(
 		prompt, prompt_cap,
 		DS_JUDGE_PROMPT,
-		task->name,
+		c_str(&task->name),
 		c_str(out)
 	);
 	cassert(written > 0 && (size_t)written < prompt_cap, "Error: Failed to build judge prompt.\n");
@@ -174,9 +174,9 @@ json_value *call_gpt_judge(String *out, Task *task){
 	free(json_body);
 
 	cassert(st == AI_OPENAI_OK, (char*) ai_openai_strerror(st));
-	cassert(created.body.data, "Error: OpenAI judge returned empty body.\n");
+	cassert(c_str(&created.body), "Error: OpenAI judge returned empty body.\n");
 
-	json_value *root = json_parse(created.body.data, created.body.len);
+	json_value *root = json_parse(c_str(&created.body), created.body.len);
 	cassert(root, "Error: Failed to parse OpenAI judge response body.\n");
 
 	ai_openai_response_free(&created);

@@ -1,3 +1,4 @@
+
 // mostly AI GENERATED CODE
 
 #include "http-server.h"
@@ -6,6 +7,7 @@
 #include "util.h"
 
 #include "search/deep-search-session.h"
+#include "goal/goal.h"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -14,9 +16,11 @@
 #include <pthread.h>
 #include <ctype.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define SERVER_BACKLOG      10
 #define READ_CHUNK_SIZE     4096
@@ -25,12 +29,20 @@
 #define MAX_HEADER_SIZE     (256 * 1024)
 
 #define MAX_SSE_CLIENTS     64
-#define MAX_RESEARCH_ID_LEN 63
+#define MAX_STREAM_ID_LEN   63
+#define GOAL_ID_LEN         32
+
+#define GRAPH_COPY_PATH     DEFAULT_GRAPH_EXPORT
 
 static _Bool started = 0;
 static int server_fd = -1;
 static pthread_t server_thread;
 static pthread_mutex_t server_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/* ========================= EXTERNAL GRAPH API ========================= */
+
+extern _Bool ExportGraphTo(char* path);
+extern void LoadGraphFromFile(char* path);
 
 /* ========================= HTTP REQUEST ========================= */
 
@@ -47,7 +59,14 @@ typedef struct {
 	int fd;
 	_Bool alive;
 	pthread_mutex_t write_lock;
-	char research_id[MAX_RESEARCH_ID_LEN + 1];
+
+	/*
+	 * Generic stream filter.
+	 *
+	 * Deep-search clients use research ids here.
+	 * Goal clients use goal-id here.
+	 */
+	char stream_id[MAX_STREAM_ID_LEN + 1];
 } ClientConnection;
 
 static ClientConnection sse_clients[MAX_SSE_CLIENTS];
@@ -91,10 +110,15 @@ static int send_all(int fd, const void* data, size_t len) {
 	size_t sent_total = 0;
 
 	while (sent_total < len) {
+#ifdef MSG_NOSIGNAL
+		ssize_t sent_now = send(fd, p + sent_total, len - sent_total, MSG_NOSIGNAL);
+#else
 		ssize_t sent_now = send(fd, p + sent_total, len - sent_total, 0);
+#endif
 
 		if (sent_now < 0) {
 			if (errno == EINTR) continue;
+			if (errno == EPIPE || errno == ECONNRESET) return -1;
 			return -1;
 		}
 
@@ -378,6 +402,10 @@ static int query_get_param(const char* query, const char* key, char* out, size_t
 
 /* ========================= JSON ESCAPE FOR SSE ========================= */
 
+/*
+ * Kept because SSE emits buffers with explicit lengths.
+ * For normal goal JSON serialization below, use global json_escape_dup(...).
+ */
 static char* json_escape_dup_n(const char* src, size_t len) {
 	size_t i;
 	size_t cap = len * 6 + 1;
@@ -424,178 +452,25 @@ static char* json_escape_dup_n(const char* src, size_t len) {
 	return out;
 }
 
-/* ========================= SSE REGISTRY ========================= */
+/* ========================= VALIDATION ========================= */
 
-static void init_sse_clients(void) {
-	int i;
+static int validate_goal_id_32(const char* goal_id) {
+	size_t len = goal_id ? strlen(goal_id) : 0;
 
-	pthread_mutex_lock(&sse_clients_lock);
-	for (i = 0; i < MAX_SSE_CLIENTS; i++) {
-		sse_clients[i].fd = -1;
-		sse_clients[i].alive = 0;
-		sse_clients[i].research_id[0] = '\0';
-	}
-	pthread_mutex_unlock(&sse_clients_lock);
-}
-
-static void remove_sse_client_locked(int idx) {
-	if (idx < 0 || idx >= MAX_SSE_CLIENTS) return;
-
-	if (sse_clients[idx].alive) {
-		shutdown(sse_clients[idx].fd, SHUT_RDWR);
-		close(sse_clients[idx].fd);
-		sse_clients[idx].fd = -1;
-		sse_clients[idx].alive = 0;
-		sse_clients[idx].research_id[0] = '\0';
-		pthread_mutex_destroy(&sse_clients[idx].write_lock);
-	}
-}
-
-static int add_sse_client(int fd, const char* research_id) {
-	int i;
-
-	pthread_mutex_lock(&sse_clients_lock);
-
-	for (i = 0; i < MAX_SSE_CLIENTS; i++) {
-		if (!sse_clients[i].alive) {
-			sse_clients[i].fd = fd;
-			sse_clients[i].alive = 1;
-			sse_clients[i].research_id[0] = '\0';
-			if (research_id) {
-				strncpy(sse_clients[i].research_id, research_id, MAX_RESEARCH_ID_LEN);
-				sse_clients[i].research_id[MAX_RESEARCH_ID_LEN] = '\0';
-			}
-			pthread_mutex_init(&sse_clients[i].write_lock, NULL);
-			pthread_mutex_unlock(&sse_clients_lock);
-			return 1;
-		}
-	}
-
-	pthread_mutex_unlock(&sse_clients_lock);
-	return 0;
-}
-
-static void prune_dead_sse_clients(void) {
-	int i;
-
-	pthread_mutex_lock(&sse_clients_lock);
-	for (i = 0; i < MAX_SSE_CLIENTS; i++) {
-		if (sse_clients[i].alive) {
-			char ping[] = ": ping\n\n";
-			pthread_mutex_lock(&sse_clients[i].write_lock);
-			if (send_all(sse_clients[i].fd, ping, strlen(ping)) != 0) {
-				pthread_mutex_unlock(&sse_clients[i].write_lock);
-				remove_sse_client_locked(i);
-				continue;
-			}
-			pthread_mutex_unlock(&sse_clients[i].write_lock);
-		}
-	}
-	pthread_mutex_unlock(&sse_clients_lock);
-}
-
-/* ========================= SSE EMIT ========================= */
-
-void ds_emit_event(const char* id, const char* type, const char* buffer, size_t buffer_len) {
-	char* esc_id = NULL;
-	char* esc_type = NULL;
-	char* esc_data = NULL;
-	size_t payload_cap;
-	char* payload;
-	int payload_len;
-	int i;
-
-	if (!server_is_running()) return;
-
-	if (!id) id = "";
-	if (!type) type = "";
-	if (!buffer) {
-		buffer = "";
-		buffer_len = 0;
-	}
-
-	esc_id = json_escape_dup_n(id, strlen(id));
-	esc_type = json_escape_dup_n(type, strlen(type));
-	esc_data = json_escape_dup_n(buffer, buffer_len);
-
-	payload_cap =
-		strlen(esc_id) +
-		strlen(esc_type) +
-		strlen(esc_data) +
-		128;
-
-	payload = malloc(payload_cap);
-	cassert(payload != NULL, "Failed to allocate SSE payload\n");
-
-	payload_len = snprintf(
-		payload,
-		payload_cap,
-		"{\"id\":\"%s\",\"type\":\"%s\",\"data\":\"%s\"}",
-		esc_id,
-		esc_type,
-		esc_data
-	);
-
-	if (payload_len > 0) {
-		pthread_mutex_lock(&sse_clients_lock);
-
-		for (i = 0; i < MAX_SSE_CLIENTS; i++) {
-			if (sse_clients[i].alive) {
-				int send_failed = 0;
-
-				if (sse_clients[i].research_id[0] != '\0' && strcmp(sse_clients[i].research_id, id) != 0) {
-					continue;
-				}
-
-				pthread_mutex_lock(&sse_clients[i].write_lock);
-
-				if (send_all(sse_clients[i].fd, "data: ", 6) != 0) send_failed = 1;
-				if (!send_failed && send_all(sse_clients[i].fd, payload, (size_t)payload_len) != 0) send_failed = 1;
-				if (!send_failed && send_all(sse_clients[i].fd, "\n\n", 2) != 0) send_failed = 1;
-
-				pthread_mutex_unlock(&sse_clients[i].write_lock);
-
-				if (send_failed) {
-					remove_sse_client_locked(i);
-				}
-			}
-		}
-
-		pthread_mutex_unlock(&sse_clients_lock);
-	}
-
-	free(payload);
-	free(esc_data);
-	free(esc_type);
-	free(esc_id);
-}
-
-/* ========================= ROUTE HANDLERS ========================= */
-
-static void handle_get_graph(int client_fd) {
-	char* graph_json = get_graph_data();
-
-	if (!graph_json) {
-		send_json_response(
-			client_fd,
-			500,
-			"Internal Server Error",
-			"{\"ok\":false,\"error\":\"serialize_graph_failed\"}"
+	if (len != GOAL_ID_LEN) {
+		change_assert(
+			len == GOAL_ID_LEN,
+			"goal-id must be exactly %d chars, got %zu",
+			GOAL_ID_LEN,
+			len
 		);
-		return;
+		return 0;
 	}
 
-	send_response(
-		client_fd,
-		200,
-		"OK",
-		"application/json",
-		graph_json,
-		strlen(graph_json)
-	);
-
-	free(graph_json);
+	return 1;
 }
+
+/* ========================= JSON PARSE HELPERS ========================= */
 
 static const char* json_skip_ws(const char* p) {
 	while (*p && isspace((unsigned char)*p)) p++;
@@ -620,7 +495,7 @@ static int json_get_string_field(const char* json, const char* key, char* out, s
 
 	p++;
 	p = json_skip_ws(p);
-	if (*p != '"') return 0;
+	if (*p != '\"') return 0;
 
 	p++;
 	start = p;
@@ -631,11 +506,11 @@ static int json_get_string_field(const char* json, const char* key, char* out, s
 			if (*p) p++;
 			continue;
 		}
-		if (*p == '"') break;
+		if (*p == '\"') break;
 		p++;
 	}
 
-	if (*p != '"') return 0;
+	if (*p != '\"') return 0;
 
 	while (start < p && w + 1 < out_cap) {
 		if (*start == '\\') {
@@ -643,7 +518,7 @@ static int json_get_string_field(const char* json, const char* key, char* out, s
 			if (!*start) break;
 
 			switch (*start) {
-				case '"':  out[w++] = '"'; break;
+				case '\"':  out[w++] = '\"'; break;
 				case '\\': out[w++] = '\\'; break;
 				case '/':  out[w++] = '/'; break;
 				case 'b':  out[w++] = '\b'; break;
@@ -690,12 +565,781 @@ static int json_get_int_field(const char* json, const char* key, int* out_value)
 	return 1;
 }
 
+/* ========================= GOAL JSON SERIALIZATION ========================= */
+
+static void goal_id_to_cstr(const Goal* g, char out[GOAL_ID_LEN + 1]) {
+	if (!g) {
+		out[0] = '\0';
+		return;
+	}
+
+	memcpy(out, g->id, GOAL_ID_LEN);
+	out[GOAL_ID_LEN] = '\0';
+}
+
+static Goal* find_goal_by_id_string(const char* goal_id) {
+	size_t goals_len = 0;
+	Goal** goals = GetGoalsContainer(&goals_len);
+
+	if (!goal_id || !goals)
+		return NULL;
+
+	for (size_t i = 0; i < goals_len; i++) {
+		Goal* g = goals[i];
+		char cur_id[GOAL_ID_LEN + 1];
+
+		if (!g)
+			continue;
+
+		goal_id_to_cstr(g, cur_id);
+
+		if (strcmp(cur_id, goal_id) == 0)
+			return g;
+	}
+
+	return NULL;
+}
+
+static void append_goal_json(String* out, Goal* g) {
+	char goal_id[GOAL_ID_LEN + 1];
+
+	char* esc_id = NULL;
+	char* esc_title = NULL;
+	char* esc_extra_info = NULL;
+
+	change_assert(out, "append_goal_json got NULL output.\n");
+	change_assert(g, "append_goal_json got NULL goal.\n");
+
+	goal_id_to_cstr(g, goal_id);
+
+	esc_id = json_escape_dup(goal_id);
+	esc_title = json_escape_dup(c_str(&g->title));
+	esc_extra_info = json_escape_dup(c_str(&g->extra_info));
+
+	CatTemplateString(
+		out,
+		"{"
+			"\"id\":\"%s\","
+			"\"globalIndex\":%zu,"
+			"\"title\":\"%s\","
+			"\"title_len\":%zu,"
+			"\"extra_info\":\"%s\","
+			"\"extra_info_len\":%zu,"
+			"\"start_date\":%lld,"
+			"\"end_date\":%lld,"
+			"\"required_time\":%lld,"
+			"\"subgoals_len\":%zu,"
+			"\"subgoals\":[",
+		esc_id,
+		g->globalIndex,
+		esc_title,
+		g->title.len,
+		esc_extra_info,
+		g->extra_info.len,
+		(long long)g->start_date,
+		(long long)g->end_date,
+		(long long)g->required_time,
+		g->subgoals_len
+	);
+
+	for (size_t i = 0; i < g->subgoals_len; i++) {
+		if (i > 0) {
+			CatString(out, FSTRING_SIZE_PARAMS(","));
+		}
+
+		CatTemplateString(out, "%zu", g->subgoals[i]);
+	}
+
+	CatTemplateString(
+		out,
+		"],"
+			"\"parent\":%zu,"
+			"\"prev\":%zu,"
+			"\"next\":%zu,"
+			"\"depth\":%zu,"
+			"\"retry_depth\":%zu,"
+			"\"priority\":%zu"
+		"}",
+		g->parent,
+		g->prev,
+		g->next,
+		g->depth,
+		g->retry_depth,
+		g->priority
+	);
+
+	free(esc_extra_info);
+	free(esc_title);
+	free(esc_id);
+}
+
+static char* serialize_goals_container_json(void) {
+	size_t goals_len = 0;
+	size_t active_count = 0;
+	Goal** goals = GetGoalsContainer(&goals_len);
+
+	String out;
+
+	if (!goals && goals_len > 0) {
+		char* error = malloc(128);
+		cassert(error, "Failed to allocate error json.\n");
+		snprintf(error, 128, "{\"ok\":false,\"error\":\"goals_container_null\"}");
+		return error;
+	}
+
+	for (size_t i = 0; i < goals_len; i++) {
+		if (goals[i])
+			active_count++;
+	}
+
+	InitString(&out, 8192 + active_count * 1024);
+
+	CatTemplateString(
+		&out,
+		"{\"ok\":true,\"count\":%zu,\"container_len\":%zu,\"goals\":[",
+		active_count,
+		goals_len
+	);
+
+	_Bool first = 1;
+
+	for (size_t i = 0; i < goals_len; i++) {
+		Goal* g = goals[i];
+
+		if (!g)
+			continue;
+
+		if (!first) {
+			CatString(&out, FSTRING_SIZE_PARAMS(","));
+		}
+
+		append_goal_json(&out, g);
+		first = 0;
+	}
+
+	CatString(&out, FSTRING_SIZE_PARAMS("]}"));
+
+	return out.p;
+}
+
+static char* serialize_goal_children_json(Goal* g) {
+	String out;
+	char goal_id[GOAL_ID_LEN + 1];
+	char* esc_goal_id = NULL;
+	_Bool decomposed_now = 0;
+
+	if (!g) {
+		char* error = malloc(128);
+		cassert(error, "Failed to allocate error json.\n");
+		snprintf(error, 128, "{\"ok\":false,\"error\":\"goal_not_found\"}");
+		return error;
+	}
+
+	if (g->subgoals_len == 0 && g->required_time >= 60 * 15) {
+		decomposed_now = DecomposeGoal(g);
+	}
+
+	goal_id_to_cstr(g, goal_id);
+	esc_goal_id = json_escape_dup(goal_id);
+
+	InitString(&out, 4096 + g->subgoals_len * 1024);
+
+	CatTemplateString(
+		&out,
+		"{"
+			"\"ok\":true,"
+			"\"goalIndex\":%zu,"
+			"\"goalId\":\"%s\","
+			"\"decomposedNow\":%s,"
+			"\"goal\":",
+		g->globalIndex,
+		esc_goal_id,
+		decomposed_now ? "true" : "false"
+	);
+
+	append_goal_json(&out, g);
+
+	CatString(&out, FSTRING_SIZE_PARAMS(",\"children\":["));
+
+	_Bool first_child = 1;
+
+	for (size_t i = 0; i < g->subgoals_len; i++) {
+		Goal* child = ExternalFindGoal(g->subgoals[i]);
+
+		if (!child)
+			continue;
+
+		if (!first_child) {
+			CatString(&out, FSTRING_SIZE_PARAMS(","));
+		}
+
+		append_goal_json(&out, child);
+		first_child = 0;
+	}
+
+	CatString(&out, FSTRING_SIZE_PARAMS("]}"));
+
+	free(esc_goal_id);
+
+	return out.p;
+}
+
+/* ========================= SSE REGISTRY ========================= */
+
+static void init_sse_clients(void) {
+	int i;
+
+	pthread_mutex_lock(&sse_clients_lock);
+	for (i = 0; i < MAX_SSE_CLIENTS; i++) {
+		sse_clients[i].fd = -1;
+		sse_clients[i].alive = 0;
+		sse_clients[i].stream_id[0] = '\0';
+	}
+	pthread_mutex_unlock(&sse_clients_lock);
+}
+
+static void remove_sse_client_locked(int idx) {
+	if (idx < 0 || idx >= MAX_SSE_CLIENTS) return;
+
+	if (sse_clients[idx].alive) {
+		shutdown(sse_clients[idx].fd, SHUT_RDWR);
+		close(sse_clients[idx].fd);
+		sse_clients[idx].fd = -1;
+		sse_clients[idx].alive = 0;
+		sse_clients[idx].stream_id[0] = '\0';
+		pthread_mutex_destroy(&sse_clients[idx].write_lock);
+	}
+}
+
+static int add_sse_client(int fd, const char* stream_id) {
+	int i;
+
+	pthread_mutex_lock(&sse_clients_lock);
+
+	for (i = 0; i < MAX_SSE_CLIENTS; i++) {
+		if (!sse_clients[i].alive) {
+			sse_clients[i].fd = fd;
+			sse_clients[i].alive = 1;
+			sse_clients[i].stream_id[0] = '\0';
+			if (stream_id) {
+				strncpy(sse_clients[i].stream_id, stream_id, MAX_STREAM_ID_LEN);
+				sse_clients[i].stream_id[MAX_STREAM_ID_LEN] = '\0';
+			}
+			pthread_mutex_init(&sse_clients[i].write_lock, NULL);
+			pthread_mutex_unlock(&sse_clients_lock);
+			return 1;
+		}
+	}
+
+	pthread_mutex_unlock(&sse_clients_lock);
+	return 0;
+}
+
+static void prune_dead_sse_clients(void) {
+	int i;
+
+	pthread_mutex_lock(&sse_clients_lock);
+	for (i = 0; i < MAX_SSE_CLIENTS; i++) {
+		if (sse_clients[i].alive) {
+			char ping[] = ": ping\n\n";
+			pthread_mutex_lock(&sse_clients[i].write_lock);
+			if (send_all(sse_clients[i].fd, ping, strlen(ping)) != 0) {
+				pthread_mutex_unlock(&sse_clients[i].write_lock);
+				remove_sse_client_locked(i);
+				continue;
+			}
+			pthread_mutex_unlock(&sse_clients[i].write_lock);
+		}
+	}
+	pthread_mutex_unlock(&sse_clients_lock);
+}
+
+/* ========================= SSE EMIT ========================= */
+
+/*
+ * General SSE emitter.
+ *
+ * stream_id is used in two ways:
+ *   1. It is serialized into the outgoing JSON as the `id` field.
+ *   2. It is used as the optional client filter. Clients connected with
+ *      /research/events?id=<stream_id> or /goal/events?goal-id=<stream_id>
+ *      only receive matching stream ids.
+ *
+ * Domain emitters such as ds_emit_event() and goal_emit_event() should stay
+ * thin wrappers around this function so all SSE formatting, escaping,
+ * filtering, locking, and dead-client cleanup remains centralized.
+ */
+void server_emit_event(const char* stream_id, const char* type, const char* buffer, size_t buffer_len) {
+	char* esc_id = NULL;
+	char* esc_type = NULL;
+	char* esc_data = NULL;
+	size_t payload_cap;
+	char* payload;
+	int payload_len;
+	int i;
+
+	if (!server_is_running()) return;
+
+	if (!stream_id) stream_id = "";
+	if (!type) type = "";
+	if (!buffer) {
+		buffer = "";
+		buffer_len = 0;
+	}
+
+	esc_id = json_escape_dup_n(stream_id, strlen(stream_id));
+	esc_type = json_escape_dup_n(type, strlen(type));
+	esc_data = json_escape_dup_n(buffer, buffer_len);
+
+	payload_cap =
+		strlen(esc_id) +
+		strlen(esc_type) +
+		strlen(esc_data) +
+		128;
+
+	payload = malloc(payload_cap);
+	cassert(payload != NULL, "Failed to allocate SSE payload\n");
+
+	payload_len = snprintf(
+		payload,
+		payload_cap,
+		"{\"id\":\"%s\",\"type\":\"%s\",\"data\":\"%s\"}",
+		esc_id,
+		esc_type,
+		esc_data
+	);
+
+	if (payload_len > 0) {
+		pthread_mutex_lock(&sse_clients_lock);
+
+		for (i = 0; i < MAX_SSE_CLIENTS; i++) {
+			if (sse_clients[i].alive) {
+				int send_failed = 0;
+
+				if (sse_clients[i].stream_id[0] != '\0' && strcmp(sse_clients[i].stream_id, stream_id) != 0) {
+					continue;
+				}
+
+				pthread_mutex_lock(&sse_clients[i].write_lock);
+
+				if (send_all(sse_clients[i].fd, "data: ", 6) != 0) send_failed = 1;
+				if (!send_failed && send_all(sse_clients[i].fd, payload, (size_t)payload_len) != 0) send_failed = 1;
+				if (!send_failed && send_all(sse_clients[i].fd, "\n\n", 2) != 0) send_failed = 1;
+
+				pthread_mutex_unlock(&sse_clients[i].write_lock);
+
+				if (send_failed) {
+					remove_sse_client_locked(i);
+				}
+			}
+		}
+
+		pthread_mutex_unlock(&sse_clients_lock);
+	}
+
+	free(payload);
+	free(esc_data);
+	free(esc_type);
+	free(esc_id);
+}
+
+void ds_emit_event(const char* id, const char* type, const char* buffer, size_t buffer_len) {
+	server_emit_event(id, type, buffer, buffer_len);
+}
+
+void goal_emit_event(const char* id, const char* type, const char* buffer, size_t buffer_len) {
+	server_emit_event(id, type, buffer, buffer_len);
+}
+
+/* ========================= ROUTE HANDLERS ========================= */
+
+static void handle_get_graph(int client_fd) {
+	char* graph_json = get_graph_data();
+
+	if (!graph_json) {
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"serialize_graph_failed\"}"
+		);
+		return;
+	}
+
+	send_response(
+		client_fd,
+		200,
+		"OK",
+		"application/json",
+		graph_json,
+		strlen(graph_json)
+	);
+
+	free(graph_json);
+}
+
+static void handle_post_graph_export(int client_fd) {
+	if (!ExportGraphTo((char*)GRAPH_COPY_PATH)) {
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"graph_export_failed\"}"
+		);
+		return;
+	}
+
+	send_json_response(
+		client_fd,
+		200,
+		"OK",
+		"{\"ok\":true,\"path\":\"" GRAPH_COPY_PATH "\"}"
+	);
+}
+
+static void handle_get_graph_load(int client_fd) {
+	if (access(GRAPH_COPY_PATH, R_OK) != 0) {
+		if (errno == ENOENT) {
+			send_json_response(
+				client_fd,
+				404,
+				"Not Found",
+				"{\"ok\":false,\"error\":\"graph_copy_not_found\"}"
+			);
+			return;
+		}
+
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"graph_copy_not_readable\"}"
+		);
+		return;
+	}
+
+	LoadGraphFromFile((char*)GRAPH_COPY_PATH);
+
+	send_json_response(
+		client_fd,
+		200,
+		"OK",
+		"{\"ok\":true,\"path\":\"" GRAPH_COPY_PATH "\"}"
+	);
+}
+
+static void handle_get_goal_list(int client_fd) {
+	char* goals_json = serialize_goals_container_json();
+
+	if (!goals_json) {
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"goals_container_failed\"}"
+		);
+		return;
+	}
+
+	send_response(
+		client_fd,
+		200,
+		"OK",
+		"application/json",
+		goals_json,
+		strlen(goals_json)
+	);
+
+	free(goals_json);
+}
+
+static void handle_post_goal_decompose(int client_fd, const HttpRequest* req) {
+	int goal_index_int = 0;
+	char goal_id[256];
+	Goal* goal = NULL;
+	char* result_json = NULL;
+
+	goal_id[0] = '\0';
+
+	if (!req->body) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_body\"}"
+		);
+		return;
+	}
+
+	if (json_get_int_field(req->body, "goalIndex", &goal_index_int) ||
+	    json_get_int_field(req->body, "globalIndex", &goal_index_int) ||
+	    json_get_int_field(req->body, "goal-index", &goal_index_int)) {
+
+		if (goal_index_int <= 0) {
+			send_json_response(
+				client_fd,
+				400,
+				"Bad Request",
+				"{\"ok\":false,\"error\":\"invalid_goal_index\"}"
+			);
+			return;
+		}
+
+		goal = ExternalFindGoal((size_t)goal_index_int);
+	} else if (
+		json_get_string_field(req->body, "goal-id", goal_id, sizeof(goal_id)) ||
+		json_get_string_field(req->body, "goalId", goal_id, sizeof(goal_id)) ||
+		json_get_string_field(req->body, "id", goal_id, sizeof(goal_id))
+	) {
+		goal = find_goal_by_id_string(goal_id);
+	} else {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_goal_identifier\"}"
+		);
+		return;
+	}
+
+	if (!goal) {
+		send_json_response(
+			client_fd,
+			404,
+			"Not Found",
+			"{\"ok\":false,\"error\":\"goal_not_found\"}"
+		);
+		return;
+	}
+
+	result_json = serialize_goal_children_json(goal);
+
+	if (!result_json) {
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"goal_decompose_failed\"}"
+		);
+		return;
+	}
+
+	send_response(
+		client_fd,
+		200,
+		"OK",
+		"application/json",
+		result_json,
+		strlen(result_json)
+	);
+
+	free(result_json);
+}
+
+static void handle_get_goal_events(int client_fd, const char* full_path) {
+	char path_only[256];
+	const char* query = NULL;
+	char goal_id[256];
+	static const char* header =
+		"HTTP/1.1 200 OK\r\n"
+		"Content-Type: text/event-stream\r\n"
+		"Cache-Control: no-cache\r\n"
+		"Connection: keep-alive\r\n"
+		"Access-Control-Allow-Origin: *\r\n"
+		"\r\n";
+
+	split_path_and_query(full_path, path_only, sizeof(path_only), &query);
+	goal_id[0] = '\0';
+
+
+	if (!query_get_param(query, "goal-id", goal_id, sizeof(goal_id))) {
+		query_get_param(query, "id", goal_id, sizeof(goal_id));
+	}
+
+	if (goal_id[0] != '\0' && !validate_goal_id_32(goal_id)) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"invalid_goal_id_length\"}"
+		);
+		return;
+	}
+
+	if (send_all(client_fd, header, strlen(header)) != 0) {
+		close(client_fd);
+		return;
+	}
+
+	if (!add_sse_client(client_fd, goal_id[0] ? goal_id : NULL)) {
+		close(client_fd);
+		return;
+	}
+
+	if (goal_id[0]) {
+		goal_emit_event(goal_id, "sse_connected", "connected", strlen("connected"));
+	}
+}
+
+static void handle_post_goal_create(int client_fd, const HttpRequest* req) {
+	char goal_id[256];
+	char title[256];
+	char extra_info[2048];
+	char response_body[256];
+	char* esc_goal_id = NULL;
+	int response_len;
+	String title_s;
+	String extra_info_s;
+	Goal* goal = NULL;
+
+	goal_id[0] = '\0';
+	title[0] = '\0';
+	extra_info[0] = '\0';
+
+	if (!req->body) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_body\"}"
+		);
+		return;
+	}
+
+	/*
+	 * Required goal identifier.
+	 *
+	 * Primary key: "goal-id"
+	 * Compatibility fallbacks: "goalId", then "id"
+	 *
+	 * The goal-id must be exactly 32 characters. The length check is kept
+	 * explicit through change_assert(...) because invalid ids indicate a
+	 * caller-side protocol bug, not a server-generated id.
+	 */
+	if (!json_get_string_field(req->body, "goal-id", goal_id, sizeof(goal_id)) &&
+	    !json_get_string_field(req->body, "goalId", goal_id, sizeof(goal_id)) &&
+	    !json_get_string_field(req->body, "id", goal_id, sizeof(goal_id))) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_goal_id\"}"
+		);
+		return;
+	}
+
+	if (!validate_goal_id_32(goal_id)) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"invalid_goal_id_length\"}"
+		);
+		return;
+	}
+
+	if (!json_get_string_field(req->body, "title", title, sizeof(title))) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_title\"}"
+		);
+		return;
+	}
+
+	if (!json_get_string_field(req->body, "extraInfo", extra_info, sizeof(extra_info)) &&
+	    !json_get_string_field(req->body, "extrainfo", extra_info, sizeof(extra_info))) {
+		send_json_response(
+			client_fd,
+			400,
+			"Bad Request",
+			"{\"ok\":false,\"error\":\"missing_extra_info\"}"
+		);
+		return;
+	}
+
+	printf("goal/create goal-id=%s title=%s extraInfo=%s\n",
+	       goal_id,
+	       title,
+	       extra_info);
+
+	InitString(&title_s, strlen(title) + 1);
+	InitString(&extra_info_s, strlen(extra_info) + 1);
+
+	CatString(&title_s, title, strlen(title));
+	CatString(&extra_info_s, extra_info, strlen(extra_info));
+
+	goal_emit_event(
+		goal_id,
+		"goal_create_started",
+		FSTRING_SIZE_PARAMS("goal create started")
+	);
+
+	goal = CreateUserGoal(&title_s, &extra_info_s, goal_id);
+
+	FreeString(&extra_info_s);
+	FreeString(&title_s);
+
+	if (!goal) {
+		goal_emit_event(
+			goal_id,
+			"goal_create_failed",
+			"goal create failed",
+			strlen("goal create failed")
+		);
+
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"goal_create_failed\"}"
+		);
+		return;
+	}
+
+	goal_emit_event(
+		goal_id,
+		"goal_created",
+		"goal created",
+		strlen("goal created")
+	);
+
+	esc_goal_id = json_escape_dup(goal_id);
+	response_len = snprintf(
+		response_body,
+		sizeof(response_body),
+		"{\"ok\":true,\"goal-id\":\"%s\"}",
+		esc_goal_id
+	);
+	free(esc_goal_id);
+
+	if (response_len < 0 || (size_t)response_len >= sizeof(response_body)) {
+		send_json_response(
+			client_fd,
+			500,
+			"Internal Server Error",
+			"{\"ok\":false,\"error\":\"response_too_large\"}"
+		);
+		return;
+	}
+
+	send_response(
+		client_fd,
+		200,
+		"OK",
+		"application/json",
+		response_body,
+		(size_t)response_len
+	);
+}
+
 static void handle_post_research_start(int client_fd, const HttpRequest* req) {
-	char research_id[MAX_RESEARCH_ID_LEN + 1];
+	char research_id[MAX_STREAM_ID_LEN + 1];
 	char task_name[256];
 	int min_rounds = 0;
 	String out;
-	Task task;
+	Task task = {0};
 
 	research_id[0] = '\0';
 	task_name[0] = '\0';
@@ -757,9 +1401,8 @@ static void handle_post_research_start(int client_fd, const HttpRequest* req) {
 
 	memset(&task, 0, sizeof(task));
 
-	strncpy(task.name, task_name, sizeof(task.name) - 1);
-	task.name[sizeof(task.name) - 1] = '\0';
-	task.name_len = strlen(task.name);
+	InitString(&task.name, strlen(task_name) + 1);
+	CatString(&task.name, task_name, strlen(task_name));
 	task.minDepth = min_rounds;
 
 	InitString(&out, 1024);
@@ -778,10 +1421,13 @@ static void handle_post_research_start(int client_fd, const HttpRequest* req) {
 	);
 
 	FreeString(&out);
+	FreeString(&task.name);
 }
 
 static void handle_post_message(int client_fd, const HttpRequest* req) {
 	char input[1024];
+	size_t input_size;
+	String inputS;
 
 	input[0] = '\0';
 
@@ -807,9 +1453,9 @@ static void handle_post_message(int client_fd, const HttpRequest* req) {
 
 	printf("message input=%s\n", input);
 
-	size_t input_size = strlen(input);
+	input_size = strlen(input);
 
-	String inputS; InitString(&inputS, input_size + 1);
+	InitString(&inputS, input_size + 1);
 	CatString(&inputS, input, input_size);
 
 	DecomposeInputIntoGraph(&inputS);
@@ -827,7 +1473,7 @@ static void handle_post_message(int client_fd, const HttpRequest* req) {
 static void handle_get_research_events(int client_fd, const char* full_path) {
 	char path_only[256];
 	const char* query = NULL;
-	char research_id[MAX_RESEARCH_ID_LEN + 1];
+	char research_id[MAX_STREAM_ID_LEN + 1];
 	static const char* header =
 		"HTTP/1.1 200 OK\r\n"
 		"Content-Type: text/event-stream\r\n"
@@ -847,12 +1493,6 @@ static void handle_get_research_events(int client_fd, const char* full_path) {
 	}
 
 	if (!add_sse_client(client_fd, research_id[0] ? research_id : NULL)) {
-		send_json_response(
-			client_fd,
-			503,
-			"Service Unavailable",
-			"{\"ok\":false,\"error\":\"too_many_sse_clients\"}"
-		);
 		close(client_fd);
 		return;
 	}
@@ -897,19 +1537,49 @@ static int handle_request(int client_fd, const HttpRequest* req) {
 		return 0;
 	}
 
-	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/research/start") == 0) {
-		handle_post_research_start(client_fd, req);
+	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/graph/export") == 0) {
+		handle_post_graph_export(client_fd);
 		return 0;
 	}
 
-	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/message") == 0) {
-		handle_post_message(client_fd, req);
+	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/graph/load") == 0) {
+		handle_get_graph_load(client_fd);
+		return 0;
+	}
+
+	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/research/start") == 0) {
+		handle_post_research_start(client_fd, req);
 		return 0;
 	}
 
 	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/research/events") == 0) {
 		handle_get_research_events(client_fd, req->path);
 		return 1;
+	}
+
+	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/goal/create") == 0) {
+		handle_post_goal_create(client_fd, req);
+		return 0;
+	}
+
+	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/goal/events") == 0) {
+		handle_get_goal_events(client_fd, req->path);
+		return 1;
+	}
+
+	if (strcmp(req->method, "GET") == 0 && strcmp(path_only, "/goal/list") == 0) {
+		handle_get_goal_list(client_fd);
+		return 0;
+	}
+
+	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/goal/decompose") == 0) {
+		handle_post_goal_decompose(client_fd, req);
+		return 0;
+	}
+
+	if (strcmp(req->method, "POST") == 0 && strcmp(path_only, "/message") == 0) {
+		handle_post_message(client_fd, req);
+		return 0;
 	}
 
 	handle_not_found(client_fd);
@@ -980,6 +1650,13 @@ void start_server(int port) {
 	struct sockaddr_in addr;
 	int opt = 1;
 	int rc;
+
+	/*
+	 * Critical for SSE:
+	 * browsers routinely close/reconnect EventSource sockets.
+	 * Without this, send() to a closed socket can terminate the process.
+	 */
+	signal(SIGPIPE, SIG_IGN);
 
 	pthread_mutex_lock(&server_lock);
 

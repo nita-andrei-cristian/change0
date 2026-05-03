@@ -4,40 +4,16 @@
 #include <stddef.h>
 #include <time.h>
 #include "util.h"
+#include "goal-util.h"
 
-typedef struct GoalType {
-	String title;
-	String reasoning;
+void FreeGoal(Goal *g);
+void FreeGoals();
+Goal* CreateUserGoal(String *input1, String *input2, char goalId[GOAL_ID_SIZE]);
 
-	time_t start_date;
-	time_t end_date;
-	size_t required_time;
+void InitGoalSystem();
+_Bool DecomposeGoal(Goal *g);
 
-	struct GoalType **subgoals;
-	size_t subgoals_len;
-	
-	size_t globalIndex;
-
-	struct GoalType* parent;
-
-	size_t priority;
-} Goal;
-
-enum GOAL_STATUS {
-	GOAL_VALID=0,
-	GOAL_COLLISION,
-	GOAL_OVERDUE,
-};
-
-#define TIME_MARIGN 0.5
-
-
-Goal *create_goal(String *input_goal, String *input_reasoning, size_t estimated_time, Goal *parent);
-void mock_develop_subgoals(Goal *g);
-enum GOAL_STATUS validate_goal(Goal *g);
-void repair_goal(Goal* g);
-void update_goal(Goal *g);
-void free_goal(Goal *g);
-void free_goals();
+void UpdateGoal(Goal *g, time_t now);
+Goal **GetGoalsContainer(size_t *len);
 
 #endif

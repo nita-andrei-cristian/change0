@@ -1,5 +1,6 @@
 build/
 debug/
+dumps/*
 compile_commands.json
 .cache/clangd/index
 models/
@@ -12,3 +13,5 @@ deep-search-result.txt
 sent.txt
 js/.codex
 *.json
+.codex
+graph-copy.json

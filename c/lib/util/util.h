@@ -4,9 +4,8 @@
 
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define ABS(a) ((a) > 0 ? (a) : -(a))
 #define CLAMP(mi,mx,v) ((v) < (mi) ? (mi) : ((v) > (mx) ? (mx) : (v)))
-#define FSIZE(fixed) (sizeof((fixed)) - 1)
-#define FSTRING_SIZE_PARAMS(fixed) (fixed),FSIZE((fixed))
 
 // ai generated strnlen
 size_t mystrnlen(const char* s, size_t maxlen);
@@ -16,6 +15,8 @@ size_t mystrnlen(const char* s, size_t maxlen);
 #define READ_FILE_FUNC
 
 #include <stdio.h>
+#include "change-errors.h"
+#include "json.h"
 
 char* readFile(char* filename, size_t *bytes);
 
@@ -25,7 +26,7 @@ size_t mygetline(char **lineptr, size_t *n, FILE *stream);
 
 char *json_escape_dup(const char *src);
 
-void dump_to_file(const char *path, const char *data, size_t len);
+json_value *json_object_get(json_value *obj, const char *name);
 
 #endif
 
@@ -50,14 +51,6 @@ char* searchFirstNonDigit(char *source);
 
 #endif
 
-#ifndef ASSERTION_CUSTOM
-#define ASSERTION_CUSTOM
-
-_Bool massert(_Bool assertion, char* message); // message assert
-void cassert(_Bool assertion, char* message); // critical assert
-
-#endif
-
 #ifndef STRING_CUSTOM_UTIL
 #define STRING_CUSTOM_UTIL
 
@@ -70,11 +63,14 @@ typedef struct {
 	char* p;
 	size_t len;
 	size_t cap;
+	_Bool used;
+	_Bool init;
 } String;
 
 void InitString(String* s, size_t init_cap);
 void FreeString(String* s);
 void CatString(String* s, char* c, size_t len);
+void CatTemplateString(String* s, char *fmt, ...);
 void CopyString(String* a, String* b);
 void EmptyString(String* a);
 void ResizeString(String* a, size_t new_cap);
