@@ -1,0 +1,79 @@
+:root {
+  color: #ffffff;
+  background: #000000;
+  font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: #000000;
+}
+
+canvas {
+  display: block;
+  width: 100vw;
+  height: 100svh;
+}
+
+.goal-viewer-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.goal-connect-button {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1;
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 14px;
+  background: #ffffff;
+  color: #000000;
+}
+
+.goal-connect-button:disabled {
+  opacity: 0.75;
+}
+
+.goal-view-button {
+  position: fixed;
+  top: 16px;
+  left: 142px;
+  z-index: 1;
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 14px;
+  background: #ffffff;
+  color: #000000;
+}
+
+.goal-view-button:disabled {
+  opacity: 0.75;
+}
+
+.goal-connect-message {
+  position: fixed;
+  top: 58px;
+  left: 16px;
+  z-index: 1;
+  margin: 0;
+  color: #ffffff;
+}
