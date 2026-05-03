@@ -15,9 +15,8 @@ The client application has a `server` feature, this allows Neuro Engine (And DS)
 
 ## Future plans
 - Make OpenAI optional, so you can host your own AI
-- Goal implmenetation, where you can customize a dynamic real-life goal based on a user's identity. The goal dinamically syncs with the user context.
-- Reintroduce mocks
-- Clean the terminal client
+- Create a more intuitive js viewer
+- Write the UI for teh actual app
 - Much more
 
 ## To consider
