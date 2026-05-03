@@ -112,6 +112,7 @@ target_include_directories(deepsearchsession PUBLIC
     ${CMAKE_SOURCE_DIR}/c/ne/search
     ${CMAKE_SOURCE_DIR}/c/lib/util
     ${CMAKE_SOURCE_DIR}/c/lib/jsonp
+    ${CMAKE_SOURCE_DIR}/c/lib/openai
     ${CMAKE_SOURCE_DIR}/c/ne
     ${CMAKE_SOURCE_DIR}/c
 )
@@ -119,6 +120,7 @@ target_link_libraries(deepsearchsession PUBLIC
     util
     jsonp
     comparsing
+    openai
     graphengine
     mocks
     globals
