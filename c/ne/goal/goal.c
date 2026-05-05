@@ -35,7 +35,7 @@ static void shorten_goal(Goal *g, time_t now){
 
 	String new_title, new_extra_info;
 	time_t new_estimated_time = 0; // this should not matter
-	ExtractGoalFromText(out, &new_title, &new_extra_info, &new_estimated_time);
+	ExtractGoalFromText(out, &new_title, &new_extra_info, &new_estimated_time, 0);
 	
 	change_assert(new_title.len > 1 && new_extra_info.len > 1, "Goal title or extra info is broken. title : [%s], info : [%s]\n", new_title.p, new_extra_info.p);
 
@@ -137,7 +137,7 @@ Goal* CreateUserGoal(String *input1, String *input2, char goalId[])
 
 	PersonalizeGoal(input1, input2, &deep_search_result, goalId);
 	goal_emit(goalId, "deep-search-final-recomandation", deep_search_result.p, deep_search_result.len);
-	ExtractGoalFromText(&deep_search_result, &title, &extra_info, &estimated_time);
+	ExtractGoalFromText(&deep_search_result, &title, &extra_info, &estimated_time, 1);
 
 	// emit info to client
 	goal_emit(goalId, "title", title.p, title.len);
