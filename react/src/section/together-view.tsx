@@ -127,14 +127,11 @@ export function CollabReadyScreen({ onReady }: { onReady: () => void }) {
         transform: visible ? 'translateY(0)' : 'translateY(16px)',
         transition: 'all .55s cubic-bezier(.32,1,.54,1)',
       }}>
-        <div className="text-[10px] font-bold tracking-[0.24em] uppercase mb-9" style={{ color: 'rgba(255,255,255,.25)' }}>
-          Collaboration
-        </div>
         <h1 className="text-[38px] font-extrabold tracking-tight leading-[1.07] mb-5">
           Are you ready<br />for this?
         </h1>
         <p className="text-[14px] leading-[1.65] mb-11" style={{ color: 'rgba(255,255,255,.36)' }}>
-          The right person transforms your goal into a mission. Built on trust and mutual respect.
+          The right person transforms your goal into a mission. Built on trust and mutual respect. This will make you account public.
         </p>
         <div className="flex gap-3 w-full">
           <button onClick={() => setPhase('bye')}
