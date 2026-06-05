@@ -211,7 +211,7 @@ export default function LoginView({ onLogin }: LoginViewProps) {
 
         {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
 
-        <ul className="mb-6 divide-y divide-[#2a2a2a] rounded border border-[#2a2a2a]">
+        <ul className="mb-6 pt-10 divide-y divide-[#2a2a2a] rounded border border-[#2a2a2a]">
           {users.length === 0 && (
             <li className="px-3 py-3 text-sm text-white/55">No users yet.</li>
           )}

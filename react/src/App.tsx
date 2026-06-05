@@ -663,7 +663,7 @@ function App() {
     return (
       <main className="fixed inset-0 flex flex-col text-white overflow-hidden">
         {!focusTarget && (devPanelOpen ? (
-          <aside className="fixed right-3 top-3 z-50 rounded-xl border border-[#2a2a2a] bg-[#111]/95 px-3 py-3 shadow-sm backdrop-blur sm:right-5 sm:top-5">
+          <aside className="fixed right-3 top-16 z-50 rounded-xl border border-[#2a2a2a] bg-[#111]/95 px-3 py-3 shadow-sm backdrop-blur sm:right-5 sm:top-20">
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">{localUser.name}</p>
               <div className="flex items-center gap-1">
